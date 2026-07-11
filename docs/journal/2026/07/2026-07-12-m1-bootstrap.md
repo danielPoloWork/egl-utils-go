@@ -31,3 +31,12 @@ Wait for this PR to merge (one PR at a time), then either cut the v0.1.0 release
 `docs/workflow/release.md`, or start roadmap item **2.1 workerpool.Pool** on a fresh branch
 from `master` (recommended tier per ROADMAP guidance: strongest model, max effort;
 leak/race/bench coverage required).
+
+## Addendum — v0.1.0 release prepared (same session)
+
+PR #6 merged with all 8 CI checks green — the first fully-green matrix run. The v0.1.0
+release PR was then prepared per `docs/workflow/release.md`: version constant bumped,
+`[Unreleased]` rolled into `docs/changelog/v0/v0.1.0.md`, README badge refreshed, release
+notes drafted under `docs/releases/v0.1.0.md`. After the maintainer merges: the agent tags
+`v0.1.0` (carry-through), CI drafts the GitHub Release from the tag push, the maintainer
+publishes. Then Milestone 2 opens with item 2.1 (workerpool.Pool).
