@@ -62,10 +62,9 @@ decisions, stricter review, and a maintained compliance-docs surface. The raised
 ├── README.md                       # human-facing project landing page
 ├── ROADMAP.md                      # numbered checkbox roadmap, updated as work completes
 ├── LICENSE
-├── src/                            # all source code lives here — see §5
-│   ├── main/go/it/d4np/utils/
-│   ├── test/go/it/d4np/utils/
-│   └── bench/go/it/d4np/utils/    # where applicable
+├── go.mod                          # module github.com/danielPoloWork/egl-utils-go — see §5
+├── version.go                      # const Version — release-lockstep source of truth
+├── <package>/                      # one feature package per directory (workerpool/, …) — see §5
 ├── docs/
 │   ├── adr/                        # Architecture Decision Records
 │   ├── patterns/                   # design-patterns catalogue + taxonomy
@@ -77,26 +76,30 @@ decisions, stricter review, and a maintained compliance-docs surface. The raised
 └── .github/                        # CI + release workflows, PR/issue templates, CODEOWNERS, Dependabot
 ```
 
-## 5. Source Tree & Cross-Language Layout
+## 5. Source Tree & Layout
 
-All code lives under a **Maven-style cross-language source tree** so that sibling projects
-in any language share the same shape:
+Code follows the **idiomatic Go root layout** decided in
+[ADR-0003](docs/adr/0003-adopt-idiomatic-go-root-layout.md), which supersedes the series'
+cross-language tree (ADR-0002) for this repository — in Go, import paths are directory
+paths, so the tree and the short consumer import could not both hold.
 
 ```text
-src/main/go/it/d4np/utils/    # production sources
-src/test/go/it/d4np/utils/    # test sources
-src/bench/go/it/d4np/utils/   # benchmarks (where applicable)
+go.mod            # module github.com/danielPoloWork/egl-utils-go (language floor 1.24)
+doc.go            # root package `utils` — module-wide docs
+version.go        # const Version — release lockstep
+<package>/        # one feature package per directory: workerpool/, pubsub/, …
 ```
 
 For this repository:
 
-- `<lang>` = `go`, `<project>` = `utils`
-- Namespace / package: **`github.com/danielPoloWork/egl-utils-go`** — mirrors the path
+- Module / namespace: **`github.com/danielPoloWork/egl-utils-go`**
 - Consumers import via: `import "github.com/danielPoloWork/egl-utils-go/workerpool"`
+- Tests are co-located `_test.go` files (white-box in-package and external `_test`
+  packages); benchmarks are co-located `Benchmark*` functions (`go test -bench`).
 
-Subdivision inside `utils/` is by **component**, not by file type. **This layout
-is normative.** Do not place code at the repository root or in any other shape without
-first superseding [ADR-0002](docs/adr/0002-adopt-cross-language-source-layout.md).
+Subdivision is by **component**, not by file type. **This layout is normative.** Do not
+introduce any other shape without first superseding
+[ADR-0003](docs/adr/0003-adopt-idiomatic-go-root-layout.md).
 
 ## 6. Git Workflow
 
@@ -255,7 +258,7 @@ Every PR must clear, at minimum:
 | Sanitizers / checkers | go test -race (data-race detector), go vet, govulncheck green where applicable |
 | Coverage | new code ≥ 80% line (finalized in an ADR) |
 | API docs | `godoc / pkg.go.dev` builds without warnings |
-| Performance claims | backed by a reproducible benchmark under `src/bench/` |
+| Performance claims | backed by a reproducible co-located benchmark (`go test -bench`, ADR-0003) |
 | Versioning | SemVer; `CHANGELOG.md` updated for user-visible changes |
 | Congruence | `python tools/consistency_lint.py` passes |
 | Review (enterprise) | **two** approving reviews before merge; a security-relevant change also requires the `security-auditor`'s sign-off |

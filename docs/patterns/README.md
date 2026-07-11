@@ -17,14 +17,14 @@ rather than an application architecture). Record one in an ADR here if that chan
 ## How to use this catalogue
 
 - **Adding a pattern** — when a PR lands one, add a row to *Implemented / Planned* as
-  `Implemented`, with the ADR link and the code location (a real path under
-  `src/main/go/...`); a pattern decided in an ADR but not yet in code is added as `Planned`.
+  `Implemented`, with the ADR link and the code location (a real feature-package path at
+  the repo root, per ADR-0003); a pattern decided in an ADR but not yet in code is added as `Planned`.
 - **Refining** — update the row and link the new ADR.
 - **Rejecting** — add it to *Rejected* with the reason; do not silently drop it.
 - **Removing** — move the row to *Superseded*, link the superseding ADR, keep the history.
 
 Status vocabulary: `Planned` (decided in an ADR, not yet landed) · `Implemented` (present
-in `src/main/...`, ADR `Accepted`) · `Considered` · `Rejected` · `Superseded`.
+in the code, ADR `Accepted`) · `Considered` · `Rejected` · `Superseded`.
 
 ## Implemented / Planned
 

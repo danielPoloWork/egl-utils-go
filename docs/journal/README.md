@@ -13,8 +13,11 @@ At the close of a state-changing session, the agent:
 
 ## Index
 
-_No checkpoints yet._
-
 ### 2026
 
 _(newest first)_
+
+#### 07 — July
+
+- [2026-07-12 — M1 bootstrap](2026/07/2026-07-12-m1-bootstrap.md) — Go module + quality
+  configs; ADR-0003 (root layout) + ADR-0004 (dependency policy); Milestone 1 complete.

@@ -1,0 +1,10 @@
+# golangci-lint v2 configuration — the static-analysis half of the AGENTS.md §10 quality
+# bar. The v2 default set already enables errcheck, govet, ineffassign, staticcheck, and
+# unused; revive and gosec complete the contract's five named linters. Warnings are errors:
+# no broad disables (a targeted //nolint needs an in-line reason and review).
+version: "2"
+
+linters:
+  enable:
+    - revive
+    - gosec

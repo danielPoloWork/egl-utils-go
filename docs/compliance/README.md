@@ -25,10 +25,6 @@ evidence* the raised bar expects to exist between audits.
 
 ## Control register
 
-_No controls registered yet. Add the project's controls below as they are decided (each with its
-ADR + evidence); until then this file records that the enterprise posture is in force and the
-register is open._
-
 | # | Control | Decided in (ADR) | Evidence (test / gate / doc) | Status |
 |---|---------|------------------|------------------------------|--------|
-| — | —       | —                | —                            | —      |
+| C-1 | Runtime dependency policy — stdlib + `golang.org/x/*` + two vetted runtime deps (prometheus client, YAML parser); test-only testify/goleak/rapid | [ADR-0004](../adr/0004-runtime-dependency-policy.md) | `govulncheck` (CI `quality` job) · `go.mod`/`go.sum` review · Dependabot `gomod` weekly | Active |
