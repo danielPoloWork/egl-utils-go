@@ -1,9 +1,9 @@
 # Benchmarks
 
 Reproducible performance measurements for `egl-utils-go`. Any performance claim in the
-spec, README, or a PR must be backed by a benchmark here and by code under
-`src/bench/go/it/d4np/utils/`. Numbers without a reproducible method
-are not evidence.
+spec, README, or a PR must be backed by a benchmark report here and by co-located
+`Benchmark*` functions in the relevant feature package (`go test -bench`, ADR-0003).
+Numbers without a reproducible method are not evidence.
 
 ## Methodology
 

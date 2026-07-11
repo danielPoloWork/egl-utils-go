@@ -81,9 +81,9 @@ net/http.Handler, error), so each is adoptable in isolation.
 Concurrency components own their goroutines and stop deterministically (context /
 close(done)); construction uses functional options for forward compatibility. HTTP
 concerns follow the standard func(http.Handler) http.Handler decorator chain.
-Packages live under the normative cross-language tree (src/main/go/it/d4np/utils);
-go.mod placement reconciling consumer import ergonomics with that tree is decided and
-recorded as an ADR in Milestone 1.
+Packages live at the module root — one directory per feature package — per ADR-0003
+(idiomatic Go root layout, superseding the cross-language tree for this repository);
+go.mod sits at the repository root with module path github.com/danielPoloWork/egl-utils-go.
 
 ## 5. Public Interface
 

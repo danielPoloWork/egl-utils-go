@@ -52,7 +52,7 @@ setup.
 
 | # | Title | Status |
 |---|---|---|
-| 1 | Project bootstrap & CI | ⏳ in progress |
+| 1 | Project bootstrap & CI | ✅ done |
 | 2 | Concurrency primitives | ⏳ planned |
 | 3 | Resilience patterns | ⏳ planned |
 | 4 | HTTP middleware | ⏳ planned |

@@ -1,6 +1,6 @@
 # ADR-0002: Adopt the cross-language source layout
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0003
 - **Date:** 2026-01-01
 - **Deciders:** Maintainer
 - **Related:** ADR-0001, AGENTS.md §5
