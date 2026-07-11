@@ -1,0 +1,327 @@
+# project.yaml — the single source of truth for this generated project.
+#
+# Filled by the classic-path intake interview (Phases 0–5), merging the maintainer's answers
+# with profiles/go.yaml (toolchain resolved per generate.md Step 1 — no blanks left for the
+# renderer). Spec imported from d4np-go.md (Q5.0 = import) and gap-audited: verification
+# strategy, measurable NFR phrasing, and the full roadmap are architect gap-fills confirmed
+# at the manifest checkpoint. Lessons applied: L-0001, L-0002, L-0003, L-0005 (#171).
+
+# --- EADOS delivery-state layer (M1-B) ---
+schema_version: 1
+manifest_rev: 0
+domain: software             # Q0.4 (defaulted): backend utilities library -> domains/software.yaml
+delivery_state:
+  phase: init                # classic path: the renderer ignores delivery_state (init.md backward-compat)
+  checkpoints: []
+  refs: { rfcs: [], milestones: [], prs: [], releases: [] }
+
+identity:
+  project_name:    "egl-utils-go"                               # Q0.3 (asked) -> {{PROJECT_NAME}}
+  project_slug:    "utils"                                      # single lowercase word -> {{PROJECT_SLUG}}
+  project_title:   "Go Concurrency & Backend Utilities Library" # Q0.1 (imported from d4np-go.md) -> {{PROJECT_TITLE}}
+  project_tagline: "Production-ready Go utilities for concurrency, resilience, HTTP middleware, configuration, and observability." # -> {{PROJECT_TAGLINE}}
+  project_series:  "Enterprise-Grade Libraries"                 # defaulted from series folder -> {{PROJECT_SERIES}}
+  project_kind:    library                                      # Q0.2 (imported) -> {{PROJECT_KIND}}
+
+ownership:                   # Q4.1–Q4.2 (imported from repo facts: git remote, LICENSE, git config)
+  owner:           "danielPoloWork"   # github.com/danielPoloWork/egl-utils-go -> {{OWNER}}
+  maintainer:      "Daniel Polo"      # -> {{MAINTAINER}}
+  author:          "Daniel Polo"      # LICENSE: (c) 2026 Daniel Polo -> {{AUTHOR}}
+  year:            "2026"             # -> {{YEAR}}
+  license_id:      MIT                # matches the LICENSE already on disk -> {{LICENSE_ID}}
+  default_branch:  master             # IMPORTED FROM REALITY — the repo's live branch (template default was main) -> {{DEFAULT_BRANCH}}
+  assignee:        "danielPoloWork"   # Q4.5: the owner, never @me (#141) -> {{ASSIGNEE}}
+
+language:                    # Phase 1: Q1.1 imported (Go, from the brief); Q1.3 + version floor asked
+  lang:            go
+  lang_name:       "Go 1.24+"
+  lang_standard:   "Go 1.24 (go.mod language floor; CI on Go 1.25 & 1.26)"
+  secondary_lang:  ""                 # Q1.2 (defaulted): none — db.Transaction wraps database/sql, owns no schema
+  group_path:      "it/d4np"          # Q1.3 (asked) -> {{GROUP_PATH}}
+  group_dotted:    "it.d4np"          # -> {{GROUP_DOTTED}}
+  namespace:       "github.com/danielPoloWork/egl-utils-go"   # Go: module path IS the namespace (profile note) -> {{NAMESPACE}}
+  src_ext:         go
+  comment_lang:    "en"               # Q4.7 (asked): all English -> {{CODE_COMMENT_LANG}}
+  public_include_hint: "import \"github.com/danielPoloWork/egl-utils-go/workerpool\""
+
+toolchain:                   # Phase 3 (defaulted): profiles/go.yaml resolved per generate.md Step 1
+  build_tool:      "go build (go modules)"
+  pkg_manager:     "go modules (go.mod / go.sum)"
+  test_framework:  "go test (+ testify; rapid for property tests)"
+  formatter:       "gofumpt (gofmt superset)"
+  linter:          "golangci-lint (govet, staticcheck, errcheck, revive, gosec)"
+  sanitizers:      "go test -race (data-race detector), go vet, govulncheck"
+  coverage_tool:   "go test -coverprofile (go tool cover)"
+  coverage_target: 80
+  doc_tool:        "godoc / pkg.go.dev"
+  version_file:    "version.go"
+  version_const_hint: "const Version = \"X.Y.Z\""
+  package_ecosystem: "gomod"
+  commands:
+    build:        "go build ./..."
+    test:         "go test ./..."
+    format_check: "test -z \"$(gofumpt -l .)\""
+    lint:         "golangci-lint run"
+    bench:        "go test -bench=. -benchmem ./..."
+
+ci:                          # Phase 3 (asked): profile matrix updated to the chosen Go floor/pair
+  tier1_platforms: "Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.24)"
+  matrix:
+    - { os: ubuntu-24.04, toolchain: "go-1.25", preset: test }
+    - { os: ubuntu-24.04, toolchain: "go-1.26", preset: test }
+    - { os: windows-2022, toolchain: "go-1.26", preset: test }
+    - { os: macos-14,     toolchain: "go-1.26", preset: test }
+  setup_steps: |
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.toolchain == 'go-1.25' && '1.25' || '1.26' }}
+        cache: true
+  extra_jobs: |
+    quality:
+      name: quality / lint + race + vuln
+      runs-on: ubuntu-24.04
+      steps:
+        - uses: actions/checkout@v6
+        - uses: actions/setup-go@v5
+          with: { go-version: '1.26', cache: true }
+        - name: gofumpt
+          run: go install mvdan.cc/gofumpt@v0.10.0 && test -z "$(gofumpt -l .)"
+        - uses: golangci/golangci-lint-action@v6
+        - name: race + vuln
+          run: |
+            go test -race ./...
+            go install golang.org/x/vuln/cmd/govulncheck@v1.4.0 && govulncheck ./...
+  race_job: |
+    race:
+      name: race / data-race detector
+      runs-on: ubuntu-24.04
+      steps:
+        - uses: actions/checkout@v6
+        - uses: actions/setup-go@v5
+          with: { go-version: '1.26', cache: true }
+        - run: go test -race ./...
+
+governance:
+  posture: enterprise                             # Q0.5 (asked, ADR-0015)
+  scopes: [concurrency, resilience, middleware, config, logging, storage, validation, lifecycle, api, build, tests, docs, ci]   # Q4.3 (defaulted): proposed from the brief's feature groups
+  version_start: "pre-1.0 milestone-driven"       # Q4.4 (defaulted)
+  start_version: "0.0.0"
+  house_rules: ""                                 # config/house-rules.md is empty
+  capabilities:
+    bench:      true                              # perf philosophy (sync.Pool, GC pressure) needs a reproducible suite
+    threading:  true                              # a concurrency library — -race is mandatory in CI (profile note)
+    public_api: true
+    i18n:       false                             # Q4.7 (asked): all English
+    packaging:  false                             # Q4.6 (defaulted): Go modules distribute via VCS, no registry step
+    service:    false                             # library
+    announce:   false                             # Q4.8 (defaulted)
+    layered:    false                             # library keeps the flat shape (Q5.4a: not offered)
+    api_spec:   false                             # library, not service/web
+
+i18n:
+  default_lang: "en"
+  targets: []
+
+announce:
+  channels: []
+
+spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, mapped to the
+                             # six-section shape and translated to English. Gap-audit fills:
+                             # measurable NFRs, verification strategy, the full roadmap.
+  provenance: import
+  objective: |
+    Provide a production-ready Go utilities module — advanced concurrency primitives,
+    resilience patterns, high-performance HTTP middleware, and API-development helpers —
+    that removes boilerplate and correctness risk (goroutine leaks, GC pressure, unsafe
+    shutdown) from Go backend services. Design philosophy (imported from the brief):
+    idiomatic Go throughout (channels, context.Context, the error interface); zero goroutine
+    leaks — every internal goroutine stops deterministically via context or close(done);
+    allocation-conscious hot paths via pointer discipline and sync.Pool object reuse.
+  functional_reqs:
+    - "workerpool.Pool — configurable goroutine pool with a bounded task queue and explicit Submit/Stop lifecycle"
+    - "pubsub.Broker — in-memory publish-subscribe broker over Go channels with filtered subscriptions"
+    - "fanin.Merge — merge multiple input channels into a single output channel without goroutine leaks"
+    - "fanout.Split — distribute messages from one source channel to multiple destination channels in parallel"
+    - "semaphore.Weighted — weighted task admission control (wrapper over golang.org/x/sync/semaphore)"
+    - "circuitbreaker.Breaker — circuit breaker guarding outbound HTTP calls (closed/open/half-open states)"
+    - "retry.Backoff — function execution with retry, exponential backoff, and random jitter"
+    - "ratelimit.Limiter — token-bucket rate limiter built on Go timers"
+    - "middleware.RequestID — extract or generate a unique request ID per HTTP call, stored in the request context"
+    - "middleware.Logger — HTTP request logging with response-time and bytes-written statistics"
+    - "middleware.Recoverer — recover panics in HTTP handlers, emit a clean 500, never crash the server"
+    - "middleware.Cors — robust, configurable CORS header handling"
+    - "config.Loader — load configuration from JSON/YAML files or environment variables, with string validation"
+    - "env.GetDefault — fast environment-variable reads with safe fallback values"
+    - "logger.Structured — JSON logger ready for ElasticSearch / Grafana Loki ingestion"
+    - "logger.Context — attach key logger fields to and read them from a context.Context"
+    - "cache.InMemory — map-backed local cache with per-entry TTL and a periodic cleanup goroutine"
+    - "db.Transaction — run SQL statements inside a transaction with automatic rollback on error or panic"
+    - "validator.Struct — tag-driven struct validation (e.g. validate:\"required,email\")"
+    - "hash.HashPassword / hash.CheckPassword — bcrypt password hashing and verification"
+    - "lifecycle.GracefulShutdown — coordinated shutdown of HTTP servers, databases, and queues on SIGINT/SIGTERM"
+    - "health.Handler — preconfigured health-check endpoint reporting the state of active connections (DB, Redis)"
+    - "metrics.Prometheus — middleware exposing standard latency and request-count metrics in Prometheus format"
+    - "syncpool.BufferPool — bytes.Buffer pool via sync.Pool to cut allocations for strings and temporary buffers"
+    - "errors.Wrap — attach context to errors while preserving the original call stack for tracing"
+  nonfunctional_reqs:
+    - "Idiomatic Go: gofumpt-clean and golangci-lint (govet, staticcheck, errcheck, revive, gosec) green on every PR"
+    - "Zero goroutine leaks: every goroutine-spawning component stops via context or close(done); per-component leak assertions (goleak) in tests"
+    - "Race-free: go test -race green in CI on every PR — the canonical concurrency gate"
+    - "Allocation-conscious hot paths: -benchmem benchmarks for pooled and middleware paths; syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun"
+    - "Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + vetted few (prometheus/client_golang, a YAML parser); test-only deps: testify, goleak, rapid"
+    - "Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.24"
+    - "Coverage: at least 80 percent line coverage enforced in CI"
+    - "Compatibility: SemVer, pre-1.0 milestone-driven; breaking changes to the public interface require a MAJOR-intent note in the PR"
+  architecture: |
+    A flat collection of small, orthogonal packages — one concern per package — under a
+    single Go module (github.com/danielPoloWork/egl-utils-go). There is no cross-package
+    framework: packages compose only through stdlib contracts (context.Context,
+    net/http.Handler, error), so each is adoptable in isolation.
+
+      concurrency:   workerpool | pubsub | fanin | fanout | semaphore
+      resilience:    circuitbreaker | retry | ratelimit
+      http:          middleware (RequestID, Logger, Recoverer, Cors) | health | metrics
+      config/env:    config | env
+      logging:       logger (Structured, Context)
+      storage:       cache | db
+      validation:    validator | hash
+      lifecycle:     lifecycle (GracefulShutdown)
+      core:          syncpool | errors
+
+    Concurrency components own their goroutines and stop deterministically (context /
+    close(done)); construction uses functional options for forward compatibility. HTTP
+    concerns follow the standard func(http.Handler) http.Handler decorator chain.
+    Packages live under the normative cross-language tree (src/main/go/it/d4np/utils);
+    go.mod placement reconciling consumer import ergonomics with that tree is decided and
+    recorded as an ADR in Milestone 1.
+  architecture_style: ""     # library — commits to no app architecture (design-patterns.md §5)
+  patterns:
+    - { name: "Worker Pool", why: "bounded concurrency with backpressure (workerpool.Pool)" }
+    - { name: "Publish-Subscribe", why: "decoupled in-memory eventing over channels (pubsub.Broker)" }
+    - { name: "Fan-In / Fan-Out", why: "canonical channel merge/split building blocks (fanin, fanout)" }
+    - { name: "Circuit Breaker", why: "fail-fast protection for outbound calls (circuitbreaker.Breaker)" }
+    - { name: "Retry with Backoff + Jitter", why: "transient-failure recovery without thundering herds (retry.Backoff)" }
+    - { name: "Token Bucket", why: "smooth rate limiting with bursts (ratelimit.Limiter)" }
+    - { name: "Decorator", why: "composable func(http.Handler) http.Handler middleware chain" }
+    - { name: "Object Pool", why: "sync.Pool reuse to relieve GC pressure (syncpool.BufferPool)" }
+    - { name: "Functional Options", why: "idiomatic, forward-compatible construction for configurable components" }
+  pattern_discipline: advisory   # default — the agent advises, the human decides
+  layers: []
+  public_api:
+    - "workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Stop(ctx) error; ErrQueueFull"
+    - "pubsub: NewBroker[T](opts ...Option) *Broker[T]; (*Broker[T]).Publish(topic string, msg T); (*Broker[T]).Subscribe(topic string, filter func(T) bool) (<-chan T, func())"
+    - "fanin: Merge[T](ctx, ins ...<-chan T) <-chan T"
+    - "fanout: Split[T](ctx, in <-chan T, outs ...chan<- T)"
+    - "semaphore: NewWeighted(capacity int64) *Weighted; Acquire(ctx, weight) error; Release(weight)"
+    - "circuitbreaker: New(opts ...Option) *Breaker; (*Breaker).Do(ctx, func() error) error; ErrOpen"
+    - "retry: Backoff(ctx, policy Policy, fn func(ctx) error) error — Policy{MaxAttempts, BaseDelay, MaxDelay, Jitter}"
+    - "ratelimit: NewLimiter(rate float64, burst int) *Limiter; (*Limiter).Allow() bool; (*Limiter).Wait(ctx) error"
+    - "middleware: RequestID(next http.Handler) http.Handler; RequestIDFrom(ctx) string"
+    - "middleware: Logger(l *slog.Logger) func(http.Handler) http.Handler — logs method, path, status, duration, bytes"
+    - "middleware: Recoverer(next http.Handler) http.Handler — 500 on panic, stack to the structured logger"
+    - "middleware: Cors(cfg CorsConfig) func(http.Handler) http.Handler"
+    - "config: Load[T any](path string, opts ...Option) (T, error) — JSON/YAML/env with validation"
+    - "env: GetDefault(key, fallback string) string; GetInt/GetBool/GetDuration variants"
+    - "logger: NewStructured(opts ...Option) *slog.Logger — JSON handler tuned for log aggregation"
+    - "logger: WithFields(ctx, ...Field) context.Context; FromContext(ctx) *slog.Logger"
+    - "cache: NewInMemory[K comparable, V any](ttl time.Duration, opts ...Option) *Cache[K, V]; Get/Set/Delete; Close(); ErrNotFound"
+    - "db: Transaction(ctx, db *sql.DB, fn func(*sql.Tx) error) error — commit on nil, rollback on error or panic"
+    - "validator: Struct(v any) error — tag grammar: required, email, min, max, oneof"
+    - "hash: HashPassword(pw string) (string, error); CheckPassword(pw, hash string) error"
+    - "lifecycle: Register(fn func(ctx) error); WaitForSignals(sig ...os.Signal); Shutdown(ctx) error"
+    - "health: Handler(checks ...Check) http.Handler — Check{Name, Probe func(ctx) error}"
+    - "metrics: Prometheus(reg prometheus.Registerer) func(http.Handler) http.Handler; Handler() http.Handler"
+    - "syncpool: NewBufferPool() *BufferPool; (*BufferPool).Get() *bytes.Buffer; (*BufferPool).Put(*bytes.Buffer)"
+    - "errors: Wrap(err error, msg string) error; Wrapf(err, format, args...) error — errors.Is/As/Unwrap compatible"
+    - "Error model: exported sentinel errors per package (ErrQueueFull, ErrOpen, ErrNotFound, ...); context cancellation surfaces ctx.Err(); all wrapping is errors.Is/As transparent"
+    - "Versioning surface: SemVer over all exported identifiers above; MAJOR = any breaking change to these signatures or their documented behavioral contracts"
+  verification: |
+    Every functional requirement maps to package-level table-driven unit tests (go test);
+    the Spec Coverage Map in ROADMAP.md keeps one row per spec section (spec-map lint gate).
+    Concurrency components additionally carry: a goleak assertion (no leaked goroutines
+    after Stop/Close/cancel), mandatory go test -race in CI, and deterministic clocks for
+    timing-sensitive logic (retry, ratelimit, cache TTL). Property-based tests (rapid) cover
+    pubsub delivery/filtering, fanin/fanout completeness (no message lost or duplicated),
+    and backoff bound invariants. Static gates on every PR: gofumpt, golangci-lint (govet,
+    staticcheck, errcheck, revive, gosec), govulncheck. Coverage gate: at least 80 percent
+    line coverage (go test -coverprofile). Benchmarks (go test -bench -benchmem) for
+    workerpool, ratelimit, middleware, and syncpool, recorded under docs/benchmarks;
+    syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun.
+    Manual-only gates: none — every requirement above has a mechanical check.
+  milestone1_items:
+    - "Record the Go module layout decision as an ADR: module path github.com/danielPoloWork/egl-utils-go, go.mod placement vs the normative src/main/go tree, consumer import ergonomics"
+    - "Record the dependency policy as an ADR: runtime = stdlib + golang.org/x/* + vetted few (prometheus/client_golang, YAML parser); test-only = testify, goleak, rapid; govulncheck as the supply-chain gate"
+  milestones:
+    - number: 2
+      title: "Concurrency primitives"
+      goal: "The five channel-native concurrency building blocks, leak-free and race-clean"
+      items:
+        - "2.1 workerpool.Pool — bounded-queue goroutine pool with Submit/Stop contract (leak, race, bench coverage)"
+        - "2.2 pubsub.Broker — filtered-subscription in-memory broker (property tests for delivery)"
+        - "2.3 fanin.Merge — multi-channel merge (completeness property tests)"
+        - "2.4 fanout.Split — parallel channel distribution (completeness property tests)"
+        - "2.5 semaphore.Weighted — weighted admission wrapper over x/sync/semaphore"
+    - number: 3
+      title: "Resilience patterns"
+      goal: "Fail-fast, retry, and rate-limit protection for outbound calls"
+      items:
+        - "3.1 circuitbreaker.Breaker — closed/open/half-open state machine with configurable thresholds"
+        - "3.2 retry.Backoff — exponential backoff with jitter and context cancellation (bound invariant tests)"
+        - "3.3 ratelimit.Limiter — token bucket on Go timers (deterministic-clock tests, bench)"
+    - number: 4
+      title: "HTTP middleware"
+      goal: "The four production middleware, composable as a standard decorator chain"
+      items:
+        - "4.1 middleware.RequestID — extract-or-generate request ID into the context"
+        - "4.2 middleware.Logger — request logging with duration and bytes-written stats"
+        - "4.3 middleware.Recoverer — panic recovery with clean 500 responses"
+        - "4.4 middleware.Cors — configurable CORS header handling"
+    - number: 5
+      title: "Configuration & environment"
+      goal: "Safe configuration ingestion from files and environment"
+      items:
+        - "5.1 config.Loader — JSON/YAML/env loading with validation hooks"
+        - "5.2 env.GetDefault — typed env reads with safe fallbacks"
+    - number: 6
+      title: "Structured logging"
+      goal: "JSON logging wired for aggregation and context propagation"
+      items:
+        - "6.1 logger.Structured — JSON logger for ElasticSearch / Loki ingestion"
+        - "6.2 logger.Context — logger fields carried in context.Context"
+    - number: 7
+      title: "Caching & data helpers"
+      goal: "TTL caching and transactional SQL ergonomics"
+      items:
+        - "7.1 cache.InMemory — TTL cache with periodic cleanup goroutine (leak-checked, bench)"
+        - "7.2 db.Transaction — auto-rollback transaction helper (panic-path tests)"
+    - number: 8
+      title: "Validation & security"
+      goal: "Tag-driven validation and password hashing"
+      items:
+        - "8.1 validator.Struct — tag-driven struct validation (required, email, min, max, oneof)"
+        - "8.2 hash.HashPassword / hash.CheckPassword — bcrypt hashing and verification"
+    - number: 9
+      title: "Diagnostics & lifecycle"
+      goal: "Graceful shutdown, health, metrics, and the core utility pair"
+      items:
+        - "9.1 lifecycle.GracefulShutdown — signal-coordinated ordered shutdown (SIGINT/SIGTERM)"
+        - "9.2 health.Handler — dependency-probing health endpoint"
+        - "9.3 metrics.Prometheus — latency/request-count middleware with Prometheus exposition"
+        - "9.4 syncpool.BufferPool — bytes.Buffer pooling (zero steady-state allocations, bench)"
+        - "9.5 errors.Wrap — stack-preserving error context helpers"
+
+# Interview provenance (#169) — recorded as the interview proceeded (questionnaire v1).
+interview:
+  questionnaire_version: 1
+  provenance:
+    identity: asked            # Q0.3 asked (name conflict); title/tagline/kind imported from d4np-go.md
+    domain: defaulted          # Q0.4 — software, echoed at both checkpoints
+    ownership: imported        # git remote, on-disk LICENSE, git config; default_branch=master from reality
+    language: asked            # Go imported from the brief; Q1.3 group path + version floor asked
+    toolchain: defaulted       # profiles/go.yaml resolved verbatim (generate.md Step 1)
+    ci: asked                  # matrix/setup/race jobs updated to the asked Go 1.25/1.26 pair
+    governance: asked          # Q0.5 posture asked (enterprise); scopes/versioning defaulted and echoed
+    i18n: asked                # Q4.7 asked unconditionally — all English
+    announce: defaulted        # Q4.8 — off
+    spec: imported             # Q5.0 = import of d4np-go.md; gap-fills (NFR metrics, verification, roadmap) confirmed at the manifest gate
