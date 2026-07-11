@@ -82,7 +82,7 @@ jobs:
         with: { go-version: '1.26', cache: true }
       - name: gofumpt
         run: go install mvdan.cc/gofumpt@v0.10.0 && test -z "$(gofumpt -l .)"
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v9
       - name: race + vuln
         run: |
           go test -race ./...
