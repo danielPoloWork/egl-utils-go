@@ -10,6 +10,4 @@ README badge.
 
 | Version | Date | Highlights | Notes |
 |---------|------|------------|-------|
-| —       | —    | —          | —     |
-
-_No releases yet — the first one lands when Milestone 1 ships._
+| v0.1.0  | 2026-07-12 | M1 bootstrap: module + quality gates live; ADR-0003/0004 | [v0.1.0.md](v0.1.0.md) |
