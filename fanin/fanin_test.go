@@ -2,13 +2,14 @@ package fanin_test
 
 import (
 	"context"
-	"math/rand/v2"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/danielPoloWork/egl-utils-go/fanin"
-	"github.com/danielPoloWork/egl-utils-go/internal/leakcheck"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
+	"pgregory.net/rapid"
 )
 
 // drainUntilClosed discards values until ch closes, failing t if that takes
@@ -32,7 +33,7 @@ func drainUntilClosed[T any](t *testing.T, ch <-chan T, within time.Duration) {
 }
 
 func TestMergeNoInputsClosesImmediately(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	out := fanin.Merge[int](context.Background())
 	if _, ok := <-out; ok {
 		t.Fatal("Merge with no inputs returned an open channel")
@@ -40,7 +41,7 @@ func TestMergeNoInputsClosesImmediately(t *testing.T) {
 }
 
 func TestMergeNilInputPanics(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	defer func() {
 		if recover() == nil {
 			t.Fatal("Merge with a nil input did not panic")
@@ -50,7 +51,7 @@ func TestMergeNilInputPanics(t *testing.T) {
 }
 
 func TestMergeCompletenessAndPerInputOrder(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	const inputs, perInput = 3, 50
 
 	ins := make([]<-chan int, 0, inputs)
@@ -89,75 +90,67 @@ func TestMergeCompletenessAndPerInputOrder(t *testing.T) {
 	}
 }
 
-// TestMergeRandomizedCompletenessProperty drives Merge with a random topology
-// of concurrent producers and asserts no value is lost, duplicated, or
-// reordered within its input (seed logged for reproduction; migrates to rapid
-// under ROADMAP 2.6).
-func TestMergeRandomizedCompletenessProperty(t *testing.T) {
-	leakcheck.Guard(t)
-	seed := rand.Uint64()
-	t.Logf("seed: %d", seed)
-	rng := rand.New(rand.NewPCG(seed, 0))
-
-	inputs := 1 + rng.IntN(8)
-	counts := make([]int, inputs)
-	for i := range counts {
-		counts[i] = rng.IntN(101)
-	}
-
-	chans := make([]chan int, inputs)
-	ins := make([]<-chan int, inputs)
-	for i := range chans {
-		chans[i] = make(chan int) // unbuffered: producers and consumer run concurrently
-		ins[i] = chans[i]
-	}
-
-	var producers sync.WaitGroup
-	producers.Add(inputs)
-	for i := range chans {
-		go func() {
-			defer producers.Done()
-			defer close(chans[i])
-			for seq := range counts[i] {
-				chans[i] <- i*1_000_000 + seq
-			}
-		}()
-	}
-
-	out := fanin.Merge(context.Background(), ins...)
-
-	lastSeq := make([]int, inputs)
-	for i := range lastSeq {
-		lastSeq[i] = -1
-	}
-	perInput := make([]int, inputs)
-	total := 0
-	for v := range out {
-		input, seq := v/1_000_000, v%1_000_000
-		if seq <= lastSeq[input] {
-			t.Fatalf("input %d: sequence %d after %d — order broken (seed %d)",
-				input, seq, lastSeq[input], seed)
+// TestMergeCompletenessProperty drives Merge with rapid-generated topologies of
+// concurrent producers and asserts no value is lost, duplicated, or reordered
+// within its input. rapid shrinks a counterexample to a minimal failing
+// topology (replacing the seeded math/rand property retired in ROADMAP 2.6).
+func TestMergeCompletenessProperty(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	rapid.Check(t, func(rt *rapid.T) {
+		inputs := rapid.IntRange(1, 8).Draw(rt, "inputs")
+		counts := make([]int, inputs)
+		for i := range counts {
+			counts[i] = rapid.IntRange(0, 100).Draw(rt, "count")
 		}
-		lastSeq[input] = seq
-		perInput[input]++
-		total++
-	}
-	producers.Wait()
 
-	want := 0
-	for i, c := range counts {
-		want += c
-		if perInput[i] != c {
-			t.Fatalf("input %d: received %d values, want %d (seed %d)", i, perInput[i], c, seed)
+		chans := make([]chan int, inputs)
+		ins := make([]<-chan int, inputs)
+		for i := range chans {
+			chans[i] = make(chan int) // unbuffered: producers and consumer run concurrently
+			ins[i] = chans[i]
 		}
-	}
-	if total != want {
-		t.Fatalf("received %d values, want %d (seed %d)", total, want, seed)
-	}
+
+		var producers sync.WaitGroup
+		producers.Add(inputs)
+		for i := range chans {
+			go func() {
+				defer producers.Done()
+				defer close(chans[i])
+				for seq := range counts[i] {
+					chans[i] <- i*1_000_000 + seq
+				}
+			}()
+		}
+
+		out := fanin.Merge(context.Background(), ins...)
+
+		lastSeq := make([]int, inputs)
+		for i := range lastSeq {
+			lastSeq[i] = -1
+		}
+		perInput := make([]int, inputs)
+		total := 0
+		for v := range out {
+			input, seq := v/1_000_000, v%1_000_000
+			require.Greaterf(rt, seq, lastSeq[input],
+				"input %d: per-input order broken", input)
+			lastSeq[input] = seq
+			perInput[input]++
+			total++
+		}
+		producers.Wait()
+
+		want := 0
+		for i, c := range counts {
+			want += c
+			require.Equalf(rt, c, perInput[i], "input %d received the wrong count", i)
+		}
+		require.Equalf(rt, want, total, "merge is not complete")
+	})
 }
 
 func TestCancelUnblocksForwardersAndClosesOutput(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	// Two values preloaded, input never closed, nobody reading the output:
 	// the forwarder ends up blocked mid-send with a value in hand — exactly
 	// the state cancellation must be able to unblock.

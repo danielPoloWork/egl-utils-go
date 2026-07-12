@@ -29,6 +29,13 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- Test infrastructure (roadmap 2.6, dev-facing only — no change to the consumer surface):
+  adopted the ADR-0004 test-only dependencies. The interim in-repo goroutine-leak guard
+  (`internal/leakcheck`) is retired in favor of `go.uber.org/goleak`; the randomized
+  completeness/delivery tests for `fanin`, `fanout`, and `pubsub` are rewritten as
+  `pgregory.net/rapid` properties (automatic shrinking); assertions use
+  `github.com/stretchr/testify`.
+
 ### Deprecated
 
 ### Removed

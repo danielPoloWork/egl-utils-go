@@ -1,13 +1,14 @@
 package pubsub_test
 
 import (
-	"math/rand/v2"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/danielPoloWork/egl-utils-go/internal/leakcheck"
 	"github.com/danielPoloWork/egl-utils-go/pubsub"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
+	"pgregory.net/rapid"
 )
 
 // collect unsubscribes (closing the channel) and drains everything buffered.
@@ -21,7 +22,7 @@ func collect[T any](ch <-chan T, unsubscribe func()) []T {
 }
 
 func TestPublishDeliversWithAndWithoutFilter(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	b := pubsub.NewBroker[int]()
 	defer b.Close()
 
@@ -54,7 +55,7 @@ func TestPublishDeliversWithAndWithoutFilter(t *testing.T) {
 }
 
 func TestTopicIsolation(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	b := pubsub.NewBroker[string]()
 	defer b.Close()
 
@@ -67,7 +68,7 @@ func TestTopicIsolation(t *testing.T) {
 }
 
 func TestDropOnFullBufferIsObservable(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	type drop struct {
 		topic string
 		msg   int
@@ -99,7 +100,7 @@ func TestDropOnFullBufferIsObservable(t *testing.T) {
 }
 
 func TestUnsubscribeIsIdempotentAndStopsDelivery(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	b := pubsub.NewBroker[int]()
 	defer b.Close()
 
@@ -115,7 +116,7 @@ func TestUnsubscribeIsIdempotentAndStopsDelivery(t *testing.T) {
 }
 
 func TestCloseClosesEverythingAndPublishBecomesNoop(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	b := pubsub.NewBroker[int]()
 	a, unsubA := b.Subscribe("a", nil)
 	c, _ := b.Subscribe("c", nil)
@@ -140,68 +141,60 @@ func TestCloseClosesEverythingAndPublishBecomesNoop(t *testing.T) {
 	lateUnsub() // no-op, must not panic
 }
 
-// TestRandomizedDeliveryProperty is a property-style test over random
-// topologies (ROADMAP 2.6 migrates it to rapid for shrinking): for ample
-// buffers and sequential publishes, every subscription receives exactly the
-// filter-matching messages for its topic, in publish order.
-func TestRandomizedDeliveryProperty(t *testing.T) {
-	leakcheck.Guard(t)
-	seed := rand.Uint64()
-	t.Logf("seed: %d", seed)
-	rng := rand.New(rand.NewPCG(seed, 0))
-
+// TestDeliveryProperty is a rapid property over random publish sequences: for
+// ample buffers and sequential publishes, every subscription receives exactly
+// the filter-matching messages for its topic, in publish order. rapid shrinks
+// a counterexample to a minimal failing sequence (replacing the seeded
+// math/rand property retired in ROADMAP 2.6).
+func TestDeliveryProperty(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	topics := []string{"a", "b", "c"}
-	const messages = 200
+	mods := []int{1, 2, 3, 5}
 
-	b := pubsub.NewBroker[int](pubsub.WithSubscriberBuffer[int](messages))
-	defer b.Close()
+	rapid.Check(t, func(rt *rapid.T) {
+		publishSeq := rapid.SliceOfN(rapid.SampledFrom(topics), 0, 300).Draw(rt, "publishes")
 
-	type subscription struct {
-		topic string
-		mod   int
-		ch    <-chan int
-		unsub func()
-	}
-	subs := make([]subscription, 0, 12)
-	for _, topic := range topics {
-		for _, mod := range []int{1, 2, 3, 5} {
-			ch, unsub := b.Subscribe(topic, func(n int) bool { return n%mod == 0 })
-			subs = append(subs, subscription{topic, mod, ch, unsub})
+		// Buffer at least the whole run so nothing is dropped on any topic.
+		b := pubsub.NewBroker[int](pubsub.WithSubscriberBuffer[int](len(publishSeq) + 1))
+		defer b.Close()
+
+		type subscription struct {
+			topic string
+			mod   int
+			ch    <-chan int
+			unsub func()
 		}
-	}
-
-	published := make(map[string][]int)
-	for i := range messages {
-		topic := topics[rng.IntN(len(topics))]
-		b.Publish(topic, i)
-		published[topic] = append(published[topic], i)
-	}
-
-	for _, s := range subs {
-		var want []int
-		for _, n := range published[s.topic] {
-			if n%s.mod == 0 {
-				want = append(want, n)
+		subs := make([]subscription, 0, len(topics)*len(mods))
+		for _, topic := range topics {
+			for _, mod := range mods {
+				ch, unsub := b.Subscribe(topic, func(n int) bool { return n%mod == 0 })
+				subs = append(subs, subscription{topic, mod, ch, unsub})
 			}
 		}
-		got := collect(s.ch, s.unsub)
-		if len(got) != len(want) {
-			t.Fatalf("topic %s mod %d: received %d messages, want %d (seed %d)",
-				s.topic, s.mod, len(got), len(want), seed)
+
+		published := make(map[string][]int)
+		for i, topic := range publishSeq {
+			b.Publish(topic, i)
+			published[topic] = append(published[topic], i)
 		}
-		for i := range want {
-			if got[i] != want[i] {
-				t.Fatalf("topic %s mod %d: message %d is %d, want %d (seed %d)",
-					s.topic, s.mod, i, got[i], want[i], seed)
+
+		for _, s := range subs {
+			var want []int
+			for _, n := range published[s.topic] {
+				if n%s.mod == 0 {
+					want = append(want, n)
+				}
 			}
+			got := collect(s.ch, s.unsub)
+			require.Equalf(rt, want, got, "topic %s mod %d: delivery mismatch", s.topic, s.mod)
 		}
-	}
+	})
 }
 
 // TestConcurrentChurnIsRaceFree exercises publish/subscribe/unsubscribe/close
 // concurrency purely for the race detector and the leak guard.
 func TestConcurrentChurnIsRaceFree(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	b := pubsub.NewBroker[int](pubsub.WithSubscriberBuffer[int](4))
 
 	var wg sync.WaitGroup

@@ -32,6 +32,27 @@ Wait for this PR to merge (one PR at a time), then either cut the v0.1.0 release
 from `master` (recommended tier per ROADMAP guidance: strongest model, max effort;
 leak/race/bench coverage required).
 
+## Addendum 7 — roadmap 2.6 test-only dependency adoption (same session)
+
+PR #12 (semaphore) merged. Item 2.6 on `feat/test-deps-goleak-rapid`: adopted the three
+ADR-0004 test-only deps and migrated the suites. `internal/leakcheck` (the interim runtime
+goroutine-count guard) is deleted; every `leakcheck.Guard(t)` becomes `defer
+goleak.VerifyNone(t)` across workerpool, pubsub, fanin, fanout, semaphore. The three seeded
+`math/rand` randomized properties (fanin merge completeness, fanout split completeness,
+pubsub delivery) are rewritten as `pgregory.net/rapid` properties — rapid draws the
+topology and shrinks a counterexample to a minimal failing case; `testify/require` carries
+the assertions (kept on the main goroutine only, since require's FailNow uses Goexit and is
+not goroutine-safe — the fanout consumers record into per-output slices and assert after
+`Wait`). Versions pinned by `go` directive vs the 1.24 floor: goleak v1.3.0 (go 1.20), rapid
+v1.3.0 (go 1.23), testify v1.11.1 (go 1.17) — all below the floor, no readonly-precision
+trap (contrast the 2.5 x/sync saga). Handoff, per the maintainer's call: this machine has
+no Go toolchain and the transitive graph (testify → go-spew/go-difflib/yaml.v3/objx; goleak
+→ kr/pretty/check.v1) is what only `go mod tidy` resolves reliably, so the branch ships the
+code + a best-effort `go.mod` (three direct requires) and the maintainer runs `go mod tidy
+&& go test ./...` to write `go.sum` + the indirect set. CI stays red until that lands (as
+with 2.5's first push). The `.golangci.yml` G404 exemption is now inert (no test uses
+math/rand) but left in place — harmless and cheap insurance for future seeded tests.
+
 ## Addendum 6 — roadmap 2.5 semaphore.Weighted (same session)
 
 PR #11 (fanout) merged. Item 2.5 on `feat/semaphore`: `semaphore.Weighted`, a thin adapter
