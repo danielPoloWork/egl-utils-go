@@ -59,7 +59,7 @@ The five channel-native concurrency building blocks, leak-free and race-clean
 - [x] 2.2 pubsub.Broker — filtered-subscription in-memory broker (property tests for delivery) → [ADR-0006](docs/adr/0006-pubsub-design.md) — *agent: Fable 5 · max (as built)*
 - [x] 2.3 fanin.Merge — multi-channel merge (completeness property tests) → [ADR-0007](docs/adr/0007-fanin-design.md) — *agent: Fable 5 · high (as built)*
 - [x] 2.4 fanout.Split — parallel channel distribution (completeness property tests) → [ADR-0008](docs/adr/0008-fanout-design.md) — *agent: Fable 5 · high (as built)*
-- [ ] 2.5 semaphore.Weighted — weighted admission wrapper over x/sync/semaphore — *agent: Sonnet 5 · high — thin adapter; the concurrency is delegated to x/sync*
+- [x] 2.5 semaphore.Weighted — weighted admission wrapper over x/sync/semaphore → [ADR-0009](docs/adr/0009-semaphore-design.md) — *agent: Opus 4.8 · low (as built) — thin adapter; the concurrency is delegated to x/sync*
 - [ ] 2.6 Adopt the ADR-0004 test-only dependencies (goleak, testify, rapid): run go mod tidy from a Go-equipped environment to produce go.sum, then migrate the interim in-repo leak assertions to goleak — *agent: Sonnet 5 · medium — mechanical dependency wiring and test migration*
 
 
