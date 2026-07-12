@@ -32,6 +32,18 @@ Wait for this PR to merge (one PR at a time), then either cut the v0.1.0 release
 from `master` (recommended tier per ROADMAP guidance: strongest model, max effort;
 leak/race/bench coverage required).
 
+## Addendum 5 — roadmap 2.4 fanout.Split (same session)
+
+PR #10 (fanin) merged. Item 2.4 followed on `feat/fanout`: the spec's verb *distribute*
+admits broadcast or work-distribution semantics — a one-way API choice — resolved as
+**exactly-once distribution** on three convergent grounds (Go-pipelines vocabulary already
+adopted in ADR-0007, spec §6's "no message lost or duplicated", and broadcast duplicating
+pubsub.Broker's concern), with broadcast recorded as Rejected in ADR-0008. Shape: the
+exact dual of fanin — one forwarder per output competing on the shared input, each closing
+the output it owns (`len(outs)` goroutines, no closer). Completeness + per-output-order
+tests including a seeded randomized property and a blocked-send cancellation proof.
+Patterns row 4 (Fan-In / Fan-Out) is now complete: both halves implemented.
+
 ## Addendum 4 — roadmap 2.3 fanin.Merge (same session)
 
 PR #9 (pubsub) merged after one real CI failure — gosec G404 on the seeded property test,
