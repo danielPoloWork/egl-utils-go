@@ -186,7 +186,13 @@ def check_patterns():
         for adr in adrs:
             if not exists(os.path.join("docs", "adr", adr)):
                 fail(name, f"pattern '{pattern}': ADR '{adr}' does not exist")
-        code = re.findall(r"\((?:\.\./)*(src/[A-Za-z0-9_./-]+)\)", row)
+        # Code locations are repo-relative paths under CONFIG["src_main"] ("." = the repo
+        # root, ADR-0003). ADR/doc links are excluded; whatever remains must exist on disk.
+        src_root = (CONFIG.get("src_main") or ".").strip("/")
+        raw = re.findall(r"\((?:\.\./)*([A-Za-z0-9_][A-Za-z0-9_./-]*)\)", row)
+        code = [p for p in raw if not p.startswith(("adr/", "docs/"))]
+        if src_root not in ("", "."):
+            code = [p for p in code if p == src_root or p.startswith(src_root + "/")]
         if not code:
             fail(name, f"pattern '{pattern}': no source code location in its row")
         for path in code:

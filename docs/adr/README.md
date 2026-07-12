@@ -20,3 +20,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0002](0002-adopt-cross-language-source-layout.md) | Adopt the cross-language source layout | Superseded by ADR-0003 |
 | [0003](0003-adopt-idiomatic-go-root-layout.md) | Adopt the idiomatic Go root layout | Accepted |
 | [0004](0004-runtime-dependency-policy.md) | Runtime dependency policy | Accepted |
+| [0005](0005-workerpool-design.md) | workerpool design — bounded pool, blocking-first admission, loud panics | Accepted |
