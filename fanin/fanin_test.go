@@ -18,7 +18,10 @@ func drainUntilClosed[T any](t *testing.T, ch <-chan T, within time.Duration) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		for range ch {
+		for {
+			if _, ok := <-ch; !ok {
+				return
+			}
 		}
 	}()
 	select {
