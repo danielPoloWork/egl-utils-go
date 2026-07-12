@@ -48,7 +48,7 @@ allocation-conscious hot paths via pointer discipline and sync.Pool object reuse
      fold): a value per hard NFR axis — throughput / concurrency, p99 latency, memory ceiling,
      target FPS, cold-start budget — each phrased so CI could prove a violation. -->
 - Idiomatic Go: gofumpt-clean and golangci-lint (govet, staticcheck, errcheck, revive, gosec) green on every PR
-- Zero goroutine leaks: every goroutine-spawning component stops via context or close(done); per-component leak assertions (goleak) in tests
+- Zero goroutine leaks: every goroutine-spawning component stops via context or close(done); per-component leak assertions in tests (goleak once ROADMAP 2.6 lands the test-only deps; an in-repo stack-based guard until then)
 - Race-free: go test -race green in CI on every PR — the canonical concurrency gate
 - Allocation-conscious hot paths: -benchmem benchmarks for pooled and middleware paths; syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun
 - Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + vetted few (prometheus/client_golang, a YAML parser); test-only deps: testify, goleak, rapid
@@ -125,9 +125,10 @@ Consumers import via `import "github.com/danielPoloWork/egl-utils-go/workerpool"
 
 Every functional requirement maps to package-level table-driven unit tests (go test);
 the Spec Coverage Map in ROADMAP.md keeps one row per spec section (spec-map lint gate).
-Concurrency components additionally carry: a goleak assertion (no leaked goroutines
-after Stop/Close/cancel), mandatory go test -race in CI, and deterministic clocks for
-timing-sensitive logic (retry, ratelimit, cache TTL). Property-based tests (rapid) cover
+Concurrency components additionally carry: a leak assertion (no leaked goroutines
+after Stop/Close/cancel — goleak once ROADMAP 2.6 lands the test-only dependencies, an
+in-repo stack-based guard until then), mandatory go test -race in CI, and deterministic
+clocks for timing-sensitive logic (retry, ratelimit, cache TTL). Property-based tests (rapid) cover
 pubsub delivery/filtering, fanin/fanout completeness (no message lost or duplicated),
 and backoff bound invariants. Static gates on every PR: gofumpt, golangci-lint (govet,
 staticcheck, errcheck, revive, gosec), govulncheck. Coverage gate: at least 80 percent

@@ -32,6 +32,15 @@ Wait for this PR to merge (one PR at a time), then either cut the v0.1.0 release
 from `master` (recommended tier per ROADMAP guidance: strongest model, max effort;
 leak/race/bench coverage required).
 
+## Addendum 2 — v0.1.0 tagged; roadmap 2.1 implemented (same session)
+
+PR #7 merged; the agent pushed the annotated `v0.1.0` tag and the release workflow drafted
+the GitHub Release (publishing remains the maintainer's click). Milestone 2 then opened
+with item 2.1: the `workerpool` package (Thread Pool + Functional Options, ADR-0005),
+black-box tests with the interim in-repo leak guard (ROADMAP 2.6 tracks the goleak
+migration — no local Go toolchain to produce `go.sum` for test-only deps), and a
+`BenchmarkSubmit` baseline. Patterns catalogue rows 1–2 flipped to Implemented.
+
 ## Addendum — v0.1.0 release prepared (same session)
 
 PR #6 merged with all 8 CI checks green — the first fully-green matrix run. The v0.1.0

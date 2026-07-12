@@ -33,7 +33,7 @@ _Patterns named in the spec at intake are seeded below as **Planned**; each beco
 
 | # | Pattern | Status | Problem it addresses | Code location | ADR / PR |
 |---|---------|--------|----------------------|---------------|----------|
-| — | Worker Pool | Planned | bounded concurrency with backpressure (workerpool.Pool) | _TBD_ | _spec (intake)_ |
+| 1 | Thread Pool | Implemented | bounded concurrency with backpressure (a.k.a. worker pool — workerpool.Pool) | [workerpool/](../../workerpool/) | [ADR-0005](../adr/0005-workerpool-design.md) |
 | — | Publish-Subscribe | Planned | decoupled in-memory eventing over channels (pubsub.Broker) | _TBD_ | _spec (intake)_ |
 | — | Fan-In / Fan-Out | Planned | canonical channel merge/split building blocks (fanin, fanout) | _TBD_ | _spec (intake)_ |
 | — | Circuit Breaker | Planned | fail-fast protection for outbound calls (circuitbreaker.Breaker) | _TBD_ | _spec (intake)_ |
@@ -41,7 +41,7 @@ _Patterns named in the spec at intake are seeded below as **Planned**; each beco
 | — | Token Bucket | Planned | smooth rate limiting with bursts (ratelimit.Limiter) | _TBD_ | _spec (intake)_ |
 | — | Decorator | Planned | composable func(http.Handler) http.Handler middleware chain | _TBD_ | _spec (intake)_ |
 | — | Object Pool | Planned | sync.Pool reuse to relieve GC pressure (syncpool.BufferPool) | _TBD_ | _spec (intake)_ |
-| — | Functional Options | Planned | idiomatic, forward-compatible construction for configurable components | _TBD_ | _spec (intake)_ |
+| 2 | Functional Options | Implemented | idiomatic, forward-compatible construction for configurable components (first use: workerpool; taxonomy deviation recorded in ADR-0005) | [workerpool/options.go](../../workerpool/options.go) | [ADR-0005](../adr/0005-workerpool-design.md) |
 
 
 ## Rejected

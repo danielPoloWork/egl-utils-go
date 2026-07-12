@@ -12,6 +12,9 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Added
 
+- `workerpool.Pool` — bounded-queue worker pool (roadmap 2.1): blocking or fail-fast
+  `Submit`, context-aware `Stop` with full drain, opt-in panic containment (ADR-0005).
+
 ### Changed
 
 ### Deprecated
