@@ -34,7 +34,7 @@ _Patterns named in the spec at intake are seeded below as **Planned**; each beco
 | # | Pattern | Status | Problem it addresses | Code location | ADR / PR |
 |---|---------|--------|----------------------|---------------|----------|
 | 1 | Thread Pool | Implemented | bounded concurrency with backpressure (a.k.a. worker pool — workerpool.Pool) | [workerpool/](../../workerpool/) | [ADR-0005](../adr/0005-workerpool-design.md) |
-| — | Publish-Subscribe | Planned | decoupled in-memory eventing over channels (pubsub.Broker) | _TBD_ | _spec (intake)_ |
+| 3 | Publish-Subscribe | Implemented | decoupled in-memory eventing over channels (pubsub.Broker) | [pubsub/](../../pubsub/) | [ADR-0006](../adr/0006-pubsub-design.md) |
 | — | Fan-In / Fan-Out | Planned | canonical channel merge/split building blocks (fanin, fanout) | _TBD_ | _spec (intake)_ |
 | — | Circuit Breaker | Planned | fail-fast protection for outbound calls (circuitbreaker.Breaker) | _TBD_ | _spec (intake)_ |
 | — | Retry with Backoff + Jitter | Planned | transient-failure recovery without thundering herds (retry.Backoff) | _TBD_ | _spec (intake)_ |

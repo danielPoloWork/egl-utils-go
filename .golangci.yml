@@ -8,3 +8,12 @@ linters:
   enable:
     - revive
     - gosec
+  exclusions:
+    rules:
+      # Property-style tests use seeded math/rand/v2 deliberately: the seed is
+      # logged so a failure reproduces exactly. crypto/rand is unseedable and
+      # would make failures unreproducible. Scoped to G404 in test files only —
+      # production code keeps full gosec coverage.
+      - path: _test\.go$
+        linters: [gosec]
+        text: "G404"
