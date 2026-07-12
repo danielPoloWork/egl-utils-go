@@ -22,6 +22,10 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 - `fanout.Split[T]` — exactly-once multi-channel work distribution with per-output input
   ordering; forwarder-per-output, closes the outputs on input-close or cancel
   (roadmap 2.4, ADR-0008).
+- `semaphore.Weighted` — weighted admission control, a thin house-contract adapter over
+  `golang.org/x/sync/semaphore` with loud panics on misuse (roadmap 2.5, ADR-0009). Adds
+  the module's first runtime dependency, `golang.org/x/sync` v0.16.0 (newest release on a
+  `go 1.23` directive, so the module's `go 1.24` floor is preserved unchanged).
 
 ### Changed
 

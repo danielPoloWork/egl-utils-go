@@ -32,6 +32,28 @@ Wait for this PR to merge (one PR at a time), then either cut the v0.1.0 release
 from `master` (recommended tier per ROADMAP guidance: strongest model, max effort;
 leak/race/bench coverage required).
 
+## Addendum 6 — roadmap 2.5 semaphore.Weighted (same session)
+
+PR #11 (fanout) merged. Item 2.5 on `feat/semaphore`: `semaphore.Weighted`, a thin adapter
+over `golang.org/x/sync/semaphore` (ADR-0009) — the spec's three-method surface
+(`NewWeighted`/`Acquire`/`Release`) with the house loud-panic contract layered on
+(non-positive capacity/weight panic); `x/sync`'s `TryAcquire` deliberately not re-exported
+(not in spec §5). Catalogued as **Guarded Suspension** (patterns row 5, in-taxonomy this
+time). This is the module's **first runtime dependency**, so it births `go.sum`. Two
+wrinkles resolved this session: (1) no local Go toolchain → the maintainer initially took
+the PR red and was to run `go mod tidy`, then redirected the agent to fetch canonical
+checksums from `sum.golang.org` and commit `go.sum` directly (a wrong hash fails CI's
+verification loudly, so this can't smuggle a bad artifact past the gate). (2) dependency go-directive
+vs our **1.24 floor**. First tried `@latest` v0.22.0 (`go 1.25.0`) — too high. Then v0.19.0
+(`go 1.24.0`) — CI still red: `go build -mod=readonly` rejects a `go 1.24.0` dep directive
+when the main module says short-form `go 1.24`, demanding the patch-precise `go 1.24.0`
+("go: updates to go.mod needed"). Rather than bump our directive (and every doc that says
+"go 1.24"), pinned **v0.16.0** — newest x/sync on `go 1.23.0`, which `go 1.24` satisfies
+unambiguously, floor string untouched. Lesson (doubly earned): hand-pinning a dep skips the
+`go mod tidy` floor-bump that surfaces this — check the dep's go directive against the floor
+BEFORE pinning, and note that a dep directive equal-in-minor but patch-precise (1.24.0) is
+NOT satisfied by a short-form main directive (1.24) under readonly build.
+
 ## Addendum 5 — roadmap 2.4 fanout.Split (same session)
 
 PR #10 (fanin) merged. Item 2.4 followed on `feat/fanout`: the spec's verb *distribute*
