@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/danielPoloWork/egl-utils-go/internal/leakcheck"
 	"github.com/danielPoloWork/egl-utils-go/semaphore"
+	"go.uber.org/goleak"
 )
 
 func TestNewWeightedPanicsOnNonPositiveCapacity(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	for _, capacity := range []int64{0, -1} {
 		func() {
 			defer func() {
@@ -24,7 +24,7 @@ func TestNewWeightedPanicsOnNonPositiveCapacity(t *testing.T) {
 }
 
 func TestAcquireReleaseBoundsConcurrency(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	sem := semaphore.NewWeighted(2)
 	ctx := context.Background()
 
@@ -55,7 +55,7 @@ func TestAcquireReleaseBoundsConcurrency(t *testing.T) {
 }
 
 func TestAcquireHonorsContextCancellation(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	sem := semaphore.NewWeighted(1)
 	if err := sem.Acquire(context.Background(), 1); err != nil {
 		t.Fatalf("initial Acquire: %v", err)
@@ -80,7 +80,7 @@ func TestAcquireHonorsContextCancellation(t *testing.T) {
 }
 
 func TestAcquirePanicsOnNonPositiveWeight(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	sem := semaphore.NewWeighted(1)
 	defer func() {
 		if recover() == nil {
@@ -91,7 +91,7 @@ func TestAcquirePanicsOnNonPositiveWeight(t *testing.T) {
 }
 
 func TestReleasePanicsOnNonPositiveWeight(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	sem := semaphore.NewWeighted(1)
 	defer func() {
 		if recover() == nil {

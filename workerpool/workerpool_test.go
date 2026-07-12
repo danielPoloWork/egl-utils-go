@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/danielPoloWork/egl-utils-go/internal/leakcheck"
 	"github.com/danielPoloWork/egl-utils-go/workerpool"
+	"go.uber.org/goleak"
 )
 
 func TestNewPanicsOnInvalidArguments(t *testing.T) {
@@ -35,7 +35,7 @@ func TestNewPanicsOnInvalidArguments(t *testing.T) {
 }
 
 func TestSubmitNilTaskPanics(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	p := workerpool.New(1, 0)
 	defer func() { _ = p.Stop(context.Background()) }()
 	defer func() {
@@ -56,7 +56,7 @@ func TestNilPanicHandlerPanics(t *testing.T) {
 }
 
 func TestSubmitRunsAllTasksAndStopDrains(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	p := workerpool.New(4, 8)
 	var ran atomic.Int64
 	const tasks = 100
@@ -80,7 +80,7 @@ func TestSubmitRunsAllTasksAndStopDrains(t *testing.T) {
 }
 
 func TestBlockingSubmitHonorsContextWhenFull(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	p := workerpool.New(1, 0)
 	gate := make(chan struct{})
 	started := make(chan struct{})
@@ -107,7 +107,7 @@ func TestBlockingSubmitHonorsContextWhenFull(t *testing.T) {
 }
 
 func TestSubmitWithCanceledContext(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	p := workerpool.New(1, 0)
 	gate := make(chan struct{})
 	started := make(chan struct{})
@@ -133,7 +133,7 @@ func TestSubmitWithCanceledContext(t *testing.T) {
 }
 
 func TestNonBlockingSubmitFailsFastWhenFull(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	p := workerpool.New(1, 1, workerpool.WithNonBlockingSubmit())
 	gate := make(chan struct{})
 	started := make(chan struct{})
@@ -170,7 +170,7 @@ func TestNonBlockingSubmitFailsFastWhenFull(t *testing.T) {
 }
 
 func TestSubmitAfterStopReturnsErrPoolClosed(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	p := workerpool.New(1, 1)
 	if err := p.Stop(context.Background()); err != nil {
 		t.Fatalf("Stop: %v", err)
@@ -182,7 +182,7 @@ func TestSubmitAfterStopReturnsErrPoolClosed(t *testing.T) {
 }
 
 func TestStopIsIdempotentAndConcurrent(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	p := workerpool.New(2, 4)
 	var ran atomic.Int64
 	for range 8 {
@@ -211,7 +211,7 @@ func TestStopIsIdempotentAndConcurrent(t *testing.T) {
 }
 
 func TestStopDeadlineCancelsExecutionContext(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	p := workerpool.New(1, 0)
 	entered := make(chan struct{})
 	exited := make(chan struct{})
@@ -238,7 +238,7 @@ func TestStopDeadlineCancelsExecutionContext(t *testing.T) {
 }
 
 func TestPanicHandlerKeepsWorkerAlive(t *testing.T) {
-	leakcheck.Guard(t)
+	defer goleak.VerifyNone(t)
 	recovered := make(chan any, 1)
 	p := workerpool.New(1, 1, workerpool.WithPanicHandler(func(r any) {
 		recovered <- r
