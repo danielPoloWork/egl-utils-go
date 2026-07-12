@@ -93,7 +93,7 @@ go.mod sits at the repository root with module path github.com/danielPoloWork/eg
 Consumers import via `import "github.com/danielPoloWork/egl-utils-go/workerpool"`. The public surface:
 
 - workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Stop(ctx) error; ErrQueueFull
-- pubsub: NewBroker[T](opts ...Option) *Broker[T]; (*Broker[T]).Publish(topic string, msg T); (*Broker[T]).Subscribe(topic string, filter func(T) bool) (<-chan T, func())
+- pubsub: NewBroker[T](opts ...Option) *Broker[T]; (*Broker[T]).Publish(topic string, msg T); (*Broker[T]).Subscribe(topic string, filter func(T) bool) (<-chan T, func()); (*Broker[T]).Close() — additive shutdown surface (ADR-0006)
 - fanin: Merge[T](ctx, ins ...<-chan T) <-chan T
 - fanout: Split[T](ctx, in <-chan T, outs ...chan<- T)
 - semaphore: NewWeighted(capacity int64) *Weighted; Acquire(ctx, weight) error; Release(weight)

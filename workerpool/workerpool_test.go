@@ -9,31 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/danielPoloWork/egl-utils-go/internal/leakcheck"
 	"github.com/danielPoloWork/egl-utils-go/workerpool"
 )
-
-// leakGuard is the interim in-repo leak assertion (ROADMAP 2.6 migrates it to
-// goleak once the test-only dependencies land): it snapshots the goroutine
-// count and fails the test if the count has not returned to the baseline
-// shortly after cleanup. Tests using it must not call t.Parallel() — the
-// counter is process-global.
-func leakGuard(t *testing.T) {
-	t.Helper()
-	before := runtime.NumGoroutine()
-	t.Cleanup(func() {
-		deadline := time.Now().Add(2 * time.Second)
-		for time.Now().Before(deadline) {
-			if runtime.NumGoroutine() <= before {
-				return
-			}
-			time.Sleep(10 * time.Millisecond)
-		}
-		buf := make([]byte, 1<<20)
-		n := runtime.Stack(buf, true)
-		t.Errorf("goroutine leak: %d before, %d after\n%s",
-			before, runtime.NumGoroutine(), buf[:n])
-	})
-}
 
 func TestNewPanicsOnInvalidArguments(t *testing.T) {
 	cases := []struct {
@@ -57,7 +35,7 @@ func TestNewPanicsOnInvalidArguments(t *testing.T) {
 }
 
 func TestSubmitNilTaskPanics(t *testing.T) {
-	leakGuard(t)
+	leakcheck.Guard(t)
 	p := workerpool.New(1, 0)
 	defer func() { _ = p.Stop(context.Background()) }()
 	defer func() {
@@ -78,7 +56,7 @@ func TestNilPanicHandlerPanics(t *testing.T) {
 }
 
 func TestSubmitRunsAllTasksAndStopDrains(t *testing.T) {
-	leakGuard(t)
+	leakcheck.Guard(t)
 	p := workerpool.New(4, 8)
 	var ran atomic.Int64
 	const tasks = 100
@@ -102,7 +80,7 @@ func TestSubmitRunsAllTasksAndStopDrains(t *testing.T) {
 }
 
 func TestBlockingSubmitHonorsContextWhenFull(t *testing.T) {
-	leakGuard(t)
+	leakcheck.Guard(t)
 	p := workerpool.New(1, 0)
 	gate := make(chan struct{})
 	started := make(chan struct{})
@@ -129,7 +107,7 @@ func TestBlockingSubmitHonorsContextWhenFull(t *testing.T) {
 }
 
 func TestSubmitWithCanceledContext(t *testing.T) {
-	leakGuard(t)
+	leakcheck.Guard(t)
 	p := workerpool.New(1, 0)
 	gate := make(chan struct{})
 	started := make(chan struct{})
@@ -155,7 +133,7 @@ func TestSubmitWithCanceledContext(t *testing.T) {
 }
 
 func TestNonBlockingSubmitFailsFastWhenFull(t *testing.T) {
-	leakGuard(t)
+	leakcheck.Guard(t)
 	p := workerpool.New(1, 1, workerpool.WithNonBlockingSubmit())
 	gate := make(chan struct{})
 	started := make(chan struct{})
@@ -192,7 +170,7 @@ func TestNonBlockingSubmitFailsFastWhenFull(t *testing.T) {
 }
 
 func TestSubmitAfterStopReturnsErrPoolClosed(t *testing.T) {
-	leakGuard(t)
+	leakcheck.Guard(t)
 	p := workerpool.New(1, 1)
 	if err := p.Stop(context.Background()); err != nil {
 		t.Fatalf("Stop: %v", err)
@@ -204,7 +182,7 @@ func TestSubmitAfterStopReturnsErrPoolClosed(t *testing.T) {
 }
 
 func TestStopIsIdempotentAndConcurrent(t *testing.T) {
-	leakGuard(t)
+	leakcheck.Guard(t)
 	p := workerpool.New(2, 4)
 	var ran atomic.Int64
 	for range 8 {
@@ -233,7 +211,7 @@ func TestStopIsIdempotentAndConcurrent(t *testing.T) {
 }
 
 func TestStopDeadlineCancelsExecutionContext(t *testing.T) {
-	leakGuard(t)
+	leakcheck.Guard(t)
 	p := workerpool.New(1, 0)
 	entered := make(chan struct{})
 	exited := make(chan struct{})
@@ -260,7 +238,7 @@ func TestStopDeadlineCancelsExecutionContext(t *testing.T) {
 }
 
 func TestPanicHandlerKeepsWorkerAlive(t *testing.T) {
-	leakGuard(t)
+	leakcheck.Guard(t)
 	recovered := make(chan any, 1)
 	p := workerpool.New(1, 1, workerpool.WithPanicHandler(func(r any) {
 		recovered <- r

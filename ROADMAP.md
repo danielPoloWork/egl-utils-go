@@ -48,7 +48,7 @@ The five channel-native concurrency building blocks, leak-free and race-clean
 > correctness surface in the project; use the strongest tier.
 
 - [x] 2.1 workerpool.Pool — bounded-queue goroutine pool with Submit/Stop contract (leak, race, bench coverage) → [ADR-0005](docs/adr/0005-workerpool-design.md)
-- [ ] 2.2 pubsub.Broker — filtered-subscription in-memory broker (property tests for delivery)
+- [x] 2.2 pubsub.Broker — filtered-subscription in-memory broker (property tests for delivery) → [ADR-0006](docs/adr/0006-pubsub-design.md)
 - [ ] 2.3 fanin.Merge — multi-channel merge (completeness property tests)
 - [ ] 2.4 fanout.Split — parallel channel distribution (completeness property tests)
 - [ ] 2.5 semaphore.Weighted — weighted admission wrapper over x/sync/semaphore

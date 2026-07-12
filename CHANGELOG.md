@@ -14,6 +14,9 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 - `workerpool.Pool` — bounded-queue worker pool (roadmap 2.1): blocking or fail-fast
   `Submit`, context-aware `Stop` with full drain, opt-in panic containment (ADR-0005).
+- `pubsub.Broker[T]` — filtered in-memory publish-subscribe broker (roadmap 2.2):
+  at-most-once buffered delivery with observable drops, no broker goroutines, additive
+  `Close` (ADR-0006).
 
 ### Changed
 

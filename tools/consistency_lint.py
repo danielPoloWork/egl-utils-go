@@ -190,7 +190,11 @@ def check_patterns():
         # root, ADR-0003). ADR/doc links are excluded; whatever remains must exist on disk.
         src_root = (CONFIG.get("src_main") or ".").strip("/")
         raw = re.findall(r"\((?:\.\./)*([A-Za-z0-9_][A-Za-z0-9_./-]*)\)", row)
-        code = [p for p in raw if not p.startswith(("adr/", "docs/"))]
+        # A code location looks like a path (contains '/' or ends in .go); a bare
+        # parenthesized symbol like `(pubsub.Broker)` in the problem cell is prose.
+        code = [p for p in raw
+                if not p.startswith(("adr/", "docs/"))
+                and ("/" in p or p.endswith(".go"))]
         if src_root not in ("", "."):
             code = [p for p in code if p == src_root or p.startswith(src_root + "/")]
         if not code:

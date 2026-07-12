@@ -32,6 +32,15 @@ Wait for this PR to merge (one PR at a time), then either cut the v0.1.0 release
 from `master` (recommended tier per ROADMAP guidance: strongest model, max effort;
 leak/race/bench coverage required).
 
+## Addendum 3 — roadmap 2.2 pubsub.Broker (same session)
+
+PR #8 (workerpool) merged, all checks green on first CI contact. Item 2.2 followed:
+generic `pubsub.Broker[T]` with at-most-once per-subscription buffered delivery (the only
+policy coherent with the ctx-less, error-less `Publish` contract — ADR-0006), observable
+drops, zero broker goroutines, and an additive `Close` recorded in spec §5. The interim
+leak guard moved to `internal/leakcheck`, shared by workerpool and pubsub until 2.6 lands
+goleak. Patterns catalogue row 3 (Publish-Subscribe) flipped to Implemented.
+
 ## Addendum 2 — v0.1.0 tagged; roadmap 2.1 implemented (same session)
 
 PR #7 merged; the agent pushed the annotated `v0.1.0` tag and the release workflow drafted
