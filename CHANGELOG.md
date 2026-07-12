@@ -19,6 +19,9 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   `Close` (ADR-0006).
 - `fanin.Merge[T]` — multi-channel merge with completeness and per-input ordering
   guarantees, cancel-or-drain consumer contract (roadmap 2.3, ADR-0007).
+- `fanout.Split[T]` — exactly-once multi-channel work distribution with per-output input
+  ordering; forwarder-per-output, closes the outputs on input-close or cancel
+  (roadmap 2.4, ADR-0008).
 
 ### Changed
 
