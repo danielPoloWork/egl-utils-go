@@ -17,6 +17,8 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 - `pubsub.Broker[T]` — filtered in-memory publish-subscribe broker (roadmap 2.2):
   at-most-once buffered delivery with observable drops, no broker goroutines, additive
   `Close` (ADR-0006).
+- `fanin.Merge[T]` — multi-channel merge with completeness and per-input ordering
+  guarantees, cancel-or-drain consumer contract (roadmap 2.3, ADR-0007).
 
 ### Changed
 

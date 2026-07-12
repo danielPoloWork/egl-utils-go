@@ -32,6 +32,17 @@ Wait for this PR to merge (one PR at a time), then either cut the v0.1.0 release
 from `master` (recommended tier per ROADMAP guidance: strongest model, max effort;
 leak/race/bench coverage required).
 
+## Addendum 4 — roadmap 2.3 fanin.Merge (same session)
+
+PR #9 (pubsub) merged after one real CI failure — gosec G404 on the seeded property test,
+resolved with a G404+`_test.go`-scoped `.golangci.yml` exclusion (seeded reproducibility is
+the point) — and after the maintainer's per-item agent-guidance tags landed verbatim in the
+same PR. Item 2.3 followed on `feat/fanin`: the canonical forwarder-per-input fan-in with a
+WaitGroup closer (ADR-0007), completeness + per-input-order tests including a seeded
+randomized property and a blocked-send cancellation proof. Patterns row 4 (Fan-In /
+Fan-Out, outside-taxonomy name recorded in the ADR) flipped to Implemented — the fanout
+half completes it at 2.4.
+
 ## Addendum 3 — roadmap 2.2 pubsub.Broker (same session)
 
 PR #8 (workerpool) merged, all checks green on first CI contact. Item 2.2 followed:

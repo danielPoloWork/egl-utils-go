@@ -22,3 +22,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0004](0004-runtime-dependency-policy.md) | Runtime dependency policy | Accepted |
 | [0005](0005-workerpool-design.md) | workerpool design — bounded pool, blocking-first admission, loud panics | Accepted |
 | [0006](0006-pubsub-design.md) | pubsub design — at-most-once buffered delivery, no broker goroutines | Accepted |
+| [0007](0007-fanin-design.md) | fanin design — forwarder-per-input, cancel-or-drain contract | Accepted |
