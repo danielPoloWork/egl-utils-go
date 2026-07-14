@@ -19,6 +19,10 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — M4.4: HTTP middleware (Cors) — Milestone 4 complete](2026/07/2026-07-15-m4-cors.md)
+  — roadmap 4.4 (ADR-0017, PR #20); fourth/last M4 middleware — CORS preflight (terminal 204), deny-by-default
+  origins, exact-origin echo + Vary, loud panic on the Fetch-forbidden credentials+`*` combo (new
+  control C-3). Milestone 4 complete.
 - [2026-07-15 — M4.3: HTTP middleware (Recoverer) + ADR-0015 backfill](2026/07/2026-07-15-m4-recoverer.md)
   — roadmap 4.3 (ADR-0016, PR #19); third HTTP middleware — panic→clean 500, no stack/panic leaked to
   the client (info-disclosure, C-2), server-side Error log, `http.ErrAbortHandler` passthrough;

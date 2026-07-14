@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M4.3: HTTP middleware (Recoverer)](docs/journal/2026/07/2026-07-15-m4-recoverer.md).
+  [2026-07-15 — M4.4: HTTP middleware (Cors) — Milestone 4 complete](docs/journal/2026/07/2026-07-15-m4-cors.md).
 
 ### Agent guidance (model × effort)
 
@@ -90,7 +90,7 @@ The four production middleware, composable as a standard decorator chain
 - [x] 4.1 middleware.RequestID — extract-or-generate request ID into the context → [ADR-0013](docs/adr/0013-middleware-requestid-design.md) — *agent: Opus 4.8 · high (as built) — first HTTP middleware: adopts the Decorator pattern and crosses the first untrusted-input trust boundary, so it carries the pattern ADR, the threat-model pass, and compliance C-2; heavier than the medium tag anticipated*
 - [x] 4.2 middleware.Logger — request logging with duration and bytes-written stats → [ADR-0014](docs/adr/0014-middleware-logger-design.md) — *agent: Opus 4.8 · high (as built) — status/bytes capture via an Unwrap-aware responseRecorder, status-derived levels, path-only logging (extends the threat model's Info-disclosure row, compliance C-2)*
 - [x] 4.3 middleware.Recoverer — panic recovery with clean 500 responses → [ADR-0016](docs/adr/0016-middleware-recoverer-design.md) — *agent: Opus 4.8 · high (as built) — panic-to-clean-500 with no stack/panic leaked to the client (info-disclosure, C-2), server-side Error log via slog.Default (value + stack + request_id), http.ErrAbortHandler re-panicked, committed responses left intact; backfilled ADR-0015 (enterprise posture) to close the referenced-but-unwritten record*
-- [ ] 4.4 middleware.Cors — configurable CORS header handling — *agent: Opus 4.8 · high*
+- [x] 4.4 middleware.Cors — configurable CORS header handling → [ADR-0017](docs/adr/0017-middleware-cors-design.md) — *agent: Opus 4.8 · high (as built) — completes Milestone 4; CorsConfig deny-by-default, terminal 204 preflight, exact-origin echo + Vary, header/method reflection, loud panic on the Fetch-forbidden credentials+wildcard combo (new compliance control C-3)*
 
 
 ---

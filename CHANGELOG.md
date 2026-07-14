@@ -63,6 +63,15 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   intact. Reuses the Logger `responseRecorder` (Unwrap-aware, so `http.ResponseController`
   still reaches the underlying Flusher/Hijacker). Recommended chain:
   `RequestID → Logger → Recoverer → handler` (ADR-0016).
+- `middleware.Cors` / `middleware.CorsConfig` — configurable CORS middleware (roadmap 4.4,
+  completes Milestone 4): answers preflight `OPTIONS` requests directly with `204` and the
+  negotiated `Access-Control-*` headers, and annotates cross-origin responses with
+  `Access-Control-Allow-Origin` (echoing a specific allowed origin with `Vary: Origin`, or
+  `*` only when credentials are off). `CorsConfig`'s zero value denies all origins (safe
+  default); `AllowedMethods` defaults to `GET, HEAD, POST`, `AllowedHeaders` reflects the
+  request's when empty or `*`. Two footgun misconfigurations panic at construction:
+  `AllowCredentials` with a `*` origin (forbidden by the Fetch spec) and a negative `MaxAge`
+  (new compliance control C-3, ADR-0017).
 
 ### Changed
 
