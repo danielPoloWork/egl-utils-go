@@ -19,6 +19,9 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — M7 opens: cache.InMemory](2026/07/2026-07-15-m7-cache.md) — roadmap 7.1
+  (ADR-0021, PR #25); generic TTL cache — expiry enforced by Get (stale reads impossible), one sweeper
+  goroutine with sync.Once Close (goleak-gated), fake-clock boundary tests, 0 allocs/op hot paths.
 - [2026-07-15 — M6.2: logger.Context — Milestone 6 complete](2026/07/2026-07-15-m6-logger-context.md)
   — roadmap 6.2 (ADR-0020, PR #24); `WithFields`/`FromContext` carry accumulating logger fields through
   context (Field = slog.Attr alias), `FromContext` enriches slog.Default. Milestone 6 complete.

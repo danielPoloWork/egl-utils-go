@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M6.2: logger.Context — Milestone 6 complete](docs/journal/2026/07/2026-07-15-m6-logger-context.md).
+  [2026-07-15 — M7 opens: cache.InMemory](docs/journal/2026/07/2026-07-15-m7-cache.md).
 
 ### Agent guidance (model × effort)
 
@@ -131,7 +131,7 @@ TTL caching and transactional SQL ergonomics
 > goroutine (leak- and race-sensitive, goleak-gated) and rides the concurrency tier — see
 > its per-item tag.
 
-- [ ] 7.1 cache.InMemory — TTL cache with periodic cleanup goroutine (leak-checked, bench) — *agent: Fable 5 · high — cleanup-goroutine lifecycle and expiry races are concurrency-critical (M2 tier)*
+- [x] 7.1 cache.InMemory — TTL cache with periodic cleanup goroutine (leak-checked, bench) → [ADR-0021](docs/adr/0021-cache-inmemory-design.md) — *agent: Fable 5 · high (as built) — expiry enforced by Get (stale reads impossible regardless of sweep schedule); one sweeper goroutine, sync.Once Close, goleak-gated; fake-clock boundary tests; 0 allocs/op hot paths (~28ns Get)*
 - [ ] 7.2 db.Transaction — auto-rollback transaction helper (panic-path tests) — *agent: Opus 4.8 · high*
 
 
