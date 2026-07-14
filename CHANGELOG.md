@@ -84,6 +84,13 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   when the variable is set to a non-empty, well-formed string, and the caller's fallback for an
   unset, empty, or malformed value. No error is returned — a malformed value is treated as "not
   configured", the safe default. Complements `config.Load` for individual optional settings.
+- `logger.NewStructured` — JSON structured logger tuned for aggregation (roadmap 6.1, opens
+  Milestone 6): returns a `*slog.Logger` backed by slog's JSON handler (one object per line, the
+  format ElasticSearch / Grafana Loki ingest), with functional options `WithWriter` (default
+  `os.Stdout`), `WithLevel` (default Info, accepts a `*slog.LevelVar` for runtime adjustment),
+  `WithSource`, and `WithAttrs` (base fields like service/version stamped on every record). slog's
+  default `time`/`level`/`msg` keys are kept as the aggregator lingua franca; composes directly with
+  `middleware.Logger` (ADR-0019).
 
 ### Changed
 

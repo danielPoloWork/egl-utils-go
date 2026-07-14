@@ -19,6 +19,9 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — M6 opens: logger.Structured](2026/07/2026-07-15-m6-logger-structured.md) — roadmap
+  6.1 (ADR-0019); `NewStructured` returns a slog JSON-handler `*slog.Logger` tuned for ES/Loki, with
+  WithWriter/WithLevel/WithSource/WithAttrs; composes with `middleware.Logger`.
 - [2026-07-15 — M5.2: env.GetDefault — Milestone 5 complete](2026/07/2026-07-15-m5-env.md) —
   roadmap 5.2 (PR #22); typed env reads (`GetDefault`/`GetInt`/`GetBool`/`GetDuration`) with safe fallbacks;
   no ADR (routine). Milestone 5 complete.

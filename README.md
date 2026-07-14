@@ -57,7 +57,7 @@ setup.
 | 3 | Resilience patterns | ✅ done |
 | 4 | HTTP middleware | ✅ done |
 | 5 | Configuration & environment | ✅ done |
-| 6 | Structured logging | ⏳ planned |
+| 6 | Structured logging | ⏳ in progress |
 | 7 | Caching & data helpers | ⏳ planned |
 | 8 | Validation & security | ⏳ planned |
 | 9 | Diagnostics & lifecycle | ⏳ planned |
