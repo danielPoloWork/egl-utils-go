@@ -97,6 +97,13 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   an outer scope; `FromContext` returns a `*slog.Logger` derived from `slog.Default` with those
   fields applied. `Field` is a type alias for `slog.Attr`. Pairs with `NewStructured` via
   `slog.SetDefault` for structured, per-request-enriched logging (ADR-0020).
+- `cache.InMemory` — generic TTL cache (roadmap 7.1, opens Milestone 7):
+  `NewInMemory[K comparable, V any](ttl, opts...)` with `Get`/`Set`/`Delete`, sentinel
+  `ErrNotFound`, and a `Close` that deterministically stops the cache's single cleanup goroutine
+  (idempotent, goleak-verified). Expiry is enforced by `Get` against each entry's deadline, so a
+  stale read is impossible no matter when the sweeper last ran — the sweeper only reclaims memory,
+  on a tunable `WithCleanupInterval` (default ttl). Loud panics on non-positive ttl/interval.
+  Zero-allocation hot paths (~28 ns Get-hit, ~51 ns Set on the reference box) (ADR-0021).
 
 ### Changed
 
