@@ -74,7 +74,7 @@ Fail-fast, retry, and rate-limit protection for outbound calls
 > testing are subtle; timing bugs here surface only under load.
 
 - [x] 3.1 circuitbreaker.Breaker — closed/open/half-open state machine with configurable thresholds → [ADR-0010](docs/adr/0010-circuitbreaker-design.md) — *agent: Fable 5 · xhigh (as built)*
-- [ ] 3.2 retry.Backoff — exponential backoff with jitter and context cancellation (bound invariant tests) — *agent: Opus 4.8 · high — mostly pure backoff/jitter logic; the bound invariants are property-testable*
+- [x] 3.2 retry.Backoff — exponential backoff with jitter and context cancellation (bound invariant tests) → [ADR-0011](docs/adr/0011-retry-design.md) — *agent: Fable 5 · xhigh (as built)*
 - [ ] 3.3 ratelimit.Limiter — token bucket on Go timers (deterministic-clock tests, bench) — *agent: Fable 5 · high*
 
 

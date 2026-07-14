@@ -47,3 +47,20 @@ retry.Backoff** (roadmap tier: Opus 4.8 · high; property-test the bound invaria
 honor context cancellation) on a fresh branch from `master`. The portable toolchain
 under `%TEMP%\go-portable` makes local build/test/format verification possible — re-download
 via go.dev if the temp dir was cleaned (checksum-verify the zip).
+
+## Addendum — roadmap 3.2 retry.Backoff (same day)
+
+PR #14 merged (`f448bd7`) — master green for the first time since the 2.6 merge. Item
+3.2 followed on `feat/retry` (draft PR #15, ADR-0011, patterns row 7): the spec-frozen
+`Backoff(ctx, Policy, fn func(ctx) error)` with **symmetric proportional jitter**
+(`Jitter ∈ [0,1]` is a ±half-range fraction; 0 = the deterministic schedule — the spec's
+field demands a tunable knob, so AWS full/equal jitter were rejected in the ADR), a
+**`MaxDelay` hard cap that survives jitter** (the §6 bound invariant: every sleep in
+`[(1−J)·exp, min((1+J)·exp, MaxDelay)]`, pinned by a rapid property over generated
+policies), overflow-safe doubling, loud policy/nil-fn validation, and **exhaustion
+returning the last error verbatim** (no wrapper, no sentinel — errors.Is/As stay aimed
+at the real cause). Deterministic testing via unexported `sleep`/`rand` seams on
+`Policy` (in-package tests only; no globals, no exported surface growth). Jitter uses
+`math/rand/v2` with a targeted, reasoned G404 `//nolint` (first production `nolint` in
+the repo — jitter is not security-sensitive). Full local gauntlet green before push
+(build, vet, all tests, gofumpt, coverage).

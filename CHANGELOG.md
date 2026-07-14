@@ -30,6 +30,10 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   consecutive-failure tripping, lazy timerless state transitions (no goroutines, no
   timers), generation-guarded outcome accounting, half-open probe budget equal to the
   success threshold (ADR-0010).
+- `retry.Backoff` — retrying execution with exponential backoff and proportional jitter
+  (roadmap 3.2): total-attempt budget, hard `MaxDelay` cap that survives jitter,
+  overflow-safe doubling, context cancellation honored before the first call and during
+  every sleep (ADR-0011).
 
 ### Changed
 
