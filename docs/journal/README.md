@@ -19,6 +19,10 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — M4.3: HTTP middleware (Recoverer) + ADR-0015 backfill](2026/07/2026-07-15-m4-recoverer.md)
+  — roadmap 4.3 (ADR-0016); third HTTP middleware — panic→clean 500, no stack/panic leaked to
+  the client (info-disclosure, C-2), server-side Error log, `http.ErrAbortHandler` passthrough;
+  also backfills ADR-0015 (enterprise posture) to close the referenced-but-unwritten record.
 - [2026-07-14 — M4.2: HTTP middleware (Logger)](2026/07/2026-07-14-m4-logger.md) — roadmap
   4.2 (ADR-0014, PR #18); second HTTP middleware — one structured `slog` line per request,
   Unwrap-aware status/bytes capture, status-derived levels, path-only logging (extends the
