@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M6 opens: logger.Structured](docs/journal/2026/07/2026-07-15-m6-logger-structured.md).
+  [2026-07-15 — M6.2: logger.Context — Milestone 6 complete](docs/journal/2026/07/2026-07-15-m6-logger-context.md).
 
 ### Agent guidance (model × effort)
 
@@ -117,7 +117,7 @@ JSON logging wired for aggregation and context propagation
 > over log/slog and context propagation.
 
 - [x] 6.1 logger.Structured — JSON logger for ElasticSearch / Loki ingestion → [ADR-0019](docs/adr/0019-logger-structured-design.md) — *agent: Opus 4.8 · low (as built) — NewStructured returns a slog JSONHandler-backed *slog.Logger; WithWriter/WithLevel(Leveler)/WithSource/WithAttrs; slog default keys kept as the aggregator lingua franca; composes with middleware.Logger*
-- [ ] 6.2 logger.Context — logger fields carried in context.Context — *agent: Sonnet 5 · high — slog.Handler wrapping; WithAttrs/WithGroup propagation is the one subtle bit*
+- [x] 6.2 logger.Context — logger fields carried in context.Context → [ADR-0020](docs/adr/0020-logger-context-design.md) — *agent: Opus 4.8 · low (as built) — completes Milestone 6; Field = slog.Attr alias + constructors, WithFields accumulates copy-on-write under an unexported key, FromContext enriches slog.Default; composes with NewStructured via slog.SetDefault*
 
 
 ---

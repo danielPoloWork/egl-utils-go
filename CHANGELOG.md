@@ -91,6 +91,12 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   `WithSource`, and `WithAttrs` (base fields like service/version stamped on every record). slog's
   default `time`/`level`/`msg` keys are kept as the aggregator lingua franca; composes directly with
   `middleware.Logger` (ADR-0019).
+- `logger.WithFields` / `logger.FromContext` / `logger.Field` (+ `String`/`Int`/`Bool`/`Duration`/
+  `Any` constructors) — context-carried logger fields (roadmap 6.2, completes Milestone 6):
+  `WithFields` attaches fields to a `context.Context`, accumulating (copy-on-write) with any set by
+  an outer scope; `FromContext` returns a `*slog.Logger` derived from `slog.Default` with those
+  fields applied. `Field` is a type alias for `slog.Attr`. Pairs with `NewStructured` via
+  `slog.SetDefault` for structured, per-request-enriched logging (ADR-0020).
 
 ### Changed
 

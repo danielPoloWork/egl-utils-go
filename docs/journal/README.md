@@ -19,6 +19,9 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — M6.2: logger.Context — Milestone 6 complete](2026/07/2026-07-15-m6-logger-context.md)
+  — roadmap 6.2 (ADR-0020); `WithFields`/`FromContext` carry accumulating logger fields through
+  context (Field = slog.Attr alias), `FromContext` enriches slog.Default. Milestone 6 complete.
 - [2026-07-15 — M6 opens: logger.Structured](2026/07/2026-07-15-m6-logger-structured.md) — roadmap
   6.1 (ADR-0019, PR #23); `NewStructured` returns a slog JSON-handler `*slog.Logger` tuned for ES/Loki, with
   WithWriter/WithLevel/WithSource/WithAttrs; composes with `middleware.Logger`.

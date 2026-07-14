@@ -35,3 +35,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0017](0017-middleware-cors-design.md) | middleware.Cors design — CorsConfig shape, deny-by-default, loud credential/wildcard guard | Accepted |
 | [0018](0018-config-loader-design.md) | config.Loader design — generic Load, extension-driven format, gopkg.in/yaml.v3 selected | Accepted |
 | [0019](0019-logger-structured-design.md) | logger.Structured design — slog JSON handler, functional options, default keys kept | Accepted |
+| [0020](0020-logger-context-design.md) | logger.Context design — Field alias, accumulating context fields, slog.Default base | Accepted |
