@@ -20,7 +20,7 @@ _(newest first)_
 #### 07 — July
 
 - [2026-07-15 — M5 opens: config.Loader](2026/07/2026-07-15-m5-config.md) — roadmap 5.1
-  (ADR-0018); generic `Load[T]` for JSON/YAML with `${VAR}` env expansion and a `Validator` hook;
+  (ADR-0018, PR #21); generic `Load[T]` for JSON/YAML with `${VAR}` env expansion and a `Validator` hook;
   selects + pins `gopkg.in/yaml.v3` (already indirect) under ADR-0004's budget.
 - [2026-07-15 — M4.4: HTTP middleware (Cors) — Milestone 4 complete](2026/07/2026-07-15-m4-cors.md)
   — roadmap 4.4 (ADR-0017, PR #20); fourth/last M4 middleware — CORS preflight (terminal 204), deny-by-default
