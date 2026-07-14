@@ -79,6 +79,11 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   extensions fail with the sentinel `ErrUnsupportedFormat`. Selects and pins
   `gopkg.in/yaml.v3` as the YAML parser under ADR-0004's dependency budget — a promotion of an
   existing indirect dependency to a direct one, no new supply-chain surface (ADR-0018).
+- `env.GetDefault` / `env.GetInt` / `env.GetBool` / `env.GetDuration` — typed environment
+  reads with safe fallbacks (roadmap 5.2, completes Milestone 5): each returns the parsed value
+  when the variable is set to a non-empty, well-formed string, and the caller's fallback for an
+  unset, empty, or malformed value. No error is returned — a malformed value is treated as "not
+  configured", the safe default. Complements `config.Load` for individual optional settings.
 
 ### Changed
 

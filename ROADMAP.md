@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M5 opens: config.Loader](docs/journal/2026/07/2026-07-15-m5-config.md).
+  [2026-07-15 — M5.2: env.GetDefault — Milestone 5 complete](docs/journal/2026/07/2026-07-15-m5-env.md).
 
 ### Agent guidance (model × effort)
 
@@ -104,7 +104,7 @@ Safe configuration ingestion from files and environment
 > budget (a review point, not a coding challenge).
 
 - [x] 5.1 config.Loader — JSON/YAML/env loading with validation hooks → [ADR-0018](docs/adr/0018-config-loader-design.md) — *agent: Opus 4.8 · low (as built) — generic Load[T], extension-driven format, ${VAR} env expansion, Validator-interface hook; selected + pinned gopkg.in/yaml.v3 (already an indirect dep) under ADR-0004's budget*
-- [ ] 5.2 env.GetDefault — typed env reads with safe fallbacks — *agent: Sonnet 5 · low — trivial typed getenv; the quality gates catch drift*
+- [x] 5.2 env.GetDefault — typed env reads with safe fallbacks — *agent: Opus 4.8 · low (as built) — completes Milestone 5; GetDefault + GetInt/GetBool/GetDuration, unset/empty/malformed all fall back silently (spec's "safe fallback" contract); trivial, no ADR (routine implementation, ADR §7)*
 
 
 ---
