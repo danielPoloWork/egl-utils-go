@@ -23,6 +23,4 @@ One report per measured scenario, from [`template.md`](template.md). Keep the in
 
 | Date | Scenario | Version | Headline result | Report |
 |------|----------|---------|-----------------|--------|
-| —    | —        | —       | —               | —      |
-
-_No benchmarks recorded yet._
+| 2026-07-14 | ratelimit hot paths (Allow / funded Wait) | v0.1.0+dev (PR #16) | Allow ~25 ns/op, 0 allocs; funded Wait ~50 ns/op, 0 allocs | [report](2026-07-14-ratelimit-hot-paths.md) |

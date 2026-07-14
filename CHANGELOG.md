@@ -34,6 +34,10 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   (roadmap 3.2): total-attempt budget, hard `MaxDelay` cap that survives jitter,
   overflow-safe doubling, context cancellation honored before the first call and during
   every sleep (ADR-0011).
+- `ratelimit.Limiter` — token-bucket rate limiter (roadmap 3.3, completes Milestone 3):
+  lazy refill with no background goroutines or timers, fail-fast `Allow` and queueing
+  `Wait` with arrival-order reservations, canceled waits repay their token; ~25ns
+  zero-allocation admission (first report under `docs/benchmarks/`) (ADR-0012).
 
 ### Changed
 

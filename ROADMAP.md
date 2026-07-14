@@ -75,7 +75,7 @@ Fail-fast, retry, and rate-limit protection for outbound calls
 
 - [x] 3.1 circuitbreaker.Breaker — closed/open/half-open state machine with configurable thresholds → [ADR-0010](docs/adr/0010-circuitbreaker-design.md) — *agent: Fable 5 · xhigh (as built)*
 - [x] 3.2 retry.Backoff — exponential backoff with jitter and context cancellation (bound invariant tests) → [ADR-0011](docs/adr/0011-retry-design.md) — *agent: Fable 5 · xhigh (as built)*
-- [ ] 3.3 ratelimit.Limiter — token bucket on Go timers (deterministic-clock tests, bench) — *agent: Fable 5 · high*
+- [x] 3.3 ratelimit.Limiter — token bucket on Go timers (deterministic-clock tests, bench) → [ADR-0012](docs/adr/0012-ratelimit-design.md) — *agent: Fable 5 · xhigh (as built)*
 
 
 ---
