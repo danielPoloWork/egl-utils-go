@@ -40,7 +40,7 @@ _Patterns named in the spec at intake are seeded below as **Planned**; each beco
 | 6 | Circuit Breaker | Implemented | fail-fast protection for outbound calls — closed/open/half-open with bounded half-open probes (circuitbreaker.Breaker) | [circuitbreaker/](../../circuitbreaker/) | [ADR-0010](../adr/0010-circuitbreaker-design.md) |
 | 7 | Retry with Backoff | Implemented | transient-failure recovery without thundering herds — proportional jitter, hard-capped exponential delays (retry.Backoff) | [retry/](../../retry/) | [ADR-0011](../adr/0011-retry-design.md) |
 | 8 | Rate Limiting / Throttling | Implemented | smooth rate limiting with bursts — lazy token bucket, reservation-model Wait (ratelimit.Limiter; the intake's "Token Bucket" is the mechanism, renamed to the taxonomy entry per ADR-0012) | [ratelimit/](../../ratelimit/) | [ADR-0012](../adr/0012-ratelimit-design.md) |
-| — | Decorator | Planned | composable func(http.Handler) http.Handler middleware chain | _TBD_ | _spec (intake)_ |
+| 9 | Decorator | Implemented | composable func(http.Handler) http.Handler middleware chain (first use: middleware.RequestID) | [middleware/](../../middleware/) | [ADR-0013](../adr/0013-middleware-requestid-design.md) |
 | — | Object Pool | Planned | sync.Pool reuse to relieve GC pressure (syncpool.BufferPool) | _TBD_ | _spec (intake)_ |
 | 2 | Functional Options | Implemented | idiomatic, forward-compatible construction for configurable components (first use: workerpool; taxonomy deviation recorded in ADR-0005) | [workerpool/options.go](../../workerpool/options.go) | [ADR-0005](../adr/0005-workerpool-design.md) |
 

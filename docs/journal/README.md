@@ -19,6 +19,9 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-14 — M4 opens: HTTP middleware (RequestID)](2026/07/2026-07-14-m4-middleware.md)
+  — roadmap 4.1 (ADR-0013, PR #17); first HTTP middleware — adopts Decorator, crosses the
+  first untrusted-input boundary (threat model + compliance C-2), `crypto/rand.Text` IDs.
 - [2026-07-14 — M3 opens: circuitbreaker](2026/07/2026-07-14-m3-circuitbreaker.md) —
   roadmap 3.1 (ADR-0010, PR #14) + addenda 3.2 retry (ADR-0011, PR #15) and 3.3 ratelimit
   (ADR-0012, PR #16 — **Milestone 3 complete**, first benchmark report); healed the red

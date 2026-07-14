@@ -13,7 +13,11 @@ that cross it, and the **assumptions** the design makes about it.
 
 | Boundary | Untrusted inputs crossing it | Assumptions |
 |---|---|---|
-| _e.g. public HTTP edge_ | _request bodies, headers, auth tokens_ | _TLS terminated upstream_ |
+| **Public HTTP edge** (a consuming service's inbound requests, guarded by this module's `middleware`) | request headers (`X-Request-ID` as of 4.1; more as 4.2–4.4 land), method, path, body | TLS terminated upstream; this module is a library composed into the consumer's handler chain, not a standalone server; the consumer owns authn/authz and body-size limits |
+
+_First populated by ROADMAP 4.1 (`middleware.RequestID`, ADR-0013). Boundaries and inputs
+grow as later middleware (Logger 4.2, Recoverer 4.3, Cors 4.4) and the diagnostics surface
+(M9) land; each such PR extends the rows below rather than starting fresh._
 
 ## 2. STRIDE pass
 
@@ -22,12 +26,12 @@ Every cell gets an entry — a threat, a mitigation, or an explicit `n/a (reason
 
 | Category | Threat considered | Boundary / component | Mitigation / control | Status |
 |---|---|---|---|---|
-| Spoofing — is the caller who it claims? | | | | ▢ |
-| Tampering — can data/code be altered in flight or at rest? | | | | ▢ |
-| Repudiation — can an action be denied for lack of a trail? | | | | ▢ |
-| Information disclosure — can data leak across a boundary? | | | | ▢ |
-| Denial of service — can the surface be exhausted? | | | | ▢ |
-| Elevation of privilege — can a caller gain authority it was not granted? | | | | ▢ |
+| Spoofing — is the caller who it claims? | Caller sets `X-Request-ID` to impersonate another request's trail, or a consumer mistakes the ID for identity | HTTP edge / `middleware.RequestID` | The ID is documented (godoc + ADR-0013) as a **correlation token only, never for authn/authz**; it grants no authority, so spoofing it achieves nothing | ☑ |
+| Tampering — can data/code be altered in flight or at rest? | Attacker injects CR/LF or control bytes into `X-Request-ID` to forge log lines or split response headers when the ID is echoed/logged | HTTP edge / `middleware.RequestID` | Inbound ID accepted only if visible-ASCII (`0x21–0x7e`) and ≤128 bytes; otherwise regenerated. CR/LF/NUL can never reach logs or the reflected header (ADR-0013, control C-2) | ☑ |
+| Repudiation — can an action be denied for lack of a trail? | A request has no correlatable identifier, so its handling cannot be traced | HTTP edge / `middleware.RequestID` | Every request carries an ID — adopted if valid, else generated — propagated in context for downstream logging (4.2) | ☑ |
+| Information disclosure — can data leak across a boundary? | A generated ID leaks server state (time, sequence, host) or is predictable | HTTP edge / `middleware.RequestID` | Generated with `crypto/rand.Text` (≥128 bits, RFC 4648 base32); derived from no server state and unguessable (ADR-0013) | ☑ |
+| Denial of service — can the surface be exhausted? | Oversized or high-volume `X-Request-ID` headers inflate memory and log storage | HTTP edge / `middleware.RequestID` | 128-byte cap on the adopted ID bounds per-request cost; broader request/body-size and rate limits are the consumer's and `ratelimit`'s concern | ◑ partial (RequestID bounded; whole-request DoS deferred to consumer + M4.3 Recoverer) |
+| Elevation of privilege — can a caller gain authority it was not granted? | Caller uses the request ID to gain access | HTTP edge / `middleware.RequestID` | n/a — the ID confers no authority by construction; RequestID makes no authorization decision | ☑ |
 
 ## 3. Findings → the risk register
 
