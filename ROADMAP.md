@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-12 — M1 bootstrap](docs/journal/2026/07/2026-07-12-m1-bootstrap.md).
+  [2026-07-14 — M3 opens: circuitbreaker](docs/journal/2026/07/2026-07-14-m3-circuitbreaker.md).
 
 ### Agent guidance (model × effort)
 

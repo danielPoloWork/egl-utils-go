@@ -1,0 +1,49 @@
+# 2026-07-14 — Milestone 3 opens: circuitbreaker
+
+## What got done
+
+- **Roadmap 3.1 `circuitbreaker.Breaker`** (branch `feat/circuitbreaker`, draft PR #14,
+  ADR-0010, patterns row 6): the closed/open/half-open breaker inside the spec-frozen
+  `New`/`Do`/`ErrOpen` surface. Design pillars: consecutive-failure tripping (completion
+  order, success resets); **lazy timerless transitions** (the open → half-open move is
+  evaluated on the next admission against an injectable clock — the breaker owns no
+  goroutines and no timers, so the zero-leak NFR holds by construction); **half-open probe
+  budget = success threshold** (`successes + inFlight ≤ successThreshold`, so closing
+  implies zero in flight); **generation-guarded accounting** (every transition bumps a
+  generation; outcomes of calls that straddle a transition are discarded — stale closed
+  calls and orphaned probes cannot corrupt the next episode's counters). Context-done
+  calls return `ctx.Err()` unrun and uncounted; panics count as failure and propagate.
+  Tests: black-box contract suite, fake-clock boundary/stale-generation suite, a rapid
+  property against a sequential reference model, an 8-worker race hammer — **100%
+  statement coverage** on the package.
+- **Healed the red master inherited from 2.6** (folded into PR #14 with a callout): the
+  squash-merge of PR #13 landed without the maintainer-side `go mod tidy` handoff, so
+  `go.sum` held only the x/sync entries and `go.mod` lacked the indirect block — master's
+  own CI run (29205790037) has been red since 2026-07-12, and PR #14's first push
+  reproduced it verbatim. Fixed canonically, not by hand: downloaded the **portable Go
+  1.26.5 toolchain** (zip under `%TEMP%\go-portable`, SHA256 verified against go.dev) and
+  ran `go mod tidy` — +7 `go.mod` lines (indirect block), +20 `go.sum` lines.
+- **First-ever local verification** on this machine, ending the write-blind era: `go
+  build`, `go vet`, the full `go test ./...` suite (all packages green first run),
+  `gofumpt -l` clean, per-package coverage. Only `-race` stays CI-only (needs cgo/gcc on
+  Windows); the Linux race job covers it.
+- README milestone-table sync M2 → done (left behind by 2.6), M3 → in progress; spec-map
+  §2/§5 → 🚧.
+
+## Where the project stands
+
+PR #14 (draft) carries 3.1 plus the go.sum heal; once its CI matrix is green the
+maintainer reviews and squash-merges, and master is green again for the first time since
+the 2.6 merge. Version is still v0.1.0: **M2 completed at PR #13, so a v0.2.0 release PR
+(MINOR per AGENTS.md §11) is available to cut whenever the maintainer wants** — the
+maintainer's instruction this session was to continue with 3.1, so the release was not
+cut here.
+
+## How the next session resumes
+
+Wait for PR #14 to merge (one PR at a time). Then either cut the pending v0.2.0 release
+PR (M2 milestone bump — maintainer's call), or continue Milestone 3 with **3.2
+retry.Backoff** (roadmap tier: Opus 4.8 · high; property-test the bound invariants,
+honor context cancellation) on a fresh branch from `master`. The portable toolchain
+under `%TEMP%\go-portable` makes local build/test/format verification possible — re-download
+via go.dev if the temp dir was cleaned (checksum-verify the zip).
