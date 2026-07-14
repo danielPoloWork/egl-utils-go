@@ -37,7 +37,7 @@ _Patterns named in the spec at intake are seeded below as **Planned**; each beco
 | 3 | Publish-Subscribe | Implemented | decoupled in-memory eventing over channels (pubsub.Broker) | [pubsub/](../../pubsub/) | [ADR-0006](../adr/0006-pubsub-design.md) |
 | 4 | Fan-In / Fan-Out | Implemented | canonical channel merge/split building blocks — both halves landed | [fanin/](../../fanin/), [fanout/](../../fanout/) | [ADR-0007](../adr/0007-fanin-design.md), [ADR-0008](../adr/0008-fanout-design.md) |
 | 5 | Guarded Suspension | Implemented | block until enough free capacity, then proceed — weighted admission control (semaphore.Weighted, over x/sync) | [semaphore/](../../semaphore/) | [ADR-0009](../adr/0009-semaphore-design.md) |
-| — | Circuit Breaker | Planned | fail-fast protection for outbound calls (circuitbreaker.Breaker) | _TBD_ | _spec (intake)_ |
+| 6 | Circuit Breaker | Implemented | fail-fast protection for outbound calls — closed/open/half-open with bounded half-open probes (circuitbreaker.Breaker) | [circuitbreaker/](../../circuitbreaker/) | [ADR-0010](../adr/0010-circuitbreaker-design.md) |
 | — | Retry with Backoff + Jitter | Planned | transient-failure recovery without thundering herds (retry.Backoff) | _TBD_ | _spec (intake)_ |
 | — | Token Bucket | Planned | smooth rate limiting with bursts (ratelimit.Limiter) | _TBD_ | _spec (intake)_ |
 | — | Decorator | Planned | composable func(http.Handler) http.Handler middleware chain | _TBD_ | _spec (intake)_ |

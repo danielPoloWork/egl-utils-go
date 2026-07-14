@@ -53,8 +53,8 @@ setup.
 | # | Title | Status |
 |---|---|---|
 | 1 | Project bootstrap & CI | ✅ done |
-| 2 | Concurrency primitives | ⏳ in progress |
-| 3 | Resilience patterns | ⏳ planned |
+| 2 | Concurrency primitives | ✅ done |
+| 3 | Resilience patterns | ⏳ in progress |
 | 4 | HTTP middleware | ⏳ planned |
 | 5 | Configuration & environment | ⏳ planned |
 | 6 | Structured logging | ⏳ planned |
