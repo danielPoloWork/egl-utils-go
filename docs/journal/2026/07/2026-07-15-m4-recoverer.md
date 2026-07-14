@@ -2,7 +2,7 @@
 
 ## What got done
 
-- **Roadmap 4.3 `middleware.Recoverer`** (branch `feat/middleware-recoverer`, ADR-0016,
+- **Roadmap 4.3 `middleware.Recoverer`** (branch `feat/middleware-recoverer`, draft PR #19, ADR-0016,
   patterns row 9): the third HTTP middleware. Spec §5 unconfigured decorator
   `Recoverer(next http.Handler) http.Handler`. Runs `next` under a deferred `recover()`;
   on a panic it writes a **generic `500 Internal Server Error`** and contains the failure.
@@ -35,7 +35,7 @@
 ## Where the project stands
 
 M1–M3 complete and merged; M4 in progress (3 of 4 — 4.1 RequestID #17, 4.2 Logger #18 merged).
-4.3 Recoverer drafted on `feat/middleware-recoverer`, awaiting the maintainer to open and merge
+4.3 Recoverer drafted on `feat/middleware-recoverer` (draft PR #19), awaiting the maintainer to open and merge
 (one PR at a time). **Two completed milestones remain unreleased** — M2 (v0.2.0) and M3 (v0.3.0),
 one MINOR each per §11; still open with the maintainer whether to cut separately, combined, or defer.
 
