@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M5.2: env.GetDefault — Milestone 5 complete](docs/journal/2026/07/2026-07-15-m5-env.md).
+  [2026-07-15 — M6 opens: logger.Structured](docs/journal/2026/07/2026-07-15-m6-logger-structured.md).
 
 ### Agent guidance (model × effort)
 
@@ -116,7 +116,7 @@ JSON logging wired for aggregation and context propagation
 > **Agent guidance:** Claude Sonnet 5 · effort **medium** — thin, well-specified wrappers
 > over log/slog and context propagation.
 
-- [ ] 6.1 logger.Structured — JSON logger for ElasticSearch / Loki ingestion — *agent: Sonnet 5 · medium*
+- [x] 6.1 logger.Structured — JSON logger for ElasticSearch / Loki ingestion → [ADR-0019](docs/adr/0019-logger-structured-design.md) — *agent: Opus 4.8 · low (as built) — NewStructured returns a slog JSONHandler-backed *slog.Logger; WithWriter/WithLevel(Leveler)/WithSource/WithAttrs; slog default keys kept as the aggregator lingua franca; composes with middleware.Logger*
 - [ ] 6.2 logger.Context — logger fields carried in context.Context — *agent: Sonnet 5 · high — slog.Handler wrapping; WithAttrs/WithGroup propagation is the one subtle bit*
 
 
