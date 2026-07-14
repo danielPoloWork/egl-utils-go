@@ -30,3 +30,5 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0012](0012-ratelimit-design.md) | ratelimit design — hand-rolled lazy token bucket, reservation-model Wait | Accepted |
 | [0013](0013-middleware-requestid-design.md) | HTTP middleware foundation — Decorator chain and RequestID design | Accepted |
 | [0014](0014-middleware-logger-design.md) | middleware.Logger design — ResponseWriter capture, status-derived levels, path-only logging | Accepted |
+| [0015](0015-enterprise-governance-posture.md) | Enterprise governance posture — a raised compliance bar orthogonal to the domain | Accepted |
+| [0016](0016-middleware-recoverer-design.md) | middleware.Recoverer design — panic-to-500, no stack to the client, ErrAbortHandler passthrough | Accepted |

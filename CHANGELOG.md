@@ -53,6 +53,16 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   query parameters cannot leak into log stores (extends the threat model's Info-disclosure
   row, compliance control C-2). Logged from a deferred call, so a panicking request is still
   logged before the panic propagates (ADR-0014).
+- `middleware.Recoverer` — panic-recovery middleware (roadmap 4.3): recovers a panic from a
+  downstream handler and writes a clean generic `500 Internal Server Error`, containing the
+  failure instead of dropping the connection. The panic value and stack trace are **never**
+  sent to the client (information-disclosure control C-2); they are logged server-side at
+  Error level on `slog.Default` with the method, path (query string omitted), panic value,
+  stack, and `request_id` when the chain seeded one. `http.ErrAbortHandler` is re-panicked
+  unchanged (net/http's silent-abort sentinel), and an already-committed response is left
+  intact. Reuses the Logger `responseRecorder` (Unwrap-aware, so `http.ResponseController`
+  still reaches the underlying Flusher/Hijacker). Recommended chain:
+  `RequestID → Logger → Recoverer → handler` (ADR-0016).
 
 ### Changed
 
