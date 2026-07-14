@@ -44,6 +44,15 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   response. Inbound IDs are sanitized (visible-ASCII, ≤128 bytes) to prevent log/header
   injection; the first HTTP trust boundary is recorded in the threat model and compliance
   control C-2 (ADR-0013).
+- `middleware.Logger` — request-logging middleware (roadmap 4.2): emits one structured
+  `log/slog` line per request (method, path, status, duration, bytes-written), at a level
+  derived from the status (5xx→Error, 4xx→Warn, else Info), attaching `request_id` when the
+  chain seeded one. Status and byte counts are captured by a `responseRecorder` that
+  implements `Unwrap`, so `http.ResponseController` still reaches the underlying Flusher /
+  Hijacker. Logs the path only — never the query string, headers, or body — so secrets in
+  query parameters cannot leak into log stores (extends the threat model's Info-disclosure
+  row, compliance control C-2). Logged from a deferred call, so a panicking request is still
+  logged before the panic propagates (ADR-0014).
 
 ### Changed
 

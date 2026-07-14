@@ -19,6 +19,10 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-14 — M4.2: HTTP middleware (Logger)](2026/07/2026-07-14-m4-logger.md) — roadmap
+  4.2 (ADR-0014); second HTTP middleware — one structured `slog` line per request,
+  Unwrap-aware status/bytes capture, status-derived levels, path-only logging (extends the
+  threat model's Info-disclosure row + compliance C-2).
 - [2026-07-14 — M4 opens: HTTP middleware (RequestID)](2026/07/2026-07-14-m4-middleware.md)
   — roadmap 4.1 (ADR-0013, PR #17); first HTTP middleware — adopts Decorator, crosses the
   first untrusted-input boundary (threat model + compliance C-2), `crypto/rand.Text` IDs.

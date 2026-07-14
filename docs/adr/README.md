@@ -29,3 +29,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0011](0011-retry-design.md) | retry design — proportional jitter, hard cap, last error verbatim | Accepted |
 | [0012](0012-ratelimit-design.md) | ratelimit design — hand-rolled lazy token bucket, reservation-model Wait | Accepted |
 | [0013](0013-middleware-requestid-design.md) | HTTP middleware foundation — Decorator chain and RequestID design | Accepted |
+| [0014](0014-middleware-logger-design.md) | middleware.Logger design — ResponseWriter capture, status-derived levels, path-only logging | Accepted |

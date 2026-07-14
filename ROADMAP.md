@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-14 — M4 opens: HTTP middleware (RequestID)](docs/journal/2026/07/2026-07-14-m4-middleware.md).
+  [2026-07-14 — M4.2: HTTP middleware (Logger)](docs/journal/2026/07/2026-07-14-m4-logger.md).
 
 ### Agent guidance (model × effort)
 
@@ -88,7 +88,7 @@ The four production middleware, composable as a standard decorator chain
 > but Recoverer's panic paths and CORS preflight edge cases reward careful reasoning.
 
 - [x] 4.1 middleware.RequestID — extract-or-generate request ID into the context → [ADR-0013](docs/adr/0013-middleware-requestid-design.md) — *agent: Opus 4.8 · high (as built) — first HTTP middleware: adopts the Decorator pattern and crosses the first untrusted-input trust boundary, so it carries the pattern ADR, the threat-model pass, and compliance C-2; heavier than the medium tag anticipated*
-- [ ] 4.2 middleware.Logger — request logging with duration and bytes-written stats — *agent: Opus 4.8 · high*
+- [x] 4.2 middleware.Logger — request logging with duration and bytes-written stats → [ADR-0014](docs/adr/0014-middleware-logger-design.md) — *agent: Opus 4.8 · high (as built) — status/bytes capture via an Unwrap-aware responseRecorder, status-derived levels, path-only logging (extends the threat model's Info-disclosure row, compliance C-2)*
 - [ ] 4.3 middleware.Recoverer — panic recovery with clean 500 responses — *agent: Opus 4.8 · high*
 - [ ] 4.4 middleware.Cors — configurable CORS header handling — *agent: Opus 4.8 · high*
 
