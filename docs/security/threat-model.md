@@ -13,11 +13,11 @@ that cross it, and the **assumptions** the design makes about it.
 
 | Boundary | Untrusted inputs crossing it | Assumptions |
 |---|---|---|
-| **Public HTTP edge** (a consuming service's inbound requests, guarded by this module's `middleware`) | request headers (`X-Request-ID` as of 4.1; more as 4.4 lands), method, path (logged by 4.2), body | TLS terminated upstream; this module is a library composed into the consumer's handler chain, not a standalone server; the consumer owns authn/authz and body-size limits |
+| **Public HTTP edge** (a consuming service's inbound requests, guarded by this module's `middleware`) | request headers (`X-Request-ID`, `Origin`, `Access-Control-Request-*`), method, path (logged by 4.2), body | TLS terminated upstream; this module is a library composed into the consumer's handler chain, not a standalone server; the consumer owns authn/authz and body-size limits |
 
-_First populated by ROADMAP 4.1 (`middleware.RequestID`, ADR-0013). Boundaries and inputs
-grow as later middleware (Logger 4.2, Recoverer 4.3, Cors 4.4) and the diagnostics surface
-(M9) land; each such PR extends the rows below rather than starting fresh._
+_First populated by ROADMAP 4.1 (`middleware.RequestID`, ADR-0013); Milestone 4 completed the
+HTTP-edge middleware (Logger 4.2, Recoverer 4.3, Cors 4.4). Boundaries and inputs grow as the
+diagnostics surface (M9) lands; each such PR extends the rows below rather than starting fresh._
 
 ## 2. STRIDE pass
 
@@ -32,6 +32,7 @@ Every cell gets an entry — a threat, a mitigation, or an explicit `n/a (reason
 | Information disclosure — can data leak across a boundary? | A generated ID leaks server state (time, sequence, host) or is predictable | HTTP edge / `middleware.RequestID` | Generated with `crypto/rand.Text` (≥128 bits, RFC 4648 base32); derived from no server state and unguessable (ADR-0013) | ☑ |
 | Information disclosure — can data leak across a boundary? | Request logging leaks secrets carried in the URL query string (tokens, API keys, signed URLs), or in headers/body, into log stores that outlive and out-scope the request | HTTP edge / `middleware.Logger` | Logger records `r.URL.Path` only — never the query string, headers, or body; the logged fields are a fixed, secret-free set (method, path, status, duration, bytes, `request_id`). A consumer needing more logs it themselves, owning that disclosure (ADR-0014, control C-2) | ☑ |
 | Information disclosure — can data leak across a boundary? | A panicking handler leaks a stack trace (source paths, symbols, internal structure) or the panic value (possibly secrets in flight) into the HTTP response | HTTP edge / `middleware.Recoverer` | Recoverer writes only a generic `500 Internal Server Error` to the client; the panic value and stack are logged server-side (`slog.Default`, Error) and never written to the response. Its log line is path-only, like Logger (ADR-0016, control C-2) | ☑ |
+| Spoofing / Information disclosure — can a foreign origin read cross-origin responses or send credentials it should not? | An over-broad CORS policy lets any website read authenticated responses or make credentialed cross-origin requests (e.g. `Access-Control-Allow-Origin: *` with credentials, or reflecting every `Origin`) | HTTP edge / `middleware.Cors` | Deny-by-default (`CorsConfig` zero value allows no origin); a specific allowed origin is echoed with `Vary: Origin`, `*` is emitted only without credentials, and the Fetch-forbidden credentials+`*` combination is refused at construction (panic). Subdomain/regex origin patterns are deliberately not offered (ADR-0017, control C-3) | ☑ |
 | Denial of service — can the surface be exhausted? | Oversized or high-volume `X-Request-ID` headers inflate memory and log storage; an unrecovered handler panic drops the connection and can unwind past the handler | HTTP edge / `middleware.RequestID`, `middleware.Recoverer` | 128-byte cap on the adopted ID bounds per-request cost (RequestID); Recoverer contains a handler panic and turns it into a bounded 500 rather than a dropped connection or a crash. Broader request/body-size and rate limits remain the consumer's and `ratelimit`'s concern | ◑ partial (per-request panics contained and IDs bounded; whole-request/body-size DoS deferred to consumer) |
 | Elevation of privilege — can a caller gain authority it was not granted? | Caller uses the request ID to gain access | HTTP edge / `middleware.RequestID` | n/a — the ID confers no authority by construction; RequestID makes no authorization decision | ☑ |
 
