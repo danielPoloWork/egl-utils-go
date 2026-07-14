@@ -13,5 +13,5 @@
 // unexported key types, so they cannot collide with a consumer's own keys;
 // each is read back through an exported accessor (e.g. RequestIDFrom). The
 // middleware in this package own no goroutines. Design decisions are recorded
-// in ADR-0013.
+// in ADR-0013 (the package foundation) and ADR-0014 (Logger).
 package middleware
