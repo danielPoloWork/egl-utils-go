@@ -33,3 +33,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0015](0015-enterprise-governance-posture.md) | Enterprise governance posture — a raised compliance bar orthogonal to the domain | Accepted |
 | [0016](0016-middleware-recoverer-design.md) | middleware.Recoverer design — panic-to-500, no stack to the client, ErrAbortHandler passthrough | Accepted |
 | [0017](0017-middleware-cors-design.md) | middleware.Cors design — CorsConfig shape, deny-by-default, loud credential/wildcard guard | Accepted |
+| [0018](0018-config-loader-design.md) | config.Loader design — generic Load, extension-driven format, gopkg.in/yaml.v3 selected | Accepted |

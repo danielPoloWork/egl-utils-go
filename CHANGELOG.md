@@ -72,6 +72,13 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   request's when empty or `*`. Two footgun misconfigurations panic at construction:
   `AllowCredentials` with a `*` origin (forbidden by the Fetch spec) and a negative `MaxAge`
   (new compliance control C-3, ADR-0017).
+- `config.Load[T]` — generic configuration loader (roadmap 5.1, opens Milestone 5): decodes a
+  JSON or YAML file (chosen by extension) straight into the consumer's type `T`, expands
+  `${VAR}`/`$VAR` environment references before parsing (disable with `WithoutEnvExpansion`),
+  and runs the decoded value's `Validate` method when it implements `Validator`. Unknown
+  extensions fail with the sentinel `ErrUnsupportedFormat`. Selects and pins
+  `gopkg.in/yaml.v3` as the YAML parser under ADR-0004's dependency budget — a promotion of an
+  existing indirect dependency to a direct one, no new supply-chain surface (ADR-0018).
 
 ### Changed
 

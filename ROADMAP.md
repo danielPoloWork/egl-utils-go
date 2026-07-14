@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M4.4: HTTP middleware (Cors) — Milestone 4 complete](docs/journal/2026/07/2026-07-15-m4-cors.md).
+  [2026-07-15 — M5 opens: config.Loader](docs/journal/2026/07/2026-07-15-m5-config.md).
 
 ### Agent guidance (model × effort)
 
@@ -103,7 +103,7 @@ Safe configuration ingestion from files and environment
 > typed fallbacks. Note: this milestone selects and pins the YAML parser under ADR-0004's
 > budget (a review point, not a coding challenge).
 
-- [ ] 5.1 config.Loader — JSON/YAML/env loading with validation hooks — *agent: Sonnet 5 · high — precedence rules (file vs env) plus the YAML-parser selection under ADR-0004*
+- [x] 5.1 config.Loader — JSON/YAML/env loading with validation hooks → [ADR-0018](docs/adr/0018-config-loader-design.md) — *agent: Opus 4.8 · low (as built) — generic Load[T], extension-driven format, ${VAR} env expansion, Validator-interface hook; selected + pinned gopkg.in/yaml.v3 (already an indirect dep) under ADR-0004's budget*
 - [ ] 5.2 env.GetDefault — typed env reads with safe fallbacks — *agent: Sonnet 5 · low — trivial typed getenv; the quality gates catch drift*
 
 
