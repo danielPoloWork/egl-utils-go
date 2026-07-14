@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-12 — M1 bootstrap](docs/journal/2026/07/2026-07-12-m1-bootstrap.md).
+  [2026-07-14 — M3 opens: circuitbreaker](docs/journal/2026/07/2026-07-14-m3-circuitbreaker.md).
 
 ### Agent guidance (model × effort)
 
@@ -73,7 +73,7 @@ Fail-fast, retry, and rate-limit protection for outbound calls
 > (closed/open/half-open), backoff bound invariants with jitter, and deterministic-clock
 > testing are subtle; timing bugs here surface only under load.
 
-- [ ] 3.1 circuitbreaker.Breaker — closed/open/half-open state machine with configurable thresholds — *agent: Fable 5 · xhigh — the hardest resilience piece: concurrent state machine with half-open probe admission*
+- [x] 3.1 circuitbreaker.Breaker — closed/open/half-open state machine with configurable thresholds → [ADR-0010](docs/adr/0010-circuitbreaker-design.md) — *agent: Fable 5 · xhigh (as built)*
 - [ ] 3.2 retry.Backoff — exponential backoff with jitter and context cancellation (bound invariant tests) — *agent: Opus 4.8 · high — mostly pure backoff/jitter logic; the bound invariants are property-testable*
 - [ ] 3.3 ratelimit.Limiter — token bucket on Go timers (deterministic-clock tests, bench) — *agent: Fable 5 · high*
 
@@ -178,8 +178,8 @@ progress · ✅ done · ❎ N/A.
 | Spec § | Requirement | Roadmap items | Status |
 |--------|-------------|---------------|--------|
 | §1 | Objective & business context | 1.1; delivered progressively by M2–M9 | 🚧 |
-| §2 | Functional requirements | 2.1–9.5 | ⏳ |
+| §2 | Functional requirements | 2.1–9.5 | 🚧 |
 | §3 | Non-functional requirements | 1.3, 1.4 (gates live); per-feature from M2 | 🚧 |
 | §4 | Logical architecture | 1.1, 1.6 (ADR-0003) | 🚧 |
-| §5 | Public interface | 2.1–9.5 | ⏳ |
+| §5 | Public interface | 2.1–9.5 | 🚧 |
 | §6 | Verification & test strategy | 1.2, 1.4 (framework + CI live); per-feature suites from M2 | 🚧 |

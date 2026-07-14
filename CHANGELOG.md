@@ -26,6 +26,10 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   `golang.org/x/sync/semaphore` with loud panics on misuse (roadmap 2.5, ADR-0009). Adds
   the module's first runtime dependency, `golang.org/x/sync` v0.16.0 (newest release on a
   `go 1.23` directive, so the module's `go 1.24` floor is preserved unchanged).
+- `circuitbreaker.Breaker` — closed/open/half-open circuit breaker (roadmap 3.1):
+  consecutive-failure tripping, lazy timerless state transitions (no goroutines, no
+  timers), generation-guarded outcome accounting, half-open probe budget equal to the
+  success threshold (ADR-0010).
 
 ### Changed
 
