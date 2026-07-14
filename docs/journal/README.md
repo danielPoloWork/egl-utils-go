@@ -20,7 +20,8 @@ _(newest first)_
 #### 07 — July
 
 - [2026-07-14 — M3 opens: circuitbreaker](2026/07/2026-07-14-m3-circuitbreaker.md) —
-  roadmap 3.1 (ADR-0010, PR #14) + addendum 3.2 retry (ADR-0011, PR #15); healed the red
+  roadmap 3.1 (ADR-0010, PR #14) + addenda 3.2 retry (ADR-0011, PR #15) and 3.3 ratelimit
+  (ADR-0012, PR #16 — **Milestone 3 complete**, first benchmark report); healed the red
   master (2.6 go.sum handoff) via a portable Go toolchain; first local verification.
 - [2026-07-12 — M1 bootstrap](2026/07/2026-07-12-m1-bootstrap.md) — Go module + quality
   configs; ADR-0003 (root layout) + ADR-0004 (dependency policy); Milestone 1 complete.

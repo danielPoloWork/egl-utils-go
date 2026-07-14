@@ -48,6 +48,25 @@ honor context cancellation) on a fresh branch from `master`. The portable toolch
 under `%TEMP%\go-portable` makes local build/test/format verification possible — re-download
 via go.dev if the temp dir was cleaned (checksum-verify the zip).
 
+## Addendum 2 — roadmap 3.3 ratelimit.Limiter; Milestone 3 complete (same day)
+
+PR #15 (retry) merged (`5c49670`). Item 3.3 on `feat/ratelimit` (draft PR #16, ADR-0012,
+patterns row 8) closes Milestone 3: the spec-frozen `NewLimiter(rate float64, burst
+int)` / `Allow()` / `Wait(ctx)` as a **hand-rolled lazy token bucket** — built, not
+wrapped, because unlike 2.5 the spec names a construction ("built on Go timers"), not an
+engine; `x/time/rate` was rejected in the ADR (uninjectable clock vs the §6
+deterministic-clock mandate, another floor-pin dance). Float tokens brought current on
+demand (no goroutines, no standing timers — the ADR-0010 lazy lineage); **Wait reserves
+its token on arrival** (debt-based queue: arrival-order fairness, per-waiter exact
+sleeps, no herding) and a canceled Wait repays its reservation. rapid property pins the
+token-bucket law (`admitted ≤ burst + rate·elapsed`). First benchmark report lands under
+`docs/benchmarks/` (spec §6 gap closed): ~25ns zero-alloc `Allow`, ~50ns zero-alloc
+funded `Wait`; the report documents the burst-1/same-tick timer-path boundary honestly.
+Patterns row renamed from the intake's "Token Bucket" to the in-taxonomy **Rate Limiting
+/ Throttling** (catalogue rule; mechanism noted in the row). **M3 complete → README
+milestone table flips M3 done; both v0.2.0 (M2) and now a v0.3.0-eligible M3 are uncut —
+the maintainer decides whether to cut one release or two.**
+
 ## Addendum — roadmap 3.2 retry.Backoff (same day)
 
 PR #14 merged (`f448bd7`) — master green for the first time since the 2.6 merge. Item

@@ -39,7 +39,7 @@ _Patterns named in the spec at intake are seeded below as **Planned**; each beco
 | 5 | Guarded Suspension | Implemented | block until enough free capacity, then proceed — weighted admission control (semaphore.Weighted, over x/sync) | [semaphore/](../../semaphore/) | [ADR-0009](../adr/0009-semaphore-design.md) |
 | 6 | Circuit Breaker | Implemented | fail-fast protection for outbound calls — closed/open/half-open with bounded half-open probes (circuitbreaker.Breaker) | [circuitbreaker/](../../circuitbreaker/) | [ADR-0010](../adr/0010-circuitbreaker-design.md) |
 | 7 | Retry with Backoff | Implemented | transient-failure recovery without thundering herds — proportional jitter, hard-capped exponential delays (retry.Backoff) | [retry/](../../retry/) | [ADR-0011](../adr/0011-retry-design.md) |
-| — | Token Bucket | Planned | smooth rate limiting with bursts (ratelimit.Limiter) | _TBD_ | _spec (intake)_ |
+| 8 | Rate Limiting / Throttling | Implemented | smooth rate limiting with bursts — lazy token bucket, reservation-model Wait (ratelimit.Limiter; the intake's "Token Bucket" is the mechanism, renamed to the taxonomy entry per ADR-0012) | [ratelimit/](../../ratelimit/) | [ADR-0012](../adr/0012-ratelimit-design.md) |
 | — | Decorator | Planned | composable func(http.Handler) http.Handler middleware chain | _TBD_ | _spec (intake)_ |
 | — | Object Pool | Planned | sync.Pool reuse to relieve GC pressure (syncpool.BufferPool) | _TBD_ | _spec (intake)_ |
 | 2 | Functional Options | Implemented | idiomatic, forward-compatible construction for configurable components (first use: workerpool; taxonomy deviation recorded in ADR-0005) | [workerpool/options.go](../../workerpool/options.go) | [ADR-0005](../adr/0005-workerpool-design.md) |
