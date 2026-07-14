@@ -2,7 +2,7 @@
 
 ## What got done
 
-- **Roadmap 6.1 `logger.NewStructured`** (branch `feat/logger-structured`, ADR-0019): the first of
+- **Roadmap 6.1 `logger.NewStructured`** (branch `feat/logger-structured`, draft PR #23, ADR-0019): the first of
   Milestone 6. Spec §5 froze `NewStructured(opts ...Option) *slog.Logger`. Returns a `*slog.Logger`
   backed by slog's **JSON handler** — one JSON object per line, the format ElasticSearch and Grafana
   Loki ingest directly — so it drops straight into `middleware.Logger` (4.2).
@@ -21,7 +21,7 @@
 ## Where the project stands
 
 M1–M5 complete and merged; **M6 in progress (1 of 2)**. 6.1 logger.Structured drafted on
-`feat/logger-structured`, awaiting the maintainer to open and merge (one PR at a time). README
+`feat/logger-structured` (draft PR #23), awaiting the maintainer to open and merge (one PR at a time). README
 milestone table: M6 → in progress. **Four completed milestones remain unreleased** (M2→v0.2.0 …
 M5→v0.5.0); the maintainer has been deferring the release cut deliberately in favor of forward
 progress.
