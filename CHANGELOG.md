@@ -38,6 +38,12 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   lazy refill with no background goroutines or timers, fail-fast `Allow` and queueing
   `Wait` with arrival-order reservations, canceled waits repay their token; ~25ns
   zero-allocation admission (first report under `docs/benchmarks/`) (ADR-0012).
+- `middleware.RequestID` / `middleware.RequestIDFrom` — request-correlation middleware
+  (roadmap 4.1, opens Milestone 4): adopts a valid inbound `X-Request-ID` or generates one
+  with `crypto/rand.Text`, stores it in the request context, and echoes it in the
+  response. Inbound IDs are sanitized (visible-ASCII, ≤128 bytes) to prevent log/header
+  injection; the first HTTP trust boundary is recorded in the threat model and compliance
+  control C-2 (ADR-0013).
 
 ### Changed
 

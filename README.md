@@ -55,7 +55,7 @@ setup.
 | 1 | Project bootstrap & CI | ✅ done |
 | 2 | Concurrency primitives | ✅ done |
 | 3 | Resilience patterns | ✅ done |
-| 4 | HTTP middleware | ⏳ planned |
+| 4 | HTTP middleware | ⏳ in progress |
 | 5 | Configuration & environment | ⏳ planned |
 | 6 | Structured logging | ⏳ planned |
 | 7 | Caching & data helpers | ⏳ planned |
