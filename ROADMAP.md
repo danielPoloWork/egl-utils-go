@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M9.5: errors.Wrap — feature-complete](docs/journal/2026/07/2026-07-15-m9-errors.md).
+  [2026-07-15 — Release: v1.0.0 (feature-complete)](docs/journal/2026/07/2026-07-15-v1-release.md).
 
 ### Agent guidance (model × effort)
 

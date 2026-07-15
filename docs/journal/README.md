@@ -19,6 +19,9 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — Release: v1.0.0 (feature-complete)](2026/07/2026-07-15-v1-release.md) — first stable
+  release (PR #34); version.go → 1.0.0, CHANGELOG [Unreleased] (M2–M9) rolled into docs/changelog/v1/v1.0.0.md,
+  release notes drafted; SemVer API-stability commitment. Agent tags v1.0.0 after the merge.
 - [2026-07-15 — M9.5: errors.Wrap — feature-complete](2026/07/2026-07-15-m9-errors.md) — roadmap 9.5
   (ADR-0029, PR #33); %w-transparent Wrap/Wrapf, one-time origin stack (StackTracer + %+v), Wrap(nil)=nil.
   **Final feature — the library is feature-complete (all 25 spec features).**
