@@ -2,7 +2,7 @@
 
 ## What got done
 
-- **Roadmap 8.1 `validator.Struct`** (branch `feat/validator-struct`, ADR-0023): the first of
+- **Roadmap 8.1 `validator.Struct`** (branch `feat/validator-struct`, draft PR #27, ADR-0023): the first of
   Milestone 8 and the largest single surface in the project (reflection tag grammar). Spec §5 froze
   `Struct(v any) error` with the rules `required, email, min, max, oneof`. **Hand-rolled** — no
   `go-playground/validator` — as ADR-0004 already mandated.
@@ -31,7 +31,7 @@
 ## Where the project stands
 
 M1–M7 complete and merged; **M8 in progress (1 of 2)**. 8.1 validator.Struct drafted on
-`feat/validator-struct`, awaiting the maintainer to open and merge (one PR at a time). README
+`feat/validator-struct` (draft PR #27), awaiting the maintainer to open and merge (one PR at a time). README
 milestone table: M8 → in progress. **Six completed milestones remain unreleased** (M2→v0.2.0 …
 M7→v0.7.0); the maintainer keeps deferring the cut.
 
