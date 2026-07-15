@@ -19,6 +19,9 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — M9.4: syncpool.BufferPool](2026/07/2026-07-15-m9-syncpool.md) — roadmap 9.4 (ADR-0028, PR #32);
+  sync.Pool of bytes.Buffer, reset-on-Put, discards buffers over a 64 KiB cap (retention trap);
+  AllocsPerRun zero-alloc proof; Object Pool pattern → Implemented (catalogue row 10).
 - [2026-07-15 — M9.3: metrics.Prometheus](2026/07/2026-07-15-m9-metrics.md) — roadmap 9.3 (ADR-0027, PR #31);
   request counter + latency histogram labelled (method, code) — no path label, method normalized
   (cardinality-DoS mitigation); adds prometheus/client_golang v1.23.2 (floor-preserving); one

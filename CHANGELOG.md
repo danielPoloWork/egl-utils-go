@@ -148,6 +148,11 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   Label cardinality is bounded by construction — the request path is never a label and the method
   is normalized to the known HTTP methods plus `"other"`, so client input cannot explode it. Panics
   on a nil registerer, a nil handler, or a double registration (ADR-0027).
+- `syncpool.BufferPool` — pooled `*bytes.Buffer` reuse (roadmap 9.4): `NewBufferPool` with `Get`
+  (an empty buffer) and `Put` (resets and returns it). Steady-state Get/write/Put allocates nothing
+  (proved by a `testing.AllocsPerRun` assertion and a benchmark). `Put` discards a buffer grown past
+  a 64 KiB cap instead of pooling it, so a one-off large buffer cannot pin memory — the classic
+  `sync.Pool` leak. Adopts the Object Pool pattern (ADR-0028).
 
 ### Changed
 
