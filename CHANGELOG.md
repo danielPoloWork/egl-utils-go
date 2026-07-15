@@ -141,6 +141,13 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   overall status. The probe's error is deliberately **not** written to the response (no internal
   detail to an unauthenticated endpoint); a consumer that wants it logs it inside the probe. Panics
   on an empty check name, a nil probe, or a duplicate name (ADR-0026).
+- `metrics.Prometheus` / `metrics.Handler` — Prometheus HTTP instrumentation (roadmap 9.3):
+  `Prometheus(reg)` returns middleware recording a `http_requests_total` counter and a
+  `http_request_duration_seconds` histogram, each labelled by request method and response status
+  code, into the given registry; `Handler()` is the exposition endpoint for the default registry.
+  Label cardinality is bounded by construction — the request path is never a label and the method
+  is normalized to the known HTTP methods plus `"other"`, so client input cannot explode it. Panics
+  on a nil registerer, a nil handler, or a double registration (ADR-0027).
 
 ### Changed
 
@@ -148,6 +155,12 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   for bcrypt by ADR-0004) for the `hash` package. v0.48.0 is the newest release whose `go` directive
   is still `1.24.x`, so the module's Go 1.24 floor is preserved (the directive is normalized to
   `go 1.24.0`); v0.50.0+ would raise it to 1.25. `govulncheck` reports no called vulnerabilities.
+- Runtime dependencies: added `github.com/prometheus/client_golang` v1.23.2 (ring 3, pre-approved
+  by ADR-0004) for the `metrics` package — completing the module's dependency budget. Its `go`
+  directive (1.23.0) is under the 1.24 floor, so the floor is unchanged. A transitive
+  `golang.org/x/sys` advisory (GO-2026-5024, Windows-only, **uncalled** by this module) is knowingly
+  retained: its fix requires `x/sys` on Go 1.25, which would drop the 1.24 floor (ADR-0027);
+  `govulncheck` reports no called vulnerabilities.
 
 - Test infrastructure (roadmap 2.6, dev-facing only — no change to the consumer surface):
   adopted the ADR-0004 test-only dependencies. The interim in-repo goroutine-leak guard
