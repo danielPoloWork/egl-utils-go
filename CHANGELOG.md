@@ -125,6 +125,16 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   and a distinct error on a malformed hash. Callers use the `hash.*` sentinels without importing
   bcrypt. Security-relevant: carries ADR-0024, compliance control C-4, a threat-model row, and the
   security-auditor sign-off.
+- `lifecycle.Register` / `lifecycle.Shutdown` / `lifecycle.WaitForSignals` — signal-coordinated
+  graceful shutdown (roadmap 9.1, opens Milestone 9): components register shutdown hooks as they
+  are wired; `Shutdown` runs them exactly once in reverse registration order (LIFO — a resource
+  closes before its dependencies), never skipping a hook on failure and returning the `errors.Join`
+  of every error; later or concurrent calls wait for the first run and share its result.
+  `WaitForSignals` blocks until a termination signal (default `os.Interrupt` + `syscall.SIGTERM`),
+  then shuts down with a background context, logging any error on `slog.Default` — no hidden
+  timeout (the platform's kill escalation is the bound; use a deadline context with `Shutdown` for
+  a custom one). The package owns no goroutines. Registering a nil hook, or registering after
+  shutdown began, panics (ADR-0025).
 
 ### Changed
 
