@@ -2,7 +2,7 @@
 
 ## What got done
 
-- **Roadmap 9.1 `lifecycle`** (branch `feat/lifecycle-shutdown`, ADR-0025): signal-coordinated
+- **Roadmap 9.1 `lifecycle`** (branch `feat/lifecycle-shutdown`, draft PR #29, ADR-0025): signal-coordinated
   graceful shutdown — the first and hardest item of **Milestone 9, the final milestone** (Fable 5 ·
   xhigh per the ROADMAP tag). Spec §5 froze three package-level functions:
   `Register(fn func(ctx) error)`, `WaitForSignals(sig ...os.Signal)`, `Shutdown(ctx) error`; the
@@ -37,7 +37,7 @@
 ## Where the project stands
 
 M1–M8 complete and merged; **M9 in progress (1 of 5)**. 9.1 lifecycle drafted on
-`feat/lifecycle-shutdown`, awaiting the maintainer to open and merge (one PR at a time). README
+`feat/lifecycle-shutdown` (draft PR #29), awaiting the maintainer to open and merge (one PR at a time). README
 milestone table: M9 → in progress. **Seven completed milestones remain unreleased** (M2→v0.2.0 …
 M8→v0.8.0); after M9 the library is feature-complete — the natural moment for the big release
 decision (possibly v1.0.0).
