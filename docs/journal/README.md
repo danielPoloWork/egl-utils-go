@@ -19,6 +19,9 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — M8 opens: validator.Struct](2026/07/2026-07-15-m8-validator.md) — roadmap 8.1
+  (ADR-0023); hand-rolled reflection validator (required/email/min/max/oneof), literal rules, nested
+  recursion with dotted paths, full aggregation; data violations returned, tag misuse panics.
 - [2026-07-15 — M7.2: db.Transaction — Milestone 7 complete](2026/07/2026-07-15-m7-db.md) — roadmap
   7.2 (ADR-0022, PR #26); auto-rollback transaction helper — commit on nil, rollback+return on error
   (errors.Join if rollback fails), rollback+re-panic on panic; fake sql driver in tests. M7 complete.
