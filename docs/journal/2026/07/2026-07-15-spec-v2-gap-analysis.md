@@ -32,7 +32,7 @@
 ## Where the project stands
 
 v1.0.0 shipped (tag pushed; GitHub Release draft awaiting the maintainer's Publish). No feature
-work pending. The spec-v2 gap analysis is drafted on `docs/spec-v2-gap-analysis`, awaiting the
+work pending. The spec-v2 gap analysis is drafted on `docs/spec-v2-gap-analysis` (draft PR #36), awaiting the
 maintainer to open and merge. The open strategic question — which spec governs post-1.0 (adopt v2
 deltas in v1.x/v2, or record deviations) — remains with the maintainer; the analysis is the
 decision's input.
