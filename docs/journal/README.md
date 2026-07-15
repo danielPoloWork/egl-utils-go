@@ -19,6 +19,10 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — M9.3: metrics.Prometheus](2026/07/2026-07-15-m9-metrics.md) — roadmap 9.3 (ADR-0027);
+  request counter + latency histogram labelled (method, code) — no path label, method normalized
+  (cardinality-DoS mitigation); adds prometheus/client_golang v1.23.2 (floor-preserving); one
+  uncalled x/sys advisory kept to preserve the 1.24 floor.
 - [2026-07-15 — M9.2: health.Handler](2026/07/2026-07-15-m9-health.md) — roadmap 9.2 (ADR-0026, PR #30);
   concurrent dependency probes on the request context, 200/503, status-only JSON body (never the
   probe error — info-disclosure); loud panic on empty/dup name or nil probe.
