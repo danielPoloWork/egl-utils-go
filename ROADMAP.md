@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M8.2: hash (bcrypt) — Milestone 8 complete](docs/journal/2026/07/2026-07-15-m8-hash.md).
+  [2026-07-15 — M9 opens: lifecycle.GracefulShutdown](docs/journal/2026/07/2026-07-15-m9-lifecycle.md).
 
 ### Agent guidance (model × effort)
 
@@ -159,7 +159,7 @@ Graceful shutdown, health, metrics, and the core utility pair
 > (Windows differs), ordered shutdown coordination, and the zero-allocation BufferPool
 > proof (testing.AllocsPerRun) span concurrency, portability, and performance at once.
 
-- [ ] 9.1 lifecycle.GracefulShutdown — signal-coordinated ordered shutdown (SIGINT/SIGTERM) — *agent: Fable 5 · xhigh — cross-platform signal handling plus ordered phases; the hardest of M9*
+- [x] 9.1 lifecycle.GracefulShutdown — signal-coordinated ordered shutdown (SIGINT/SIGTERM) → [ADR-0025](docs/adr/0025-lifecycle-shutdown-design.md) — *agent: Fable 5 · xhigh (as built) — LIFO hooks (reverse-dependency order), run-all + errors.Join, exactly-once convergent Shutdown (concurrent callers wait and share the result), no hidden timeout (platform kill escalation bounds it), zero owned goroutines; injected signal seam makes tests deterministic on Windows (no kill(2))*
 - [ ] 9.2 health.Handler — dependency-probing health endpoint — *agent: Opus 4.8 · medium — concurrent probes with per-check timeouts; moderate and well-trodden*
 - [ ] 9.3 metrics.Prometheus — latency/request-count middleware with Prometheus exposition — *agent: Sonnet 5 · high — client_golang integration; label cardinality is the review point*
 - [ ] 9.4 syncpool.BufferPool — bytes.Buffer pooling (zero steady-state allocations, bench) — *agent: Opus 4.8 · high — sync.Pool oversized-buffer retention trap plus the AllocsPerRun proof*

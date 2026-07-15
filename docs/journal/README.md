@@ -19,6 +19,9 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — M9 opens: lifecycle.GracefulShutdown](2026/07/2026-07-15-m9-lifecycle.md) — roadmap
+  9.1 (ADR-0025); LIFO shutdown hooks, run-all + errors.Join, exactly-once convergent Shutdown, no
+  hidden timeout, zero owned goroutines; injected signal seam for Windows-deterministic tests.
 - [2026-07-15 — M8.2: hash (bcrypt) — Milestone 8 complete](2026/07/2026-07-15-m8-hash.md) — roadmap
   8.2 (ADR-0024, PR #28); bcrypt hashing/verify — default cost 10, per-hash salt, ErrPasswordTooLong,
   constant-time ErrMismatch; adds x/crypto v0.48.0 (floor-preserving); control C-4 + auditor sign-off.
