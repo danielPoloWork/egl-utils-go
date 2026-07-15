@@ -20,7 +20,7 @@ _(newest first)_
 #### 07 — July
 
 - [2026-07-15 — M8.2: hash (bcrypt) — Milestone 8 complete](2026/07/2026-07-15-m8-hash.md) — roadmap
-  8.2 (ADR-0024); bcrypt hashing/verify — default cost 10, per-hash salt, ErrPasswordTooLong,
+  8.2 (ADR-0024, PR #28); bcrypt hashing/verify — default cost 10, per-hash salt, ErrPasswordTooLong,
   constant-time ErrMismatch; adds x/crypto v0.48.0 (floor-preserving); control C-4 + auditor sign-off.
   Milestone 8 complete.
 - [2026-07-15 — M8 opens: validator.Struct](2026/07/2026-07-15-m8-validator.md) — roadmap 8.1
