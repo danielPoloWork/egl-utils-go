@@ -19,6 +19,9 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — M9.2: health.Handler](2026/07/2026-07-15-m9-health.md) — roadmap 9.2 (ADR-0026, PR #30);
+  concurrent dependency probes on the request context, 200/503, status-only JSON body (never the
+  probe error — info-disclosure); loud panic on empty/dup name or nil probe.
 - [2026-07-15 — M9 opens: lifecycle.GracefulShutdown](2026/07/2026-07-15-m9-lifecycle.md) — roadmap
   9.1 (ADR-0025, PR #29); LIFO shutdown hooks, run-all + errors.Join, exactly-once convergent Shutdown, no
   hidden timeout, zero owned goroutines; injected signal seam for Windows-deterministic tests.

@@ -135,6 +135,12 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   timeout (the platform's kill escalation is the bound; use a deadline context with `Shutdown` for
   a custom one). The package owns no goroutines. Registering a nil hook, or registering after
   shutdown began, panics (ADR-0025).
+- `health.Handler` / `health.Check` — preconfigured HTTP health-check endpoint (roadmap 9.2):
+  runs every `Check`'s probe concurrently with the request context and responds `200` when all pass
+  or `503` when any fails, with a JSON body reporting each check by name as `ok`/`fail` plus an
+  overall status. The probe's error is deliberately **not** written to the response (no internal
+  detail to an unauthenticated endpoint); a consumer that wants it logs it inside the probe. Panics
+  on an empty check name, a nil probe, or a duplicate name (ADR-0026).
 
 ### Changed
 

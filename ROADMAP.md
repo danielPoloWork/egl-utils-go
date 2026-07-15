@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M9 opens: lifecycle.GracefulShutdown](docs/journal/2026/07/2026-07-15-m9-lifecycle.md).
+  [2026-07-15 — M9.2: health.Handler](docs/journal/2026/07/2026-07-15-m9-health.md).
 
 ### Agent guidance (model × effort)
 
@@ -160,7 +160,7 @@ Graceful shutdown, health, metrics, and the core utility pair
 > proof (testing.AllocsPerRun) span concurrency, portability, and performance at once.
 
 - [x] 9.1 lifecycle.GracefulShutdown — signal-coordinated ordered shutdown (SIGINT/SIGTERM) → [ADR-0025](docs/adr/0025-lifecycle-shutdown-design.md) — *agent: Fable 5 · xhigh (as built) — LIFO hooks (reverse-dependency order), run-all + errors.Join, exactly-once convergent Shutdown (concurrent callers wait and share the result), no hidden timeout (platform kill escalation bounds it), zero owned goroutines; injected signal seam makes tests deterministic on Windows (no kill(2))*
-- [ ] 9.2 health.Handler — dependency-probing health endpoint — *agent: Opus 4.8 · medium — concurrent probes with per-check timeouts; moderate and well-trodden*
+- [x] 9.2 health.Handler — dependency-probing health endpoint → [ADR-0026](docs/adr/0026-health-handler-design.md) — *agent: Opus 4.8 · medium (as built) — probes run concurrently with the request context, 200 all-pass / 503 any-fail; status-only JSON body (name + ok/fail, never the probe error — info-disclosure, threat model); loud panic on empty/dup name or nil probe*
 - [ ] 9.3 metrics.Prometheus — latency/request-count middleware with Prometheus exposition — *agent: Sonnet 5 · high — client_golang integration; label cardinality is the review point*
 - [ ] 9.4 syncpool.BufferPool — bytes.Buffer pooling (zero steady-state allocations, bench) — *agent: Opus 4.8 · high — sync.Pool oversized-buffer retention trap plus the AllocsPerRun proof*
 - [ ] 9.5 errors.Wrap — stack-preserving error context helpers — *agent: Opus 4.8 · medium — %w-compatible wrapping with one-time stack capture; well-specified*

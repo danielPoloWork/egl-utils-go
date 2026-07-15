@@ -41,3 +41,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0023](0023-validator-struct-design.md) | validator.Struct design — reflection tag grammar, literal rules, panic on tag misuse | Accepted |
 | [0024](0024-hash-password-design.md) | hash password design — bcrypt at default cost, per-hash salt, constant-time verify | Accepted |
 | [0025](0025-lifecycle-shutdown-design.md) | lifecycle.GracefulShutdown design — LIFO hooks, exactly-once convergent Shutdown, no hidden timeout | Accepted |
+| [0026](0026-health-handler-design.md) | health.Handler design — concurrent probes, 200/503, status-only body (no error leak) | Accepted |
