@@ -20,7 +20,7 @@ _(newest first)_
 #### 07 — July
 
 - [2026-07-15 — M7.2: db.Transaction — Milestone 7 complete](2026/07/2026-07-15-m7-db.md) — roadmap
-  7.2 (ADR-0022); auto-rollback transaction helper — commit on nil, rollback+return on error
+  7.2 (ADR-0022, PR #26); auto-rollback transaction helper — commit on nil, rollback+return on error
   (errors.Join if rollback fails), rollback+re-panic on panic; fake sql driver in tests. M7 complete.
 - [2026-07-15 — M7 opens: cache.InMemory](2026/07/2026-07-15-m7-cache.md) — roadmap 7.1
   (ADR-0021, PR #25); generic TTL cache — expiry enforced by Get (stale reads impossible), one sweeper
