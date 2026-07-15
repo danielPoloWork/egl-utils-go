@@ -59,7 +59,7 @@ setup.
 | 5 | Configuration & environment | ✅ done |
 | 6 | Structured logging | ✅ done |
 | 7 | Caching & data helpers | ✅ done |
-| 8 | Validation & security | ⏳ in progress |
+| 8 | Validation & security | ✅ done |
 | 9 | Diagnostics & lifecycle | ⏳ planned |
 
 

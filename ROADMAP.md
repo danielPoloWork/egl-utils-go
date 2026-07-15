@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M8 opens: validator.Struct](docs/journal/2026/07/2026-07-15-m8-validator.md).
+  [2026-07-15 — M8.2: hash (bcrypt) — Milestone 8 complete](docs/journal/2026/07/2026-07-15-m8-hash.md).
 
 ### Agent guidance (model × effort)
 
@@ -146,7 +146,7 @@ Tag-driven validation and password hashing
 > carries an ADR and the security-auditor's review (AGENTS.md §7/§10).
 
 - [x] 8.1 validator.Struct — tag-driven struct validation (required, email, min, max, oneof) → [ADR-0023](docs/adr/0023-validator-struct-design.md) — *agent: Opus 4.8 · xhigh (as built) — hand-rolled reflection (no framework, ADR-0004); literal rules (no implicit optional), rune-length min/max, nested-struct recursion with dotted paths, full aggregation via ValidationErrors; data violations returned, tag-misuse panics (two channels kept separate)*
-- [ ] 8.2 hash.HashPassword / hash.CheckPassword — bcrypt hashing and verification — *agent: Opus 4.8 · high*
+- [x] 8.2 hash.HashPassword / hash.CheckPassword — bcrypt hashing and verification → [ADR-0024](docs/adr/0024-hash-password-design.md) — *agent: Opus 4.8 · high (as built) — completes Milestone 8; bcrypt default cost 10, per-hash salt, ErrPasswordTooLong (no truncation), constant-time verify → generic ErrMismatch; adds golang.org/x/crypto v0.48.0 (ring 2, floor-preserving pin); security-relevant → ADR + auditor sign-off + compliance C-4*
 
 
 ---

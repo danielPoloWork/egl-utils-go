@@ -118,8 +118,20 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   field expresses optionality). A malformed tag — an unknown rule, a rule on an incompatible type,
   a non-numeric bound — panics as the programming error it is, keeping the returned error purely
   about data. Hand-rolled reflection, no third-party dependency (ADR-0023, ADR-0004).
+- `hash.HashPassword` / `hash.CheckPassword` — bcrypt password hashing and verification (roadmap
+  8.2, completes Milestone 8): `HashPassword` returns a salted, adaptive bcrypt hash at the default
+  cost (10), rejecting input over bcrypt's 72-byte limit with `ErrPasswordTooLong` rather than
+  truncating; `CheckPassword` verifies in constant time, returning `ErrMismatch` on a wrong password
+  and a distinct error on a malformed hash. Callers use the `hash.*` sentinels without importing
+  bcrypt. Security-relevant: carries ADR-0024, compliance control C-4, a threat-model row, and the
+  security-auditor sign-off.
 
 ### Changed
+
+- Runtime dependencies: added `golang.org/x/crypto` v0.48.0 (ring 2, `golang.org/x/*`; pre-approved
+  for bcrypt by ADR-0004) for the `hash` package. v0.48.0 is the newest release whose `go` directive
+  is still `1.24.x`, so the module's Go 1.24 floor is preserved (the directive is normalized to
+  `go 1.24.0`); v0.50.0+ would raise it to 1.25. `govulncheck` reports no called vulnerabilities.
 
 - Test infrastructure (roadmap 2.6, dev-facing only — no change to the consumer surface):
   adopted the ADR-0004 test-only dependencies. The interim in-repo goroutine-leak guard

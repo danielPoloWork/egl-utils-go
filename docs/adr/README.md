@@ -39,3 +39,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0021](0021-cache-inmemory-design.md) | cache.InMemory design — lazy expiry on Get, one sweeper goroutine, deterministic Close | Accepted |
 | [0022](0022-db-transaction-design.md) | db.Transaction design — rollback on error and panic, re-panic, joined rollback errors | Accepted |
 | [0023](0023-validator-struct-design.md) | validator.Struct design — reflection tag grammar, literal rules, panic on tag misuse | Accepted |
+| [0024](0024-hash-password-design.md) | hash password design — bcrypt at default cost, per-hash salt, constant-time verify | Accepted |
