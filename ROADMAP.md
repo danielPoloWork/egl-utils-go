@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M9.3: metrics.Prometheus](docs/journal/2026/07/2026-07-15-m9-metrics.md).
+  [2026-07-15 — M9.4: syncpool.BufferPool](docs/journal/2026/07/2026-07-15-m9-syncpool.md).
 
 ### Agent guidance (model × effort)
 
@@ -162,7 +162,7 @@ Graceful shutdown, health, metrics, and the core utility pair
 - [x] 9.1 lifecycle.GracefulShutdown — signal-coordinated ordered shutdown (SIGINT/SIGTERM) → [ADR-0025](docs/adr/0025-lifecycle-shutdown-design.md) — *agent: Fable 5 · xhigh (as built) — LIFO hooks (reverse-dependency order), run-all + errors.Join, exactly-once convergent Shutdown (concurrent callers wait and share the result), no hidden timeout (platform kill escalation bounds it), zero owned goroutines; injected signal seam makes tests deterministic on Windows (no kill(2))*
 - [x] 9.2 health.Handler — dependency-probing health endpoint → [ADR-0026](docs/adr/0026-health-handler-design.md) — *agent: Opus 4.8 · medium (as built) — probes run concurrently with the request context, 200 all-pass / 503 any-fail; status-only JSON body (name + ok/fail, never the probe error — info-disclosure, threat model); loud panic on empty/dup name or nil probe*
 - [x] 9.3 metrics.Prometheus — latency/request-count middleware with Prometheus exposition → [ADR-0027](docs/adr/0027-metrics-prometheus-design.md) — *agent: Opus 4.8 · high (as built) — request counter + latency histogram labelled (method, code); no path label and method normalized to a bounded set (cardinality DoS mitigation, threat model); adds prometheus/client_golang v1.23.2 (ring 3, ADR-0004, floor-preserving); one uncalled x/sys advisory knowingly kept to preserve the 1.24 floor*
-- [ ] 9.4 syncpool.BufferPool — bytes.Buffer pooling (zero steady-state allocations, bench) — *agent: Opus 4.8 · high — sync.Pool oversized-buffer retention trap plus the AllocsPerRun proof*
+- [x] 9.4 syncpool.BufferPool — bytes.Buffer pooling (zero steady-state allocations, bench) → [ADR-0028](docs/adr/0028-syncpool-bufferpool-design.md) — *agent: Opus 4.8 · high (as built) — sync.Pool of bytes.Buffer, reset-on-Put, discards buffers grown past a 64 KiB cap (memory-retention trap); AllocsPerRun zero-alloc assertion + bench (~17ns/0-alloc); adopts the Object Pool pattern (catalogue row 10)*
 - [ ] 9.5 errors.Wrap — stack-preserving error context helpers — *agent: Opus 4.8 · medium — %w-compatible wrapping with one-time stack capture; well-specified*
 
 

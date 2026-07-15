@@ -41,7 +41,7 @@ _Patterns named in the spec at intake are seeded below as **Planned**; each beco
 | 7 | Retry with Backoff | Implemented | transient-failure recovery without thundering herds — proportional jitter, hard-capped exponential delays (retry.Backoff) | [retry/](../../retry/) | [ADR-0011](../adr/0011-retry-design.md) |
 | 8 | Rate Limiting / Throttling | Implemented | smooth rate limiting with bursts — lazy token bucket, reservation-model Wait (ratelimit.Limiter; the intake's "Token Bucket" is the mechanism, renamed to the taxonomy entry per ADR-0012) | [ratelimit/](../../ratelimit/) | [ADR-0012](../adr/0012-ratelimit-design.md) |
 | 9 | Decorator | Implemented | composable func(http.Handler) http.Handler middleware chain (middleware.RequestID, middleware.Logger, middleware.Recoverer, middleware.Cors) | [middleware/](../../middleware/) | [ADR-0013](../adr/0013-middleware-requestid-design.md), [ADR-0014](../adr/0014-middleware-logger-design.md), [ADR-0016](../adr/0016-middleware-recoverer-design.md), [ADR-0017](../adr/0017-middleware-cors-design.md) |
-| — | Object Pool | Planned | sync.Pool reuse to relieve GC pressure (syncpool.BufferPool) | _TBD_ | _spec (intake)_ |
+| 10 | Object Pool | Implemented | sync.Pool reuse to relieve GC pressure — reset-on-return, oversized buffers discarded so a one-off large buffer cannot pin memory (syncpool.BufferPool; ~17ns/0-alloc Get/Put) | [syncpool/](../../syncpool/) | [ADR-0028](../adr/0028-syncpool-bufferpool-design.md) |
 | 2 | Functional Options | Implemented | idiomatic, forward-compatible construction for configurable components (first use: workerpool; taxonomy deviation recorded in ADR-0005) | [workerpool/options.go](../../workerpool/options.go) | [ADR-0005](../adr/0005-workerpool-design.md) |
 
 
