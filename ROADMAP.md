@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — Release: v1.0.0 (feature-complete)](docs/journal/2026/07/2026-07-15-v1-release.md).
+  [2026-07-15 — Spec v2.0 discovered: gap analysis](docs/journal/2026/07/2026-07-15-spec-v2-gap-analysis.md).
 
 ### Agent guidance (model × effort)
 

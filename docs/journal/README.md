@@ -19,6 +19,10 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — Spec v2.0 discovered: gap analysis](2026/07/2026-07-15-spec-v2-gap-analysis.md) —
+  found untracked `.spec/` (spec v2.0 + 3 maintainer ADRs, post-intake, never reconciled); wrote
+  `docs/specs/02_spec_v2_gap_analysis.md` — all 25 items classified, breaking vs additive deltas,
+  v2's internal YAML/zero-dep contradiction, adoption paths. Informational; disposition open.
 - [2026-07-15 — Release: v1.0.0 (feature-complete)](2026/07/2026-07-15-v1-release.md) — first stable
   release (PR #34); version.go → 1.0.0, CHANGELOG [Unreleased] (M2–M9) rolled into docs/changelog/v1/v1.0.0.md,
   release notes drafted; SemVer API-stability commitment. Agent tags v1.0.0 after the merge.
