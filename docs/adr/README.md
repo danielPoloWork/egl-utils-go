@@ -44,3 +44,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0026](0026-health-handler-design.md) | health.Handler design — concurrent probes, 200/503, status-only body (no error leak) | Accepted |
 | [0027](0027-metrics-prometheus-design.md) | metrics.Prometheus design — bounded-cardinality labels, client_golang pin, uncalled-vuln trade-off | Accepted |
 | [0028](0028-syncpool-bufferpool-design.md) | syncpool.BufferPool design — sync.Pool of bytes.Buffer, reset on return, discard oversized | Accepted |
+| [0029](0029-errors-wrap-design.md) | errors.Wrap design — %w-transparent wrapping, one-time origin stack, errors package name | Accepted |

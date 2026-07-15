@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M9.4: syncpool.BufferPool](docs/journal/2026/07/2026-07-15-m9-syncpool.md).
+  [2026-07-15 — M9.5: errors.Wrap — feature-complete](docs/journal/2026/07/2026-07-15-m9-errors.md).
 
 ### Agent guidance (model × effort)
 
@@ -163,7 +163,7 @@ Graceful shutdown, health, metrics, and the core utility pair
 - [x] 9.2 health.Handler — dependency-probing health endpoint → [ADR-0026](docs/adr/0026-health-handler-design.md) — *agent: Opus 4.8 · medium (as built) — probes run concurrently with the request context, 200 all-pass / 503 any-fail; status-only JSON body (name + ok/fail, never the probe error — info-disclosure, threat model); loud panic on empty/dup name or nil probe*
 - [x] 9.3 metrics.Prometheus — latency/request-count middleware with Prometheus exposition → [ADR-0027](docs/adr/0027-metrics-prometheus-design.md) — *agent: Opus 4.8 · high (as built) — request counter + latency histogram labelled (method, code); no path label and method normalized to a bounded set (cardinality DoS mitigation, threat model); adds prometheus/client_golang v1.23.2 (ring 3, ADR-0004, floor-preserving); one uncalled x/sys advisory knowingly kept to preserve the 1.24 floor*
 - [x] 9.4 syncpool.BufferPool — bytes.Buffer pooling (zero steady-state allocations, bench) → [ADR-0028](docs/adr/0028-syncpool-bufferpool-design.md) — *agent: Opus 4.8 · high (as built) — sync.Pool of bytes.Buffer, reset-on-Put, discards buffers grown past a 64 KiB cap (memory-retention trap); AllocsPerRun zero-alloc assertion + bench (~17ns/0-alloc); adopts the Object Pool pattern (catalogue row 10)*
-- [ ] 9.5 errors.Wrap — stack-preserving error context helpers — *agent: Opus 4.8 · medium — %w-compatible wrapping with one-time stack capture; well-specified*
+- [x] 9.5 errors.Wrap — stack-preserving error context helpers → [ADR-0029](docs/adr/0029-errors-wrap-design.md) — *agent: Opus 4.8 · medium (as built, completes the roadmap) — Wrap/Wrapf %w-transparent (errors.Is/As/Unwrap), one-time origin stack captured at the first wrap and inherited by later wraps, StackTracer + fmt.Formatter (%+v prints frames), Wrap(nil)=nil; package named errors imports stdlib as stderrors*
 
 
 
@@ -177,9 +177,9 @@ progress · ✅ done · ❎ N/A.
 
 | Spec § | Requirement | Roadmap items | Status |
 |--------|-------------|---------------|--------|
-| §1 | Objective & business context | 1.1; delivered progressively by M2–M9 | 🚧 |
-| §2 | Functional requirements | 2.1–9.5 | 🚧 |
-| §3 | Non-functional requirements | 1.3, 1.4 (gates live); per-feature from M2 | 🚧 |
-| §4 | Logical architecture | 1.1, 1.6 (ADR-0003) | 🚧 |
-| §5 | Public interface | 2.1–9.5 | 🚧 |
-| §6 | Verification & test strategy | 1.2, 1.4 (framework + CI live); per-feature suites from M2 | 🚧 |
+| §1 | Objective & business context | 1.1; delivered by M2–M9 | ✅ |
+| §2 | Functional requirements | 2.1–9.5 (all 25 features) | ✅ |
+| §3 | Non-functional requirements | 1.3, 1.4 (gates live); per-feature from M2 | ✅ |
+| §4 | Logical architecture | 1.1, 1.6 (ADR-0003) | ✅ |
+| §5 | Public interface | 2.1–9.5 | ✅ |
+| §6 | Verification & test strategy | 1.2, 1.4 (framework + CI live); per-feature suites M2–M9 | ✅ |

@@ -153,6 +153,12 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   (proved by a `testing.AllocsPerRun` assertion and a benchmark). `Put` discards a buffer grown past
   a 64 KiB cap instead of pooling it, so a one-off large buffer cannot pin memory — the classic
   `sync.Pool` leak. Adopts the Object Pool pattern (ADR-0028).
+- `errors.Wrap` / `errors.Wrapf` — stack-preserving error wrapping (roadmap 9.5, completes
+  Milestone 9): annotate an error with a message while staying fully `errors.Is`/`As`/`Unwrap`
+  transparent, and capture the call stack once at the origin (later wraps reuse it, so the trace
+  points at the first failure site). The stack is reachable via the `StackTracer` interface
+  (`StackTrace() []uintptr`) and printed by `%+v`; `%v`/`%s` print `"message: cause"`. Wrapping a
+  nil error returns nil. The package is named `errors` and shadows the standard library's (ADR-0029).
 
 ### Changed
 
