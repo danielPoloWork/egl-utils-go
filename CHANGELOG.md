@@ -110,6 +110,14 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   original value); a rollback that itself fails is joined onto the returned error via `errors.Join`,
   never swallowed. The context governs both begin and the statements. Panics on a nil db or fn
   (ADR-0022).
+- `validator.Struct` — tag-driven struct validation (roadmap 8.1, opens Milestone 8):
+  validates a struct (or non-nil pointer to one) against `validate:"..."` tags with the rules
+  `required`, `email`, `min=N`, `max=N`, and `oneof=a b c`, recursing into nested structs with
+  dotted field paths and aggregating every failure into a `ValidationErrors` (an
+  `errors.As`-inspectable `[]*FieldError`). Rules apply literally (no implicit optional; a pointer
+  field expresses optionality). A malformed tag — an unknown rule, a rule on an incompatible type,
+  a non-numeric bound — panics as the programming error it is, keeping the returned error purely
+  about data. Hand-rolled reflection, no third-party dependency (ADR-0023, ADR-0004).
 
 ### Changed
 

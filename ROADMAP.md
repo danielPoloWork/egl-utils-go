@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M7.2: db.Transaction — Milestone 7 complete](docs/journal/2026/07/2026-07-15-m7-db.md).
+  [2026-07-15 — M8 opens: validator.Struct](docs/journal/2026/07/2026-07-15-m8-validator.md).
 
 ### Agent guidance (model × effort)
 
@@ -145,7 +145,7 @@ Tag-driven validation and password hashing
 > is fiddly, and hashing is security-relevant: under the enterprise posture this milestone
 > carries an ADR and the security-auditor's review (AGENTS.md §7/§10).
 
-- [ ] 8.1 validator.Struct — tag-driven struct validation (required, email, min, max, oneof) — *agent: Opus 4.8 · xhigh — the largest single surface: reflection tag grammar, nested structs, error aggregation*
+- [x] 8.1 validator.Struct — tag-driven struct validation (required, email, min, max, oneof) → [ADR-0023](docs/adr/0023-validator-struct-design.md) — *agent: Opus 4.8 · xhigh (as built) — hand-rolled reflection (no framework, ADR-0004); literal rules (no implicit optional), rune-length min/max, nested-struct recursion with dotted paths, full aggregation via ValidationErrors; data violations returned, tag-misuse panics (two channels kept separate)*
 - [ ] 8.2 hash.HashPassword / hash.CheckPassword — bcrypt hashing and verification — *agent: Opus 4.8 · high*
 
 
