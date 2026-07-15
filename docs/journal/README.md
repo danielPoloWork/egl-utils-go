@@ -19,6 +19,9 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-15 — M9.5: errors.Wrap — feature-complete](2026/07/2026-07-15-m9-errors.md) — roadmap 9.5
+  (ADR-0029, PR #33); %w-transparent Wrap/Wrapf, one-time origin stack (StackTracer + %+v), Wrap(nil)=nil.
+  **Final feature — the library is feature-complete (all 25 spec features).**
 - [2026-07-15 — M9.4: syncpool.BufferPool](2026/07/2026-07-15-m9-syncpool.md) — roadmap 9.4 (ADR-0028, PR #32);
   sync.Pool of bytes.Buffer, reset-on-Put, discards buffers over a 64 KiB cap (retention trap);
   AllocsPerRun zero-alloc proof; Object Pool pattern → Implemented (catalogue row 10).
