@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — M7 opens: cache.InMemory](docs/journal/2026/07/2026-07-15-m7-cache.md).
+  [2026-07-15 — M7.2: db.Transaction — Milestone 7 complete](docs/journal/2026/07/2026-07-15-m7-db.md).
 
 ### Agent guidance (model × effort)
 
@@ -132,7 +132,7 @@ TTL caching and transactional SQL ergonomics
 > its per-item tag.
 
 - [x] 7.1 cache.InMemory — TTL cache with periodic cleanup goroutine (leak-checked, bench) → [ADR-0021](docs/adr/0021-cache-inmemory-design.md) — *agent: Fable 5 · high (as built) — expiry enforced by Get (stale reads impossible regardless of sweep schedule); one sweeper goroutine, sync.Once Close, goleak-gated; fake-clock boundary tests; 0 allocs/op hot paths (~28ns Get)*
-- [ ] 7.2 db.Transaction — auto-rollback transaction helper (panic-path tests) — *agent: Opus 4.8 · high*
+- [x] 7.2 db.Transaction — auto-rollback transaction helper (panic-path tests) → [ADR-0022](docs/adr/0022-db-transaction-design.md) — *agent: Opus 4.8 · high (as built) — completes Milestone 7; commit on nil, rollback+return on error (errors.Join if rollback fails), rollback+re-panic on panic; context-governed begin; loud nil; fake database/sql driver in tests (no sqlmock, ADR-0004)*
 
 
 ---

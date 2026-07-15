@@ -104,6 +104,12 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   stale read is impossible no matter when the sweeper last ran — the sweeper only reclaims memory,
   on a tunable `WithCleanupInterval` (default ttl). Loud panics on non-positive ttl/interval.
   Zero-allocation hot paths (~28 ns Get-hit, ~51 ns Set on the reference box) (ADR-0021).
+- `db.Transaction` — auto-rollback SQL transaction helper (roadmap 7.2, completes Milestone 7):
+  runs `fn(*sql.Tx)` inside a `BeginTx`, committing when it returns nil and rolling back when it
+  returns an error or panics. A panic is re-panicked after rollback (the caller's `recover` sees the
+  original value); a rollback that itself fails is joined onto the returned error via `errors.Join`,
+  never swallowed. The context governs both begin and the statements. Panics on a nil db or fn
+  (ADR-0022).
 
 ### Changed
 
