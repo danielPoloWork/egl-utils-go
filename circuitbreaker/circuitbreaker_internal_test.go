@@ -36,7 +36,7 @@ func (c *fakeClock) advance(d time.Duration) {
 }
 
 // snapshot reads the breaker's internals under its own lock.
-func snapshot(b *Breaker) (st state, failures, successes, inFlight int) {
+func snapshot(b *Breaker) (st State, failures, successes, inFlight int) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	return b.state, b.failures, b.successes, b.inFlight
@@ -48,6 +48,40 @@ func TestNewAppliesDocumentedDefaults(t *testing.T) {
 	require.Equal(t, 5, b.failureThreshold)
 	require.Equal(t, 1, b.successThreshold)
 	require.Equal(t, 30*time.Second, b.openTimeout)
+}
+
+// TestStateReflectsLazyTransitionWithoutMutating pins the observability
+// contract: State() reports the effective state (an open breaker past its
+// cool-down reads half-open) but never performs the transition — the stored
+// state and generation are untouched, so polling has no side effect.
+func TestStateReflectsLazyTransition(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	clock := newFakeClock()
+	b := New(WithFailureThreshold(1), WithOpenTimeout(100*time.Millisecond))
+	b.now = clock.now
+	bg := context.Background()
+
+	require.Equal(t, StateClosed, b.State(), "a fresh breaker is closed")
+
+	require.Error(t, b.Do(bg, func() error { return errors.New("boom") }))
+	require.Equal(t, StateOpen, b.State(), "tripped breaker is open")
+
+	clock.advance(99 * time.Millisecond)
+	require.Equal(t, StateOpen, b.State(), "still open one tick short of the timeout")
+
+	clock.advance(time.Millisecond) // cool-down elapsed
+	genBefore := b.generation
+	require.Equal(t, StateHalfOpen, b.State(), "past the cool-down State reports half-open")
+
+	// The pure-observer property: State() did not perform the transition.
+	rawState, _, _, inFlight := snapshot(b)
+	require.Equal(t, StateOpen, rawState, "State must not mutate the stored state")
+	require.Equal(t, genBefore, b.generation, "State must not advance the generation")
+	require.Equal(t, 0, inFlight, "State must not admit a probe")
+
+	// A real call now performs the transition and closes the breaker.
+	require.NoError(t, b.Do(bg, func() error { return nil }))
+	require.Equal(t, StateClosed, b.State())
 }
 
 func TestOpenAdmitsProbeExactlyAtTimeout(t *testing.T) {
@@ -68,7 +102,7 @@ func TestOpenAdmitsProbeExactlyAtTimeout(t *testing.T) {
 	clock.advance(time.Millisecond) // exactly the timeout: the next call is the probe
 	require.NoError(t, b.Do(bg, func() error { return nil }))
 	st, _, _, _ := snapshot(b)
-	require.Equal(t, stateClosed, st)
+	require.Equal(t, StateClosed, st)
 }
 
 func TestFailedProbeRestartsTheFullCoolDown(t *testing.T) {
@@ -91,7 +125,7 @@ func TestFailedProbeRestartsTheFullCoolDown(t *testing.T) {
 	clock.advance(time.Millisecond)
 	require.NoError(t, b.Do(bg, func() error { return nil }))
 	st, _, _, _ := snapshot(b)
-	require.Equal(t, stateClosed, st)
+	require.Equal(t, StateClosed, st)
 }
 
 // TestStaleClosedOutcomeIsDiscarded pins the generation guard: a call
@@ -128,7 +162,7 @@ func TestStaleClosedOutcomeIsDiscarded(t *testing.T) {
 	// With threshold 1, the stale failure would have tripped the breaker had
 	// it been counted against the new generation.
 	st, failures, _, _ := snapshot(b)
-	require.Equal(t, stateClosed, st)
+	require.Equal(t, StateClosed, st)
 	require.Equal(t, 0, failures)
 	require.NoError(t, b.Do(bg, func() error { return nil }))
 }
@@ -178,7 +212,7 @@ func TestOrphanedProbeOutcomeIsDiscarded(t *testing.T) {
 	close(probes[0].release)
 	require.ErrorIs(t, <-probes[0].done, errBoom)
 	st, _, _, inFlight := snapshot(b)
-	require.Equal(t, stateOpen, st)
+	require.Equal(t, StateOpen, st)
 	require.Equal(t, 0, inFlight)
 
 	// The orphaned probe's success reaches its caller but is discarded by
@@ -186,7 +220,7 @@ func TestOrphanedProbeOutcomeIsDiscarded(t *testing.T) {
 	close(probes[1].release)
 	require.NoError(t, <-probes[1].done)
 	st, _, successes, inFlight := snapshot(b)
-	require.Equal(t, stateOpen, st)
+	require.Equal(t, StateOpen, st)
 	require.Equal(t, 0, successes)
 	require.Equal(t, 0, inFlight)
 
@@ -194,10 +228,10 @@ func TestOrphanedProbeOutcomeIsDiscarded(t *testing.T) {
 	clock.advance(100 * time.Millisecond)
 	require.NoError(t, b.Do(bg, func() error { return nil }))
 	st, _, _, _ = snapshot(b)
-	require.Equal(t, stateHalfOpen, st)
+	require.Equal(t, StateHalfOpen, st)
 	require.NoError(t, b.Do(bg, func() error { return nil }))
 	st, _, _, _ = snapshot(b)
-	require.Equal(t, stateClosed, st)
+	require.Equal(t, StateClosed, st)
 }
 
 // breakerModel is a sequential reference model of the breaker's documented
@@ -207,7 +241,7 @@ type breakerModel struct {
 	successThreshold int
 	openTimeout      time.Duration
 
-	st          state
+	st          State
 	failures    int
 	successes   int
 	openElapsed time.Duration
@@ -220,22 +254,22 @@ func (m *breakerModel) advance(d time.Duration) {
 // call feeds one call outcome through the model and reports whether the
 // breaker should have executed it.
 func (m *breakerModel) call(success bool) bool {
-	if m.st == stateOpen {
+	if m.st == StateOpen {
 		if m.openElapsed < m.openTimeout {
 			return false
 		}
-		m.st = stateHalfOpen
+		m.st = StateHalfOpen
 		m.successes = 0
 	}
-	if m.st == stateHalfOpen {
+	if m.st == StateHalfOpen {
 		if !success {
-			m.st = stateOpen
+			m.st = StateOpen
 			m.openElapsed = 0
 			return true
 		}
 		m.successes++
 		if m.successes >= m.successThreshold {
-			m.st = stateClosed
+			m.st = StateClosed
 			m.failures = 0
 		}
 		return true
@@ -246,7 +280,7 @@ func (m *breakerModel) call(success bool) bool {
 	}
 	m.failures++
 	if m.failures >= m.failureThreshold {
-		m.st = stateOpen
+		m.st = StateOpen
 		m.openElapsed = 0
 	}
 	return true

@@ -12,8 +12,10 @@
 //
 // The breaker owns no goroutines and no timers — time-based transitions are
 // evaluated lazily on admission — so it cannot leak and is safe for
-// concurrent use. The zero value is not usable; construct a Breaker with
-// New. Design decisions are recorded in ADR-0010.
+// concurrent use. State reports the current position for observability
+// (metrics, health), reflecting the lazy transition without performing it. The
+// zero value is not usable; construct a Breaker with New. Design decisions are
+// recorded in ADR-0010 (State observability added per ADR-0030).
 package circuitbreaker
 
 import (
@@ -35,14 +37,33 @@ const (
 	defaultOpenTimeout      = 30 * time.Second
 )
 
-// state is a position in the closed/open/half-open machine.
-type state uint8
+// State is a position in the closed/open/half-open machine, reported by
+// (*Breaker).State. Its zero value is StateClosed — the state of a fresh
+// breaker.
+type State uint8
 
 const (
-	stateClosed state = iota
-	stateOpen
-	stateHalfOpen
+	// StateClosed admits every call and counts consecutive failures.
+	StateClosed State = iota
+	// StateOpen rejects calls with ErrOpen while cooling down.
+	StateOpen
+	// StateHalfOpen admits a bounded number of probe calls.
+	StateHalfOpen
 )
+
+// String returns the lowercase state name ("closed", "open", "half-open").
+func (s State) String() string {
+	switch s {
+	case StateClosed:
+		return "closed"
+	case StateOpen:
+		return "open"
+	case StateHalfOpen:
+		return "half-open"
+	default:
+		return "unknown"
+	}
+}
 
 // Breaker is a closed/open/half-open circuit breaker. All methods are safe
 // for concurrent use. The zero value is not usable; construct a Breaker with
@@ -55,7 +76,7 @@ type Breaker struct {
 	now func() time.Time // injectable clock for deterministic tests
 
 	mu    sync.Mutex
-	state state
+	state State
 	// generation is bumped on every state transition. An outcome is recorded
 	// only against the generation that admitted the call, so a slow call that
 	// completes after the breaker has moved on cannot corrupt the counters of
@@ -126,13 +147,13 @@ func (b *Breaker) admit() (uint64, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if b.state == stateOpen {
+	if b.state == StateOpen {
 		if b.now().Sub(b.openedAt) < b.openTimeout {
 			return 0, ErrOpen
 		}
-		b.transition(stateHalfOpen)
+		b.transition(StateHalfOpen)
 	}
-	if b.state == stateHalfOpen {
+	if b.state == StateHalfOpen {
 		// Admit while unresolved probes plus recorded successes fit the
 		// budget: never more trial traffic than the successes still needed.
 		if b.successes+b.inFlight >= b.successThreshold {
@@ -154,26 +175,26 @@ func (b *Breaker) record(gen uint64, success bool) {
 		return
 	}
 	switch b.state {
-	case stateClosed:
+	case StateClosed:
 		if success {
 			b.failures = 0
 			return
 		}
 		b.failures++
 		if b.failures >= b.failureThreshold {
-			b.transition(stateOpen)
+			b.transition(StateOpen)
 		}
-	case stateHalfOpen:
+	case StateHalfOpen:
 		b.inFlight--
 		if !success {
-			b.transition(stateOpen) // one failed probe reopens; the cool-down restarts
+			b.transition(StateOpen) // one failed probe reopens; the cool-down restarts
 			return
 		}
 		b.successes++
 		if b.successes >= b.successThreshold {
-			b.transition(stateClosed)
+			b.transition(StateClosed)
 		}
-	case stateOpen:
+	case StateOpen:
 		// Unreachable with a matching generation: every transition into
 		// stateOpen bumps the generation, orphaning outstanding calls.
 	}
@@ -182,13 +203,28 @@ func (b *Breaker) record(gen uint64, success bool) {
 // transition moves the machine to a new state, resets the per-state
 // counters, and bumps the generation so outstanding calls admitted before
 // the transition are recorded against nothing.
-func (b *Breaker) transition(to state) {
+func (b *Breaker) transition(to State) {
 	b.state = to
 	b.generation++
 	b.failures = 0
 	b.successes = 0
 	b.inFlight = 0
-	if to == stateOpen {
+	if to == StateOpen {
 		b.openedAt = b.now()
 	}
+}
+
+// State returns the breaker's current state. It reflects the lazy, time-based
+// transition without performing it: an open breaker whose cool-down has
+// elapsed reports StateHalfOpen — the state the next call would be admitted
+// under — even though no call has yet triggered the move. State is a pure
+// observer: it never admits a probe, mutates the breaker, or advances the
+// generation, so polling it (e.g. for metrics) is free of side effects.
+func (b *Breaker) State() State {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.state == StateOpen && b.now().Sub(b.openedAt) >= b.openTimeout {
+		return StateHalfOpen
+	}
+	return b.state
 }
