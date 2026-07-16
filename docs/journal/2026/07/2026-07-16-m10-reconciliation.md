@@ -32,8 +32,8 @@
 ## Where the project stands
 
 v1.0.0 shipped (tag pushed; GitHub Release publish pending with the maintainer). M10 opened:
-10.1 drafted on `docs/spec-v2-reconciliation`, awaiting the maintainer to open and merge (one PR at
-a time). 12 items remain (10.2–10.13).
+10.1 drafted on `docs/spec-v2-reconciliation` (draft PR #37), awaiting the maintainer to open and
+merge (one PR at a time). 12 items remain (10.2–10.13).
 
 ## How the next session resumes
 
