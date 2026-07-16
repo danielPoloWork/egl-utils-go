@@ -61,6 +61,7 @@ setup.
 | 7 | Caching & data helpers | ✅ done |
 | 8 | Validation & security | ✅ done |
 | 9 | Diagnostics & lifecycle | ✅ done |
+| 10 | Spec v2 reconciliation (v1.x additive) | ⏳ in progress |
 
 
 ## License

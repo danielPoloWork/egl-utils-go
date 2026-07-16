@@ -45,3 +45,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0027](0027-metrics-prometheus-design.md) | metrics.Prometheus design — bounded-cardinality labels, client_golang pin, uncalled-vuln trade-off | Accepted |
 | [0028](0028-syncpool-bufferpool-design.md) | syncpool.BufferPool design — sync.Pool of bytes.Buffer, reset on return, discard oversized | Accepted |
 | [0029](0029-errors-wrap-design.md) | errors.Wrap design — %w-transparent wrapping, one-time origin stack, errors package name | Accepted |
+| [0030](0030-spec-v2-reconciliation.md) | Spec v2.0 reconciliation — hybrid adoption: additive deltas in v1.x, breaking deferred to /v2 | Accepted |

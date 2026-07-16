@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-15 — Spec v2.0 discovered: gap analysis](docs/journal/2026/07/2026-07-15-spec-v2-gap-analysis.md).
+  [2026-07-16 — M10 opens: spec v2 reconciliation (hybrid)](docs/journal/2026/07/2026-07-16-m10-reconciliation.md).
 
 ### Agent guidance (model × effort)
 
@@ -165,6 +165,33 @@ Graceful shutdown, health, metrics, and the core utility pair
 - [x] 9.4 syncpool.BufferPool — bytes.Buffer pooling (zero steady-state allocations, bench) → [ADR-0028](docs/adr/0028-syncpool-bufferpool-design.md) — *agent: Opus 4.8 · high (as built) — sync.Pool of bytes.Buffer, reset-on-Put, discards buffers grown past a 64 KiB cap (memory-retention trap); AllocsPerRun zero-alloc assertion + bench (~17ns/0-alloc); adopts the Object Pool pattern (catalogue row 10)*
 - [x] 9.5 errors.Wrap — stack-preserving error context helpers → [ADR-0029](docs/adr/0029-errors-wrap-design.md) — *agent: Opus 4.8 · medium (as built, completes the roadmap) — Wrap/Wrapf %w-transparent (errors.Is/As/Unwrap), one-time origin stack captured at the first wrap and inherited by later wraps, StackTracer + fmt.Formatter (%+v prints frames), Wrap(nil)=nil; package named errors imports stdlib as stderrors*
 
+
+---
+
+## Milestone 10 — Spec v2 reconciliation (v1.x additive adoption)
+
+The non-breaking deltas of the imported spec v2.0 draft ([`docs/specs/v2/`](docs/specs/v2/)),
+adopted per the hybrid disposition in [ADR-0030](docs/adr/0030-spec-v2-reconciliation.md) —
+breaking deltas stay ledgered there for a possible `/v2`. Post-1.0: every item is additive under
+the v1.0.0 API-stability commitment; the milestone releases as **v1.1.0**.
+
+> **Agent guidance:** Claude Opus 4.8 · effort **high** — additive API surfaces and CI plumbing;
+> the NFR suite (10.10) and the contrib module topology (10.13) are the reasoning-heavy steps and
+> carry their own tags.
+
+- [x] 10.1 Governance — import the spec v2.0 draft verbatim under `docs/specs/v2/` and record the reconciliation disposition → [ADR-0030](docs/adr/0030-spec-v2-reconciliation.md) — *agent: Fable 5 · max (as built) — gap analysis + three-bucket disposition (adopt/defer/deviate)*
+- [ ] 10.2 circuitbreaker.State() — observable breaker state (v2 item 6; lifts the ADR-0010 deferral) — *agent: Opus 4.8 · medium*
+- [ ] 10.3 lifecycle.Trigger() — programmatic shutdown that unblocks WaitForSignals (v2 item 21, §6 example) — *agent: Opus 4.8 · medium — coordinator-scoped trigger channel, idempotent*
+- [ ] 10.4 ratelimit.Middleware() + ErrLimited — 429-on-deny HTTP middleware over the existing engine (v2 item 8) — *agent: Opus 4.8 · medium*
+- [ ] 10.5 hash.HashPasswordCost (cost 10–31) + argon2id migration godoc note + cost-sizing benchmark (v2 item 20, §7) — *agent: Opus 4.8 · high — security-relevant: extends ADR-0024/control C-4, auditor sign-off*
+- [ ] 10.6 config.WithStructValidation() — wire validator.Struct into config.Load as an option (v2 item 13) — *agent: Opus 4.8 · low*
+- [ ] 10.7 Fuzzing — FuzzConfigLoader + FuzzValidatorTags, committed corpora, CI fuzz job (10-min budget) (v2 §7) — *agent: Opus 4.8 · high*
+- [ ] 10.8 Import-graph enforcement — depguard rules for the ADR-0004 allowlist (yaml.v3→config only, prometheus→metrics only) + go mod graph CI assertion (v2 §3) — *agent: Opus 4.8 · medium*
+- [ ] 10.9 CI coverage gate ≥ 85% (v2 §7; raises the §10 floor) — *agent: Opus 4.8 · low*
+- [ ] 10.10 NFR benchmark suite — NFR-01/02/03/04/06 benches + benchstat methodology + nightly regression workflow (>10% flags) (v2 §5) — *agent: Fable 5 · high — perf methodology, flaky-resistant gating*
+- [ ] 10.11 cache hardening — 1 000-cache create/close goleak test + NFR-06 1M-entry p99 bench; shard internally only if the bench demands (v2 item 17) — *agent: Opus 4.8 · medium*
+- [ ] 10.12 pubsub.WithDropOldest — additive slow-subscriber policy option (default stays drop-newest + handler) (v2 item 2) — *agent: Opus 4.8 · medium*
+- [ ] 10.13 contrib/ nested submodules — contrib/redishealth + contrib/pgxhealth (own go.mod, independent tags) supplying health.Check probes (v2 item 22 / ADR-003) — *agent: Fable 5 · high — module topology, driver glue, release-tag discipline*
 
 
 ---

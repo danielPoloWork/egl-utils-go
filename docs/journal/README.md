@@ -19,6 +19,10 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-16 — M10 opens: spec v2 reconciliation (hybrid)](2026/07/2026-07-16-m10-reconciliation.md)
+  — maintainer chose hybrid adoption; spec v2 imported verbatim to docs/specs/v2/; ADR-0030 records
+  the three-bucket disposition (13 additive items → Milestone 10 → v1.1.0; breaking → /v2 ledger;
+  deviations maintained with their ADRs).
 - [2026-07-15 — Spec v2.0 discovered: gap analysis](2026/07/2026-07-15-spec-v2-gap-analysis.md) —
   found untracked `.spec/` (spec v2.0 + 3 maintainer ADRs, post-intake, never reconciled); wrote
   `docs/specs/02_spec_v2_gap_analysis.md` — all 25 items classified, breaking vs additive deltas,
