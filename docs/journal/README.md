@@ -20,7 +20,7 @@ _(newest first)_
 #### 07 — July
 
 - [2026-07-16 — M10.2: circuitbreaker.State()](2026/07/2026-07-16-m10-circuitbreaker-state.md) —
-  roadmap 10.2 (spec v2 item 6, ADR-0030); exported State type + String() and a pure read-only
+  roadmap 10.2 (spec v2 item 6, ADR-0030, PR #38); exported State type + String() and a pure read-only
   `(*Breaker).State()` that reflects the lazy transition without performing it (no mutation, no
   probe). First feature item of Milestone 10.
 - [2026-07-16 — M10 opens: spec v2 reconciliation (hybrid)](2026/07/2026-07-16-m10-reconciliation.md)

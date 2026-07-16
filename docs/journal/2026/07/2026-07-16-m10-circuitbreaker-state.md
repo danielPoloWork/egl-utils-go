@@ -2,7 +2,7 @@
 
 ## What got done
 
-- **Roadmap 10.2 `circuitbreaker.State()`** (branch `feat/circuitbreaker-state`): the first feature
+- **Roadmap 10.2 `circuitbreaker.State()`** (branch `feat/circuitbreaker-state`, draft PR #38): the first feature
   item of the spec-v2 reconciliation (Milestone 10) — breaker observability (v2 item 6), lifting the
   `State()` deferral ADR-0010 recorded. Additive and non-breaking, per ADR-0030.
 - **Exported `State` type** (promoted from the internal `state uint8`): `StateClosed` (zero value,
@@ -29,7 +29,7 @@
 ## Where the project stands
 
 v1.0.0 shipped. **Milestone 10 in progress (2 of 13)**: 10.1 (#37) merged; 10.2 drafted on
-`feat/circuitbreaker-state`, awaiting the maintainer to open and merge. M10 releases as v1.1.0.
+`feat/circuitbreaker-state` (draft PR #38), awaiting the maintainer to open and merge. M10 releases as v1.1.0.
 
 ## How the next session resumes
 
