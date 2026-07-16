@@ -78,7 +78,9 @@ unexported field, injected only by the package's own deterministic tests.
   need in services that cancel aggressively, but it expands the decision surface beyond
   the spec's contract. Deferred: add via a spec amendment when a consumer needs it.
 - **Exporting `State()` / metrics hooks** — observability is useful but outside spec §5;
-  same discipline as ADR-0009's rejected `TryAcquire` re-export.
+  same discipline as ADR-0009's rejected `TryAcquire` re-export. *(Superseded: `State()` is adopted
+  in roadmap 10.2 under the spec-v2 reconciliation — ADR-0030 — as a read-only, lazy-transition-aware
+  observer; the exported `State` type it returns is additive and non-breaking.)*
 
 ## Consequences
 

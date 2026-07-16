@@ -12,6 +12,14 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Added
 
+- `circuitbreaker.State` / `(*Breaker).State()` — observable breaker state (roadmap 10.2, spec v2
+  item 6): an exported `State` type (`StateClosed`/`StateOpen`/`StateHalfOpen`, with `String()`)
+  and a `State()` accessor. `State()` is a pure read-only observer — it reflects the lazy,
+  time-based transition (an open breaker whose cool-down has elapsed reports `StateHalfOpen`)
+  without performing it, so polling it for metrics never admits a probe, mutates the breaker, or
+  advances the generation. Additive; the existing `Do`/`ErrOpen` surface is unchanged (ADR-0030,
+  lifting ADR-0010's deferral).
+
 ### Changed
 
 ### Deprecated

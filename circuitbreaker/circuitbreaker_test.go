@@ -30,6 +30,24 @@ func TestOptionsPanicOnNonPositiveValues(t *testing.T) {
 	require.Panics(t, func() { circuitbreaker.WithOpenTimeout(-time.Second) })
 }
 
+func TestStateString(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	require.Equal(t, "closed", circuitbreaker.StateClosed.String())
+	require.Equal(t, "open", circuitbreaker.StateOpen.String())
+	require.Equal(t, "half-open", circuitbreaker.StateHalfOpen.String())
+	require.Equal(t, "unknown", circuitbreaker.State(99).String())
+	require.Equal(t, circuitbreaker.StateClosed, circuitbreaker.State(0), "the zero value is closed")
+}
+
+func TestStateObservable(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	b := circuitbreaker.New(circuitbreaker.WithFailureThreshold(1))
+	require.Equal(t, circuitbreaker.StateClosed, b.State())
+
+	require.ErrorIs(t, b.Do(context.Background(), func() error { return errBoom }), errBoom)
+	require.Equal(t, circuitbreaker.StateOpen, b.State(), "one failure at threshold 1 trips it open")
+}
+
 func TestClosedPassesResultsThrough(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	b := circuitbreaker.New()
