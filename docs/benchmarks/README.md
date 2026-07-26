@@ -23,4 +23,5 @@ One report per measured scenario, from [`template.md`](template.md). Keep the in
 
 | Date | Scenario | Version | Headline result | Report |
 |------|----------|---------|-----------------|--------|
+| 2026-07-26 | bcrypt cost sizing (hash / verify per work factor) | v1.0.0+dev (roadmap 10.5) | exact doubling per cost step: 55 ms at cost 10 → 887 ms at 14; verify costs the same as hash, so cost is a per-login CPU multiplier | [report](2026-07-26-hash-bcrypt-cost-sizing.md) |
 | 2026-07-14 | ratelimit hot paths (Allow / funded Wait) | v0.1.0+dev (PR #16) | Allow ~25 ns/op, 0 allocs; funded Wait ~50 ns/op, 0 allocs | [report](2026-07-14-ratelimit-hot-paths.md) |
