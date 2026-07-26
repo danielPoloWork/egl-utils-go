@@ -25,10 +25,18 @@ func newFakeCache(t *testing.T, ttl time.Duration) (*Cache[string, int], *fakeNo
 	return c, clk
 }
 
+// length totals the entries across every shard. It takes each shard's lock in
+// turn rather than all of them at once, so it is not an atomic snapshot — fine
+// for tests, which call it while nothing else is writing.
 func (c *Cache[K, V]) length() int {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return len(c.entries)
+	n := 0
+	for i := range c.shards {
+		s := &c.shards[i]
+		s.mu.RLock()
+		n += len(s.entries)
+		s.mu.RUnlock()
+	}
+	return n
 }
 
 func TestExpiryBoundary(t *testing.T) {

@@ -95,6 +95,15 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- `cache.Cache` is now **sharded internally** — 32 independently locked shards, selected with
+  `hash/maphash.Comparable` against a per-cache seed (roadmap 10.11, spec v2 item 17). This is invisible
+  in the API (key ordering was never promised and iteration is not offered) and fixes NFR-06: the 90/10
+  read/write mix at 1 M entries across 8 goroutines goes from **349.8 ns to 46.6 ns (7.5× faster)**, now
+  inside the 200 ns target, because a `Set` no longer takes an exclusive lock over the whole keyspace.
+  Uncontended single-goroutine operations pay about **5 ns more** for the shard hash (`Get` hit 27.2 →
+  32.9 ns, `Get` miss 15.1 → 20.1 ns, `Set` 52.0 → 60.5 ns) — a deliberate trade, recorded in ADR-0038.
+  A cache still owns **exactly one** sweeper goroutine however many shards it has, now verified at a
+  thousand caches.
 - AGENTS.md §10's quality bar: the coverage row moves from the provisional "new code ≥ 80% line
   (finalized in an ADR)" to "≥ 85% of statements per package", finalized in ADR-0036 as that row always
   promised; and its build-matrix row now states the module floor as Go 1.25, matching `go.mod` and the CI
