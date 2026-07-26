@@ -19,6 +19,11 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-27 — v1.1.0 release cut](2026/07/2026-07-27-v1.1.0-release-cut.md) — Milestone 10 cut as
+  **[v1.1.0](../releases/v1.1.0.md)**: `[Unreleased]` moved into `docs/changelog/v1/v1.1.0.md`, version
+  constant/badge/release notes in lockstep (verified the gate fails on a mismatch). Two findings carried
+  forward deliberately — NFR-01's unachievable 0-alloc target and the non-canonical
+  `middleware.HeaderName`. The contrib modules are **not** in this tag. Remaining agent step: tag after merge.
 - [2026-07-27 — M10.13: contrib/ submodules — **Milestone 10 complete**](2026/07/2026-07-27-m10-contrib-submodules.md)
   — roadmap 10.13 (spec v2 item 22, ADR-0040); `contrib/redishealth` + `contrib/pgxhealth` as separate
   modules requiring the released core (no `replace`, no `go.work`). Closed the three things that
