@@ -16,6 +16,22 @@
 // — this is how secrets and per-environment values stay out of the committed
 // file. If the decoded value implements Validator, its Validate method runs
 // and its error, if any, fails the load.
+//
+// # Validation
+//
+// Two validation mechanisms are available and they compose rather than compete:
+//
+//   - WithStructValidation runs the validator package's tag-based rules
+//     (`validate:"required,email,min,max,oneof"`) over the decoded struct — the
+//     declarative, per-field layer.
+//   - Validator lets the config type check invariants a tag cannot express —
+//     relationships between fields, or anything needing real logic.
+//
+// When both apply, tags run first and a tag failure returns without calling
+// Validate, so a Validate implementation may assume every individual field
+// already satisfied its own rules and can concern itself only with the
+// cross-field questions. Neither mechanism is enabled implicitly: tags require
+// the option, and Validate requires the method.
 package config
 
 import (
@@ -27,6 +43,8 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+
+	"github.com/danielPoloWork/egl-utils-go/validator"
 )
 
 // ErrUnsupportedFormat is returned (wrapped) when the file extension is not one
@@ -41,7 +59,8 @@ type Validator interface {
 }
 
 type options struct {
-	expandEnv bool
+	expandEnv      bool
+	validateStruct bool
 }
 
 // Option configures Load.
@@ -53,9 +72,36 @@ func WithoutEnvExpansion() Option {
 	return func(o *options) { o.expandEnv = false }
 }
 
+// WithStructValidation validates the decoded value against its `validate` field
+// tags via validator.Struct, so a config file can be checked declaratively in
+// the same call that loads it:
+//
+//	type Config struct {
+//		Addr  string `yaml:"addr"  validate:"required"`
+//		Admin string `yaml:"admin" validate:"required,email"`
+//		Port  int    `yaml:"port"  validate:"min=1,max=65535"`
+//	}
+//	cfg, err := config.Load[Config]("config.yaml", config.WithStructValidation())
+//
+// Rule failures come back as a wrapped validator.ValidationErrors listing every
+// violated field, so errors.As reaches the individual *validator.FieldError
+// values. It runs before Validator, and a failure skips Validate entirely.
+//
+// It is off by default: a struct carrying no `validate` tags would pass
+// vacuously, so enabling it silently would imply a guarantee that is not there.
+//
+// Because tag misuse is a programming error rather than bad data, the underlying
+// rules panic on a malformed tag, a rule applied to an incompatible type, or a T
+// that is not a struct at all — see the validator package documentation. Those
+// surface on the first load, which is where a wiring mistake belongs.
+func WithStructValidation() Option {
+	return func(o *options) { o.validateStruct = true }
+}
+
 // Load reads path, expands environment references (unless disabled), decodes it
-// into T by file extension, and runs T's Validator if it implements one. The
-// zero T is returned alongside any error.
+// into T by file extension, validates it against its `validate` tags when
+// WithStructValidation is passed, and runs T's Validator if it implements one.
+// The zero T is returned alongside any error.
 func Load[T any](path string, opts ...Option) (T, error) {
 	o := options{expandEnv: true}
 	for _, opt := range opts {
@@ -84,6 +130,15 @@ func Load[T any](path string, opts ...Option) (T, error) {
 		}
 	default:
 		return cfg, fmt.Errorf("%w: %q", ErrUnsupportedFormat, filepath.Ext(path))
+	}
+
+	// Tags first: they are per-field, so a Validate method that runs after them
+	// can assume each field is individually well-formed and check only the
+	// cross-field invariants it exists for.
+	if o.validateStruct {
+		if err := validator.Struct(&cfg); err != nil {
+			return cfg, fmt.Errorf("config: validate %s: %w", path, err)
+		}
 	}
 
 	if v, ok := any(&cfg).(Validator); ok {
