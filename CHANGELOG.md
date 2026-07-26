@@ -75,8 +75,18 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   against the manifest — covering what depguard cannot see: a new direct module requirement, a blank
   sibling import, and a sanctioned exception that has become dead. Developer-facing only; no library
   behaviour changes (ADR-0035).
+- Coverage gate (roadmap 10.9, spec v2 §7): `tools/coverage_gate.py` and a `coverage` CI job enforce
+  **≥ 85% of statements per package**. Per package rather than module-wide, because with 16 of 21
+  packages at 100% the module-wide figure sits near 99% and could not fail for any realistic regression.
+  Packages with no statements are skipped rather than counted as zero. Developer-facing only; no library
+  behaviour changes (ADR-0036).
 
 ### Changed
+
+- AGENTS.md §10's quality bar: the coverage row moves from the provisional "new code ≥ 80% line
+  (finalized in an ADR)" to "≥ 85% of statements per package", finalized in ADR-0036 as that row always
+  promised; and its build-matrix row now states the module floor as Go 1.25, matching `go.mod` and the CI
+  matrix, instead of the stale 1.24.
 
 ### Deprecated
 

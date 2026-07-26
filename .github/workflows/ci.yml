@@ -106,6 +106,24 @@ jobs:
 
 
   # ---------------------------------------------------------------------------
+  # Coverage gate (spec v2 §7, ADR-0036) — 85% of statements *per package*, so the
+  # threshold binds the weakest package instead of being absorbed by an average.
+  # ---------------------------------------------------------------------------
+  coverage:
+    name: coverage / 85% per package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@v7
+        with: { go-version: '1.26', cache: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Enforce the per-package coverage floor
+        run: python tools/coverage_gate.py
+
+  # ---------------------------------------------------------------------------
   # Import-graph gate (spec v2 §3, ADR-0004/ADR-0035). depguard enforces the rings
   # and the layered graph per file inside the `quality` job; this asserts the same
   # policies over the *resolved* graph, which additionally catches a new direct

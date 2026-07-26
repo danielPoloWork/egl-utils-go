@@ -19,6 +19,10 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-26 — M10.9: per-package coverage gate](2026/07/2026-07-26-m10-coverage-gate.md) —
+  roadmap 10.9 (spec v2 §7, ADR-0036); 85% enforced **per package**, because with 16 of 21 packages at
+  100% a module-wide gate could never fail. Real low-water mark is fanout 93.3%. Also discharges
+  AGENTS.md §10's outstanding "finalized in an ADR".
 - [2026-07-26 — M10.8: import-graph enforcement](2026/07/2026-07-26-m10-import-graph-enforcement.md)
   — roadmap 10.8 (spec v2 §3, ADR-0035); ADR-0004's rings and the layer graph become build-breaking rules
   via depguard **plus** a resolved-graph assertion, because **depguard does not report a blank import of a

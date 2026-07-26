@@ -250,13 +250,13 @@ Every PR must clear, at minimum:
 
 | Gate | Requirement |
 |---|---|
-| Build matrix | Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.24) — every CI cell green |
+| Build matrix | Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.25) — every CI cell green |
 | Warnings | zero, treated as errors on the diff |
 | Lint | `golangci-lint (govet, staticcheck, errcheck, revive, gosec)` clean on the diff; no broad disables |
 | Format | `gofumpt (gofmt superset)` clean |
 | Unit tests | cover the new/changed behavior; pass on every CI cell |
 | Sanitizers / checkers | go test -race (data-race detector), go vet, govulncheck green where applicable |
-| Coverage | new code ≥ 80% line (finalized in an ADR) |
+| Coverage | ≥ 85% of statements **per package**, enforced by `tools/coverage_gate.py` in CI ([ADR-0036](docs/adr/0036-coverage-gate.md)) — a module-wide average would let a 100% package subsidise a neglected one |
 | API docs | `godoc / pkg.go.dev` builds without warnings |
 | Performance claims | backed by a reproducible co-located benchmark (`go test -bench`, ADR-0003) |
 | Versioning | SemVer; `CHANGELOG.md` updated for user-visible changes |
