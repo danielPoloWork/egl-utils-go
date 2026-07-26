@@ -24,6 +24,16 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   itself (a fatal background error, an admin endpoint, a supervisor command). Idempotent and safe for
   concurrent use; a `Trigger` that arrives before `WaitForSignals` latches instead of being lost.
   Additive — `Register`, `Shutdown`, and `WaitForSignals` keep their signatures (ADR-0030).
+- `ratelimit.(*Limiter).Middleware()` and `ratelimit.ErrLimited` — HTTP admission middleware (roadmap
+  10.4, spec v2 item 8): a standard `func(http.Handler) http.Handler` decorator that admits each
+  request through the limiter and answers `429 Too Many Requests` with a `Retry-After` of
+  `ceil(1/rate)` seconds when the bucket is empty. Admission uses `Allow`, never `Wait`, so an
+  over-budget burst is shed rather than queued into parked goroutines and held connections; the
+  refusal body is the generic status text and discloses no limiter state, and denials are not logged
+  by the library (they surface as ordinary 429s to `middleware.Logger`). The admit path allocates
+  nothing (~30 ns/op, 0 allocs). One limiter bounds total throughput, not any one client's share —
+  per-client limiting stays the consumer's decision. `ErrLimited` is the matching sentinel for
+  callers gating their own work on `Allow`. Additive; the engine is unchanged (ADR-0031, ADR-0030).
 
 ### Changed
 

@@ -19,6 +19,11 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-26 — M10.4: ratelimit.Middleware() + ErrLimited](2026/07/2026-07-26-m10-ratelimit-middleware.md)
+  — roadmap 10.4 (spec v2 item 8, ADR-0031, the milestone's first new ADR); `(*Limiter).Middleware()`
+  sheds via `Allow` rather than queueing via `Wait`, 429 + constant `Retry-After`, no logging (a
+  client-triggerable log line would be a flood amplifier), 0-alloc admit path; global-budget
+  limitation carried as control C-5.
 - [2026-07-26 — M10.3: lifecycle.Trigger()](2026/07/2026-07-26-m10-lifecycle-trigger.md) —
   roadmap 10.3 (spec v2 item 21, ADR-0030); coordinator-scoped `triggered` channel closed once via
   `sync.Once`, `WaitForSignals` selects over signals + trigger, so a trigger arriving first latches
