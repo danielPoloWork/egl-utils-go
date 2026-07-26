@@ -65,6 +65,16 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   artifact. `FuzzValidatorTags` asserts a contract-shaped invariant rather than "never panics", because
   `validator.Struct` panics by design on tag misuse: any panic must be a `validator: `-prefixed string
   and never a `runtime.Error`, and any error must be a `ValidationErrors` (ADR-0034).
+- Import-graph enforcement (roadmap 10.8, spec v2 §3): ADR-0004's dependency rings and the layered
+  internal import graph are now build-breaking rules rather than prose. `depguard` rules in
+  `.golangci.yml` confine each governed module to the package whose ADR bought it (`yaml.v3` → `config`,
+  `client_golang` → `metrics`, `x/crypto` → `hash`, `x/sync` → `semaphore`), deny database-driver and
+  cache-client SDKs outright, and deny internal sibling imports everywhere except `config`'s sanctioned
+  `validator` edge. `tools/import_graph_lint.py` asserts the same policies over the *resolved* graph —
+  direct `go.mod` requirements, per-package direct imports, the internal edge set, and `go mod graph`
+  against the manifest — covering what depguard cannot see: a new direct module requirement, a blank
+  sibling import, and a sanctioned exception that has become dead. Developer-facing only; no library
+  behaviour changes (ADR-0035).
 
 ### Changed
 

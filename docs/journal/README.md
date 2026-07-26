@@ -19,6 +19,11 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-26 — M10.8: import-graph enforcement](2026/07/2026-07-26-m10-import-graph-enforcement.md)
+  — roadmap 10.8 (spec v2 §3, ADR-0035); ADR-0004's rings and the layer graph become build-breaking rules
+  via depguard **plus** a resolved-graph assertion, because **depguard does not report a blank import of a
+  sibling package** (verified) and cannot see a new direct requirement or a dead exception. Every rule
+  verified by deliberate violation.
 - [2026-07-26 — M10.7: fuzzing (and a contract violation it found)](2026/07/2026-07-26-m10-fuzzing.md)
   — roadmap 10.7 (spec v2 §7, ADR-0034); `FuzzValidatorTags` asserts a contract-shaped invariant
   (`runtime.Error` vs documented panic) because `validator.Struct` panics by design, and its tag space is

@@ -8,6 +8,81 @@ linters:
   enable:
     - revive
     - gosec
+    - depguard
+  settings:
+    # depguard encodes two written policies as build-breaking rules (roadmap 10.8,
+    # spec v2 §3, ADR-0035): the ADR-0004 dependency rings — each vetted third-party
+    # or golang.org/x module is confined to the single package that justified it —
+    # and the layered internal import graph.
+    #
+    # Rules apply to production files only (`!$test`): tests legitimately import
+    # sibling packages and the test-only ring, and the module-level allowlist is
+    # asserted separately by tools/import_graph_lint.py.
+    depguard:
+      rules:
+        # --- ADR-0004 ring 3: the two vetted runtime dependencies ------------
+        yaml-belongs-to-config:
+          files: ['$all', '!$test', '!**/config/*.go']
+          deny:
+            - pkg: gopkg.in/yaml.v3
+              desc: "ADR-0004/ADR-0018: the YAML parser is budgeted for config.Load only. Decode elsewhere by passing the decoded value, not by importing a parser."
+        prometheus-belongs-to-metrics:
+          files: ['$all', '!$test', '!**/metrics/*.go']
+          deny:
+            - pkg: github.com/prometheus
+              desc: "ADR-0004/ADR-0027: the Prometheus SDK is budgeted for the metrics package only. Other packages expose plain counters/handlers and let metrics observe them."
+
+        # --- ADR-0004 ring 2: golang.org/x, confined to its justifying package --
+        crypto-belongs-to-hash:
+          files: ['$all', '!$test', '!**/hash/*.go']
+          deny:
+            - pkg: golang.org/x/crypto
+              desc: "ADR-0004/ADR-0024: x/crypto is budgeted for password hashing in the hash package. Anything else needs a superseding ADR."
+        xsync-belongs-to-semaphore:
+          files: ['$all', '!$test', '!**/semaphore/*.go']
+          deny:
+            - pkg: golang.org/x/sync
+              desc: "ADR-0004/ADR-0009: x/sync is budgeted for the weighted semaphore. Elsewhere use the stdlib sync primitives."
+
+        # --- Spec §3: no driver or client SDKs anywhere in the core module ----
+        # Probes that need a driver live in contrib/* submodules (ADR-0003), so the
+        # core module never inherits a database or cache client's dependency tree.
+        no-driver-sdks:
+          files: ['$all']
+          deny:
+            - pkg: github.com/lib/pq
+              desc: "Spec §3: the core module imports no database drivers — db works against database/sql, and driver-backed health probes belong in contrib/*."
+            - pkg: github.com/jackc/pgx
+              desc: "Spec §3: the core module imports no database drivers — driver-backed health probes belong in contrib/pgxhealth."
+            - pkg: github.com/go-sql-driver/mysql
+              desc: "Spec §3: the core module imports no database drivers — see ADR-0003 on contrib/* submodules."
+            - pkg: github.com/redis/go-redis
+              desc: "Spec §3: the core module imports no cache clients — Redis probes belong in contrib/redishealth."
+            - pkg: github.com/go-redis/redis
+              desc: "Spec §3: the core module imports no cache clients — Redis probes belong in contrib/redishealth."
+
+        # --- Spec §3: the layered internal import graph -----------------------
+        # Arrows point downward only, and a same-layer edge is legal only where the
+        # spec mandates the composition. config → validator is the sole such edge
+        # (spec item 13, "configuration with struct validation (via item 19)",
+        # ADR-0033); every other feature package stays self-contained, which is what
+        # keeps them independently adoptable.
+        internal-edges-only-where-mandated:
+          files: ['$all', '!$test', '!**/config/*.go']
+          deny:
+            - pkg: github.com/danielPoloWork/egl-utils-go
+              desc: "Spec §3/ADR-0033: feature packages do not import each other. The one sanctioned edge is config → validator (spec item 13). Compose in the consumer, or open an ADR to sanction a new edge."
+        config-imports-only-validator:
+          files: ['**/config/*.go', '!$test']
+          list-mode: strict
+          allow:
+            - $gostd
+            - gopkg.in/yaml.v3
+            - github.com/danielPoloWork/egl-utils-go/validator
+          deny:
+            - pkg: github.com/danielPoloWork/egl-utils-go
+              desc: "ADR-0033 sanctions exactly one internal edge from config: validator. Any other sibling import needs its own ADR."
+
   exclusions:
     rules:
       # Property-style tests use seeded math/rand/v2 deliberately: the seed is
