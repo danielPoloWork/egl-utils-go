@@ -19,6 +19,11 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   without performing it, so polling it for metrics never admits a probe, mutates the breaker, or
   advances the generation. Additive; the existing `Do`/`ErrOpen` surface is unchanged (ADR-0030,
   lifting ADR-0010's deferral).
+- `lifecycle.Trigger()` — programmatic shutdown (roadmap 10.3, spec v2 item 21): unblocks a pending
+  `WaitForSignals` exactly as a termination signal would, for code that decides to stop the process
+  itself (a fatal background error, an admin endpoint, a supervisor command). Idempotent and safe for
+  concurrent use; a `Trigger` that arrives before `WaitForSignals` latches instead of being lost.
+  Additive — `Register`, `Shutdown`, and `WaitForSignals` keep their signatures (ADR-0030).
 
 ### Changed
 
@@ -27,6 +32,11 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 ### Removed
 
 ### Fixed
+
+- `go.mod` / `go.sum`: re-tidied after the `prometheus/client_golang` 1.24.1 bump (#44), which left
+  the transitive `prometheus/common`, `prometheus/procfs`, and `protobuf` pins at their pre-bump
+  versions and `go.sum` without the matching entries — `go build ./...` failed on a clean module
+  cache with *missing go.sum entry for go.mod file*.
 
 ### Security
 

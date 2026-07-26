@@ -85,11 +85,15 @@ process-wide goroutine ever starts under test (goleak stays exact).
 - Shutdown is deterministic: reverse-dependency order, all hooks, exactly once, one converged
   result — under signals, programmatic calls, or both racing.
 - The package owns no goroutines (blocking receive), keeping the module's zero-leak invariant
-  trivially true; goleak gates it.
+  trivially true; goleak gates it. *(Amended in roadmap 10.3 — ADR-0030: `WaitForSignals` now blocks
+  in a `select` over the signal channel and the `Trigger` channel. Still a blocking wait in the
+  caller's goroutine, so the no-goroutines property is unchanged.)*
 - Signal behaviour is portable and honest about Windows (Interrupt only), and tests are fully
   deterministic on every platform via the injected signal seam.
 - Milestone 9 opens; health (9.2), metrics (9.3), syncpool (9.4), and errors (9.5) complete it.
 - Deferred, additive: an exported `Coordinator`, force-exit-on-second-signal, per-hook timeouts.
+  *(Roadmap 10.3 adds `Trigger()` — a programmatic wake for a pending `WaitForSignals`, latched in a
+  once-closed channel scoped to the coordinator — without exporting the coordinator itself.)*
 
 ## References
 

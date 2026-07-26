@@ -44,6 +44,16 @@ func swapSignals(t *testing.T, sig os.Signal) (gotSigs *[]os.Signal, stopped *bo
 	return &sigs, &stop
 }
 
+// swapSilentSignals replaces the os/signal seam with a fake that subscribes but
+// never delivers anything, so WaitForSignals can only be unblocked by Trigger.
+func swapSilentSignals(t *testing.T) {
+	t.Helper()
+	origNotify, origStop := notifySignal, stopSignal
+	notifySignal = func(chan<- os.Signal, ...os.Signal) {}
+	stopSignal = func(chan<- os.Signal) {}
+	t.Cleanup(func() { notifySignal, stopSignal = origNotify, origStop })
+}
+
 func TestShutdownRunsHooksInReverseOrder(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	swapStd(t)
@@ -186,6 +196,78 @@ func TestWaitForSignalsDefaultsToInterruptAndTerm(t *testing.T) {
 	WaitForSignals()
 	require.Equal(t, []os.Signal{os.Interrupt, syscall.SIGTERM}, *gotSigs,
 		"no arguments defaults to the common termination pair")
+}
+
+func TestTriggerUnblocksPendingWaitForSignals(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	swapStd(t)
+	swapSilentSignals(t)
+	var ran atomic.Bool
+	Register(func(context.Context) error { ran.Store(true); return nil })
+
+	returned := make(chan struct{})
+	go func() {
+		defer close(returned)
+		WaitForSignals() // no signal will ever be delivered
+	}()
+
+	Trigger()
+	select {
+	case <-returned:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Trigger did not unblock a pending WaitForSignals")
+	}
+	require.True(t, ran.Load(), "the trigger runs the hooks, exactly as a signal would")
+}
+
+func TestTriggerBeforeWaitForSignalsIsNotALostWakeup(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	swapStd(t)
+	swapSilentSignals(t)
+	ran := false
+	Register(func(context.Context) error { ran = true; return nil })
+
+	Trigger()
+	WaitForSignals() // returns immediately: the request latched in the channel
+
+	require.True(t, ran, "a Trigger that arrived first is latched, not dropped")
+}
+
+func TestTriggerIsIdempotentAndConcurrencySafe(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	swapStd(t)
+	swapSilentSignals(t)
+
+	const callers = 8
+	var wg sync.WaitGroup
+	for range callers {
+		wg.Add(1)
+		go func() { defer wg.Done(); Trigger() }()
+	}
+	wg.Wait() // a second close of the channel would have panicked
+
+	var runs atomic.Int32
+	Register(func(context.Context) error { runs.Add(1); return nil })
+	WaitForSignals()
+	Trigger() // still a no-op after the shutdown has run
+	require.Equal(t, int32(1), runs.Load(), "however many triggers, one shutdown")
+}
+
+func TestTriggerIsCoordinatorScoped(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	first := swapStd(t)
+	Trigger()
+	require.NotNil(t, first)
+
+	// A fresh coordinator starts un-triggered: the latch is per-coordinator
+	// state, not a process-wide flag.
+	second := swapStd(t)
+	require.NotSame(t, first, second)
+	select {
+	case <-second.triggered:
+		t.Fatal("a fresh coordinator must not inherit an earlier Trigger")
+	default:
+	}
 }
 
 // capturingHandler records slog records for assertion.
