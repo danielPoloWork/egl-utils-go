@@ -10,8 +10,13 @@
 // is safe for concurrent use. Waiters reserve their token on arrival and
 // sleep exactly until it is funded, giving arrival-order fairness with no
 // wake-and-recheck herding; a canceled Wait repays its reservation. The
-// zero value is not usable; construct a Limiter with NewLimiter. Design
-// decisions are recorded in ADR-0012.
+// zero value is not usable; construct a Limiter with NewLimiter.
+//
+// For HTTP servers, Middleware wraps the fail-fast Allow path as an ordinary
+// net/http decorator that answers 429 Too Many Requests when the bucket is
+// empty; ErrLimited is the matching sentinel for non-HTTP callers that gate
+// their own work on Allow. Design decisions are recorded in ADR-0012 and,
+// for the middleware, ADR-0031.
 package ratelimit
 
 import (
