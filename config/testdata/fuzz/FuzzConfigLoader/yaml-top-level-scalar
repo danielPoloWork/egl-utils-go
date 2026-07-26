@@ -1,0 +1,5 @@
+go test fuzz v1
+[]byte("just-a-string\n")
+byte(1)
+bool(true)
+bool(false)

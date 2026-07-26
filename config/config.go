@@ -101,19 +101,26 @@ func WithStructValidation() Option {
 // Load reads path, expands environment references (unless disabled), decodes it
 // into T by file extension, validates it against its `validate` tags when
 // WithStructValidation is passed, and runs T's Validator if it implements one.
-// The zero T is returned alongside any error.
+//
+// The zero T is returned alongside any error — never a partially decoded value.
+// This matters: a failed decode leaves both encoding/json and gopkg.in/yaml.v3
+// having already populated the fields they read before the one that broke, and
+// handing that back would let a half-configured struct escape behind an error
+// (a security setting silently left at its zero value, for instance). Returning
+// the zero value makes the failure total and unambiguous.
 func Load[T any](path string, opts ...Option) (T, error) {
 	o := options{expandEnv: true}
 	for _, opt := range opts {
 		opt(&o)
 	}
 
-	var cfg T
+	// zero is what every error path returns; cfg is only handed back on success.
+	var zero, cfg T
 	// G304: reading a caller-specified config path is this function's contract;
 	// the path is the API's first argument, not attacker-influenced input.
 	data, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
-		return cfg, fmt.Errorf("config: read %s: %w", path, err)
+		return zero, fmt.Errorf("config: read %s: %w", path, err)
 	}
 	if o.expandEnv {
 		data = []byte(os.Expand(string(data), os.Getenv))
@@ -122,14 +129,14 @@ func Load[T any](path string, opts ...Option) (T, error) {
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".json":
 		if err := json.Unmarshal(data, &cfg); err != nil {
-			return cfg, fmt.Errorf("config: parse %s: %w", path, err)
+			return zero, fmt.Errorf("config: parse %s: %w", path, err)
 		}
 	case ".yaml", ".yml":
 		if err := yaml.Unmarshal(data, &cfg); err != nil {
-			return cfg, fmt.Errorf("config: parse %s: %w", path, err)
+			return zero, fmt.Errorf("config: parse %s: %w", path, err)
 		}
 	default:
-		return cfg, fmt.Errorf("%w: %q", ErrUnsupportedFormat, filepath.Ext(path))
+		return zero, fmt.Errorf("%w: %q", ErrUnsupportedFormat, filepath.Ext(path))
 	}
 
 	// Tags first: they are per-field, so a Validate method that runs after them
@@ -137,13 +144,13 @@ func Load[T any](path string, opts ...Option) (T, error) {
 	// cross-field invariants it exists for.
 	if o.validateStruct {
 		if err := validator.Struct(&cfg); err != nil {
-			return cfg, fmt.Errorf("config: validate %s: %w", path, err)
+			return zero, fmt.Errorf("config: validate %s: %w", path, err)
 		}
 	}
 
 	if v, ok := any(&cfg).(Validator); ok {
 		if err := v.Validate(); err != nil {
-			return cfg, fmt.Errorf("config: validate %s: %w", path, err)
+			return zero, fmt.Errorf("config: validate %s: %w", path, err)
 		}
 	}
 	return cfg, nil

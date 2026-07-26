@@ -1,0 +1,5 @@
+go test fuzz v1
+[]byte("debug: yes\naddr: \":1\"\n")
+byte(1)
+bool(true)
+bool(false)

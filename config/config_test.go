@@ -117,3 +117,43 @@ func TestLoadValidatorFails(t *testing.T) {
 	require.Contains(t, err.Error(), "validate")
 	require.Contains(t, err.Error(), "name is required")
 }
+
+// TestLoadReturnsZeroValueOnError pins the contract FuzzConfigLoader asserts, as
+// an ordinary regression test that does not depend on the fuzzer running.
+//
+// The parse cases are the ones that actually bite: both encoding/json and
+// gopkg.in/yaml.v3 populate the fields they read *before* the one that fails, so
+// returning the decode target on error would hand back a half-configured struct
+// behind an error — here, Addr set while Port silently stayed zero.
+func TestLoadReturnsZeroValueOnError(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	cases := []struct {
+		name, file, content string
+	}{
+		{"json partial decode", "c.json", `{"addr":"kept","port":"not-an-int"}`},
+		{"yaml partial decode", "c.yaml", "addr: kept\nport: not-an-int\n"},
+		{"json truncated", "c.json", `{"addr":"kept"`},
+		{"unsupported format", "c.txt", `{"addr":"kept"}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, err := config.Load[appConfig](write(t, tc.file, tc.content))
+			require.Error(t, err)
+			require.Equal(t, appConfig{}, cfg,
+				"an error must carry the zero value, never a partially decoded one")
+		})
+	}
+
+	t.Run("file not found", func(t *testing.T) {
+		cfg, err := config.Load[appConfig](filepath.Join(t.TempDir(), "absent.json"))
+		require.Error(t, err)
+		require.Equal(t, appConfig{}, cfg)
+	})
+
+	t.Run("validator rejection discards the decoded value", func(t *testing.T) {
+		cfg, err := config.Load[validated](write(t, "c.yaml", "name: \"\"\n"))
+		require.Error(t, err)
+		require.Equal(t, validated{}, cfg,
+			"a value that decoded cleanly but failed validation is still not returned")
+	})
+}

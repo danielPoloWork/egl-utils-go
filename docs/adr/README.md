@@ -49,3 +49,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0031](0031-ratelimit-middleware-design.md) | ratelimit HTTP middleware — 429 shed via Allow (never Wait), constant Retry-After, ErrLimited sentinel | Accepted |
 | [0032](0032-hash-password-cost-design.md) | configurable bcrypt cost — floor of 10 enforced locally (upstream accepts weak costs silently), error not panic, rehash-on-login | Accepted |
 | [0033](0033-config-struct-validation.md) | config.WithStructValidation — opt-in tag validation, tags before Validate, and the module's first internal package edge | Accepted |
+| [0034](0034-fuzzing-strategy.md) | fuzzing strategy — contract-shaped invariants (runtime.Error vs documented panic), bounded tag space, hand-authored corpus | Accepted |

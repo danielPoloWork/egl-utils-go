@@ -1,0 +1,5 @@
+go test fuzz v1
+[]byte("\t")
+byte(7)
+string("k")
+int64(0)

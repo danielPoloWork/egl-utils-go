@@ -1,0 +1,5 @@
+go test fuzz v1
+[]byte("{\"port\":99999999999999999999}")
+byte(0)
+bool(true)
+bool(false)

@@ -1,0 +1,5 @@
+go test fuzz v1
+[]byte("\x02\x03")
+byte(3)
+string("")
+int64(-1)
