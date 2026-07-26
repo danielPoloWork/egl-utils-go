@@ -51,3 +51,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0033](0033-config-struct-validation.md) | config.WithStructValidation — opt-in tag validation, tags before Validate, and the module's first internal package edge | Accepted |
 | [0034](0034-fuzzing-strategy.md) | fuzzing strategy — contract-shaped invariants (runtime.Error vs documented panic), bounded tag space, hand-authored corpus | Accepted |
 | [0035](0035-import-graph-enforcement.md) | import-graph enforcement — depguard per file plus a resolved-graph assertion; one sanctioned internal edge | Accepted |
+| [0036](0036-coverage-gate.md) | statement-coverage floor — 85% enforced per package (a module-wide average could not fail) | Accepted |
