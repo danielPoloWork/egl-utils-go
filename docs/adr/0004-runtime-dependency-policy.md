@@ -33,6 +33,12 @@ Runtime dependencies are limited to three rings, outermost ring closed by defaul
 lands. `go.sum` is committed; Dependabot watches `gomod` weekly; `govulncheck` stays a
 blocking CI gate.
 
+*(Enforced since roadmap 10.8 — [ADR-0035](0035-import-graph-enforcement.md): `depguard` rules in
+`.golangci.yml` confine each module above to the single package whose ADR justified it, and
+`tools/import_graph_lint.py` asserts the rings over the resolved graph, including that no direct
+requirement appears outside them and that no test-only dependency reaches production code. Adding a
+dependency now means editing both files in the PR that carries the superseding ADR.)*
+
 ## Alternatives Considered
 
 - **Strict stdlib + `golang.org/x` only** — zero third-party runtime deps: hand-rolled

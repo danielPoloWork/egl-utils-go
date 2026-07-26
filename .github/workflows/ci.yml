@@ -106,6 +106,26 @@ jobs:
 
 
   # ---------------------------------------------------------------------------
+  # Import-graph gate (spec v2 §3, ADR-0004/ADR-0035). depguard enforces the rings
+  # and the layered graph per file inside the `quality` job; this asserts the same
+  # policies over the *resolved* graph, which additionally catches a new direct
+  # module requirement and a blank sibling import that depguard does not report.
+  # ---------------------------------------------------------------------------
+  imports:
+    name: imports / dependency rings + layer graph
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@v7
+        with: { go-version: '1.26', cache: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Assert the dependency rings and internal import graph
+        run: python tools/import_graph_lint.py
+
+  # ---------------------------------------------------------------------------
   # Fuzzing gate (spec v2 §7) — the 10-minute PR budget, split evenly between the
   # two targets. `-fuzz` accepts one target per invocation, so these are two runs
   # of 5 minutes rather than one of ten.
