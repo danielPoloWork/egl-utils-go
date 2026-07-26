@@ -19,6 +19,11 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-26 — M10.11: cache sharding (the bench demanded it)](2026/07/2026-07-26-m10-cache-sharding.md)
+  — roadmap 10.11 (spec v2 item 17, ADR-0038); 10.10's numbers answered the brief's "shard only if the
+  bench demands", so `Cache` is now 32 shards keyed by `maphash.Comparable`: **NFR-06's 90/10 mix goes
+  349.8 → 46.6 ns (7.5×)**, at a recorded ~5 ns cost to uncontended operations. One sweeper per cache
+  preserved and pinned at a thousand caches.
 - [2026-07-26 — M10.10: the NFR suite (two NFRs do not hold)](2026/07/2026-07-26-m10-nfr-suite.md) —
   roadmap 10.10 (spec v2 §5, ADR-0037 + [report](../benchmarks/2026-07-26-nfr-suite.md)); gates the
   hardware-independent NFRs and reports the rest. **NFR-01's 0-alloc target is unachievable** (replaced by
