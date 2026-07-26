@@ -9,6 +9,14 @@
 // ADR-0006. The broker owns no goroutines, so it is leak-free by
 // construction.
 //
+// Which message is sacrificed is configurable. By default the new one is
+// dropped, keeping the earliest pending work — right for event-like streams
+// where every message is independently meaningful. WithDropOldest inverts it,
+// evicting the oldest buffered message so the subscriber sees the most recent
+// ones — right for state-like streams where a later message supersedes an
+// earlier one (ADR-0039). Under either policy every message is, per
+// subscription, either delivered or reported to the drop handler exactly once.
+//
 // Ordering: messages published sequentially from one goroutine arrive in
 // order on any given subscription (subject to drops); publishes from
 // concurrent goroutines have no relative order.
@@ -25,8 +33,9 @@ type subscriber[T any] struct {
 // T. All methods are safe for concurrent use. The zero value is not usable;
 // construct a Broker with NewBroker.
 type Broker[T any] struct {
-	bufSize int
-	onDrop  func(topic string, msg T)
+	bufSize    int
+	onDrop     func(topic string, msg T)
+	dropOldest bool // WithDropOldest; default false = drop-newest
 
 	// mu serialises Subscribe/unsubscribe/Close (write lock) against Publish
 	// bodies (read lock): a subscription channel is only ever closed under
@@ -64,13 +73,58 @@ func (b *Broker[T]) Publish(topic string, msg T) {
 		if sub.filter != nil && !sub.filter(msg) {
 			continue
 		}
-		select {
-		case sub.ch <- msg:
-		default:
-			if b.onDrop != nil {
-				b.onDrop(topic, msg)
-			}
-		}
+		b.deliver(topic, sub, msg)
+	}
+}
+
+// deliver hands msg to one subscription, applying the configured
+// slow-subscriber policy when its buffer is full. The caller holds mu for
+// reading, which is what makes receiving from sub.ch here safe: a subscription
+// channel is only ever closed under the write lock.
+//
+// Exactly one of two things happens to msg per subscription — it is buffered, or
+// it is reported to the drop handler. Under drop-oldest the *evicted* message is
+// the one reported, and since an evicted message was buffered but never
+// received, the invariant "every message is either received or reported dropped,
+// once" holds under both policies. NFR-03's benchmark asserts it.
+func (b *Broker[T]) deliver(topic string, sub *subscriber[T], msg T) {
+	select {
+	case sub.ch <- msg:
+		return
+	default:
+	}
+
+	if !b.dropOldest {
+		b.reportDrop(topic, msg)
+		return
+	}
+
+	// Make room by discarding the oldest buffered message.
+	select {
+	case oldest := <-sub.ch:
+		b.reportDrop(topic, oldest)
+	default:
+		// The subscriber drained the buffer between the failed send above and
+		// this receive, so there is room again and nothing needs evicting. Also
+		// the normal case for a rendezvous subscription, which has no buffer to
+		// evict from.
+	}
+
+	select {
+	case sub.ch <- msg:
+	default:
+		// A concurrent publisher refilled the buffer in the window. Retrying has
+		// no bound and Publish must not block, so this message is dropped
+		// instead: drop-oldest degrades to drop-newest under contention rather
+		// than spinning.
+		b.reportDrop(topic, msg)
+	}
+}
+
+// reportDrop notifies the drop handler, if one is installed.
+func (b *Broker[T]) reportDrop(topic string, msg T) {
+	if b.onDrop != nil {
+		b.onDrop(topic, msg)
 	}
 }
 

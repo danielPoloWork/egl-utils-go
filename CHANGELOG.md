@@ -93,6 +93,18 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   met** — reads average 79 ns but a 90/10 mix averages 350 ns, because a single `sync.RWMutex` serialises
   readers behind every `Set`. Developer-facing only; no library behaviour changes (ADR-0037).
 
+- `pubsub.WithDropOldest()` — opt-in slow-subscriber policy (roadmap 10.12, spec v2 item 2). When a
+  subscription's buffer is full, the **oldest buffered** message is evicted to make room for the new one,
+  so the subscriber sees the most recent messages: the right choice for state-like streams where a later
+  message supersedes an earlier one (a gauge, a price tick, a progress percentage). The default stays
+  drop-newest, unchanged. The drop handler receives the message that was actually lost — the *evicted*
+  one under this policy — and every message is still, per subscription, either delivered or reported
+  dropped exactly once. The policy is best-effort: evicting from a channel is a receive followed by a
+  send, so if a concurrent publisher refills the buffer in between, that one message is dropped instead
+  of retrying without bound (`Publish` still never blocks). It is a no-op for a rendezvous subscription
+  (`WithSubscriberBuffer(0)`), which has nothing buffered to evict. Costs ~63 ns extra only on the
+  already-saturated path; fan-out throughput is unchanged (ADR-0039).
+
 ### Changed
 
 - `cache.Cache` is now **sharded internally** — 32 independently locked shards, selected with

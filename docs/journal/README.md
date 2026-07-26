@@ -19,6 +19,11 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-26 — M10.12: pubsub.WithDropOldest](2026/07/2026-07-26-m10-pubsub-drop-oldest.md) —
+  roadmap 10.12 (spec v2 item 2, ADR-0039); opt-in policy that evicts the **oldest** buffered message, for
+  state-like streams. **Best-effort by construction** — evicting from a channel is receive-then-send, and
+  retrying without bound would break ADR-0006's "Publish never blocks". The drop handler reports the
+  *evicted* message, so the accounting invariant survives. pubsub 96.4% → **100%** coverage.
 - [2026-07-26 — M10.11: cache sharding (the bench demanded it)](2026/07/2026-07-26-m10-cache-sharding.md)
   — roadmap 10.11 (spec v2 item 17, ADR-0038); 10.10's numbers answered the brief's "shard only if the
   bench demands", so `Cache` is now 32 shards keyed by `maphash.Comparable`: **NFR-06's 90/10 mix goes
