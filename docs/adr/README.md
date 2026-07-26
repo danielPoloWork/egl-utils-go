@@ -52,3 +52,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0034](0034-fuzzing-strategy.md) | fuzzing strategy — contract-shaped invariants (runtime.Error vs documented panic), bounded tag space, hand-authored corpus | Accepted |
 | [0035](0035-import-graph-enforcement.md) | import-graph enforcement — depguard per file plus a resolved-graph assertion; one sanctioned internal edge | Accepted |
 | [0036](0036-coverage-gate.md) | statement-coverage floor — 85% enforced per package (a module-wide average could not fail) | Accepted |
+| [0037](0037-nfr-benchmark-methodology.md) | NFR benchmark methodology — gate the hardware-independent NFRs, report the rest; NFR-01's 0-alloc target unachievable | Accepted |

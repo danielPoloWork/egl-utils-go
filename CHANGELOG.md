@@ -80,6 +80,18 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   packages at 100% the module-wide figure sits near 99% and could not fail for any realistic regression.
   Packages with no statements are skipped rather than counted as zero. Developer-facing only; no library
   behaviour changes (ADR-0036).
+- NFR benchmark suite (roadmap 10.10, spec v2 §5): benchmarks for NFR-01/02/03/04/06 with per-NFR
+  verdicts in [a report](docs/benchmarks/2026-07-26-nfr-suite.md), and an `nfr-nightly` workflow that
+  tracks them with `benchstat` and flags >10% movements. The suite is split by the *kind* of claim each
+  NFR makes: hardware-independent properties are **hard assertions in the test suite** — NFR-01's
+  allocation budget, NFR-04's ±1% admission accuracy (exact, via the injected clock), NFR-05's
+  zero-allocation steady state — while throughput and latency are measured and reported rather than
+  gated, because shared CI runners move microbenchmarks by more than 10% between identical runs.
+  Measured: NFR-03 met by 12.7×, NFR-02 throughput met by 4.4×, NFR-04 met exactly; **NFR-01's
+  0-allocs/op target is unachievable** (`context.WithValue`, `r.WithContext` and each `Header.Set`
+  allocate structurally) and is replaced by an enforced ratchet at the measured floor; **NFR-06 is not
+  met** — reads average 79 ns but a 90/10 mix averages 350 ns, because a single `sync.RWMutex` serialises
+  readers behind every `Set`. Developer-facing only; no library behaviour changes (ADR-0037).
 
 ### Changed
 

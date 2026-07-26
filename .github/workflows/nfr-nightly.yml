@@ -1,0 +1,125 @@
+name: nfr-nightly
+
+# Nightly NFR tracking (spec v2 §5, ADR-0037).
+#
+# This job REPORTS; it does not fail on a regression. Spec §5 says "> 10%
+# regression fails", and ADR-0037 records why that is a documented deviation
+# rather than an oversight: a hard gate needs a stable baseline on comparable
+# hardware, and GitHub-hosted runners are shared, unpinned, and vary far more
+# than 10% between runs for CPU-bound microbenchmarks. A gate that fires on
+# machine noise gets switched off within a fortnight, which leaves worse
+# protection than an honest report nobody has learned to ignore.
+#
+# What *does* fail the build lives in the ordinary test suite, because it is
+# hardware-independent: NFR-01's allocation budget (middleware), NFR-04's ±1%
+# admission accuracy (ratelimit, driven by a fake clock), and NFR-05's
+# zero-allocation steady state (syncpool). Those are asserted on every CI cell.
+
+on:
+  schedule:
+    - cron: '0 3 * * *'      # 03:00 UTC daily
+  workflow_dispatch:          # and on demand, e.g. before cutting a release
+
+permissions:
+  contents: read
+
+jobs:
+  nfr:
+    name: nfr / measure + compare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@v7
+        with: { go-version: '1.26', cache: true }
+
+      - name: Record the environment
+        run: |
+          {
+            echo "## NFR run environment"
+            echo
+            echo '```'
+            go version
+            echo "runner: $(uname -srm)"
+            echo "cpu: $(nproc) logical cores"
+            grep -m1 'model name' /proc/cpuinfo || true
+            echo "commit: $GITHUB_SHA"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install benchstat
+        run: go install golang.org/x/perf/cmd/benchstat@latest
+
+      # ≥ 10 runs per spec §5's methodology, so benchstat can compute a p-value
+      # rather than compare two noisy single samples.
+      - name: Run the NFR suite
+        run: |
+          go test -run '^$' -bench 'NFR' -benchmem -count 10 \
+            ./middleware/ ./workerpool/ ./pubsub/ ./cache/ ./ratelimit/ ./syncpool/ \
+            | tee current.txt
+
+      # restore-keys prefix-matches, so the most recent nightly's baseline is
+      # picked up even though each run saves under a run-id-suffixed key (a cache
+      # entry cannot be overwritten once written).
+      - name: Restore the previous nightly baseline
+        id: baseline
+        uses: actions/cache/restore@v4
+        with:
+          path: baseline.txt
+          key: nfr-baseline-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            nfr-baseline-${{ github.ref_name }}-
+
+      - name: Compare against the baseline
+        run: |
+          {
+            echo
+            echo "## NFR results"
+            echo
+            if [ -f baseline.txt ]; then
+              echo "benchstat baseline (previous nightly) vs current:"
+              echo
+              echo '```'
+              benchstat baseline.txt current.txt || true
+              echo '```'
+              echo
+              echo "_Deltas above ~10% with p < 0.05 are worth investigating. This job"
+              echo "does not fail on them — see ADR-0037 on why a hard gate on shared"
+              echo "runners would be noise-driven._"
+            else
+              echo "No previous baseline for this branch; recording the first one."
+              echo
+              echo '```'
+              benchstat current.txt || true
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Flag large movements in the log so a scan of the run output surfaces them,
+      # without failing the job.
+      - name: Flag movements over 10%
+        if: hashFiles('baseline.txt') != ''
+        run: |
+          benchstat -format csv baseline.txt current.txt > delta.csv 2>/dev/null || true
+          awk -F, 'NR>1 && $NF ~ /%/ {
+              d = $NF; gsub(/[%+]/, "", d);
+              if (d < 0) d = -d;
+              if (d > 10) { print "::warning title=NFR movement::" $1 " moved " $NF }
+            }' delta.csv || true
+
+      - name: Publish this run as the next baseline
+        run: cp current.txt baseline.txt
+
+      - uses: actions/cache/save@v4
+        with:
+          path: baseline.txt
+          key: nfr-baseline-${{ github.ref_name }}-${{ github.run_id }}
+
+      - name: Upload the raw results
+        uses: actions/upload-artifact@v4
+        with:
+          name: nfr-results-${{ github.run_id }}
+          path: |
+            current.txt
+            delta.csv
+          if-no-files-found: warn
