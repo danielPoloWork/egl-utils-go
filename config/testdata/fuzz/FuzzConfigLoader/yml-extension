@@ -1,0 +1,5 @@
+go test fuzz v1
+[]byte("addr: \":8080\"\nadmin: \"a@b.co\"\nport: 1\nmode: dev\n")
+byte(2)
+bool(true)
+bool(true)

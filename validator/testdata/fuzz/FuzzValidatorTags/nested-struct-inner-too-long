@@ -1,0 +1,5 @@
+go test fuzz v1
+[]byte("\r")
+byte(9)
+string("waytoolong")
+int64(0)

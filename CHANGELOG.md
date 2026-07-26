@@ -57,6 +57,14 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   design — a struct with no `validate` tags would pass vacuously, so enabling it implicitly would imply
   a guarantee that is not there. Additive: a `Load` call without the option behaves exactly as before
   (ADR-0033).
+- Fuzzing (roadmap 10.7, spec v2 §7): `FuzzConfigLoader` over the whole `config.Load` pipeline (read,
+  env expansion, format dispatch, both decoders, tag validation) and `FuzzValidatorTags` over the
+  `validator` tag grammar and rule evaluators, with hand-authored seed corpora committed under each
+  package's `testdata/fuzz/` — so they run as ordinary regression tests on every `go test` — and a CI
+  `fuzz` job spending §7's 10-minute budget as two 5-minute runs, uploading any reproducer as an
+  artifact. `FuzzValidatorTags` asserts a contract-shaped invariant rather than "never panics", because
+  `validator.Struct` panics by design on tag misuse: any panic must be a `validator: `-prefixed string
+  and never a `runtime.Error`, and any error must be a `ValidationErrors` (ADR-0034).
 
 ### Changed
 
@@ -70,6 +78,13 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   the transitive `prometheus/common`, `prometheus/procfs`, and `protobuf` pins at their pre-bump
   versions and `go.sum` without the matching entries — `go build ./...` failed on a clean module
   cache with *missing go.sum entry for go.mod file*.
+- `config.Load` now returns the **zero** `T` on every error path, as its documentation has always
+  promised. It previously returned the decode target, and both `encoding/json` and `gopkg.in/yaml.v3`
+  populate the fields they read before the one that fails — so a malformed file handed back a
+  partially configured struct behind an error (`{"addr":"kept","port":"not-an-int"}` yielded
+  `{Addr:"kept", Port:0}`), risking a security-relevant setting silently left at its zero value. Found
+  by the roadmap 10.7 fuzz target; a bug fix rather than a breaking change, since the documented
+  behaviour was always the zero value (ADR-0034).
 
 ### Security
 

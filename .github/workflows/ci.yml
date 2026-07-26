@@ -105,6 +105,41 @@ jobs:
         run: go test -bench=. -benchmem ./...
 
 
+  # ---------------------------------------------------------------------------
+  # Fuzzing gate (spec v2 §7) — the 10-minute PR budget, split evenly between the
+  # two targets. `-fuzz` accepts one target per invocation, so these are two runs
+  # of 5 minutes rather than one of ten.
+  #
+  # Seed corpora under each package's testdata/fuzz/ are committed and also run by
+  # the ordinary `go test` in the build job, so a previously found input is a
+  # permanent regression test whether or not this job is reached.
+  # ---------------------------------------------------------------------------
+  fuzz:
+    name: fuzz / 10-minute budget
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@v7
+        with: { go-version: '1.26', cache: true }
+
+      - name: Fuzz the config loader
+        run: go test ./config/ -run '^$' -fuzz FuzzConfigLoader -fuzztime 5m
+
+      - name: Fuzz the validator tag grammar
+        run: go test ./validator/ -run '^$' -fuzz FuzzValidatorTags -fuzztime 5m
+
+      # A crash makes the fuzzer write its reproducer to testdata/fuzz/<Target>/.
+      # Without this the file dies with the runner and the failure is unreproducible,
+      # so the artifact is what turns a red run into a committable regression test.
+      - name: Upload fuzz reproducers
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-reproducers
+          path: '**/testdata/fuzz/**'
+          if-no-files-found: ignore
+
   # Data-race / concurrency gate — runs only when the project exposes concurrency.
   race:
     name: race / data-race detector

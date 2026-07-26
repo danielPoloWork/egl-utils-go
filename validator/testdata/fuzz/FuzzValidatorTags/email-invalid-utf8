@@ -1,0 +1,5 @@
+go test fuzz v1
+[]byte("\x01")
+byte(0)
+string("a@b.\xef\xbf\xbd")
+int64(0)

@@ -1,0 +1,5 @@
+go test fuzz v1
+[]byte("{\"addr\":\":1\",\"admin\":\"a@b.co\",\"port\":-1,\"mode\":\"dev\"}")
+byte(0)
+bool(true)
+bool(true)

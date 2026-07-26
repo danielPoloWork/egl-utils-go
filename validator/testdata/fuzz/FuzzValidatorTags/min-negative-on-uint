@@ -1,0 +1,5 @@
+go test fuzz v1
+[]byte("\x06")
+byte(3)
+string("")
+int64(1)

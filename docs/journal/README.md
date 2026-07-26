@@ -19,6 +19,11 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-26 — M10.7: fuzzing (and a contract violation it found)](2026/07/2026-07-26-m10-fuzzing.md)
+  — roadmap 10.7 (spec v2 §7, ADR-0034); `FuzzValidatorTags` asserts a contract-shaped invariant
+  (`runtime.Error` vs documented panic) because `validator.Struct` panics by design, and its tag space is
+  bounded because `reflect.StructOf`'s type cache never evicts. **Found and fixed a real defect:
+  `config.Load` returned a partially decoded struct on error despite promising the zero value.**
 - [2026-07-26 — M10.6: config.WithStructValidation()](2026/07/2026-07-26-m10-config-struct-validation.md)
   — roadmap 10.6 (spec v2 item 13, ADR-0033); opt-in option, tags run before `Validator` and a tag
   failure skips `Validate`. Small code, but it establishes the module's **first internal package edge**
