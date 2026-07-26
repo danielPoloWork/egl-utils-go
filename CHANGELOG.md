@@ -48,6 +48,15 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   delegating to `HashPasswordCost` (ADR-0032, extending ADR-0024; control C-4 extended). Spec v2's
   default-cost change 10 → 12 remains deferred to `/v2` as breaking — reachable today via
   `HashPasswordCost(pw, 12)`.
+- `config.WithStructValidation()` — opt-in tag-based validation of a loaded config (roadmap 10.6, spec
+  v2 item 13): runs `validator.Struct` over the decoded value, so `validate:"required,email,min,max,
+  oneof"` tags are enforced in the same call that loads the file. Failures come back as a wrapped
+  `validator.ValidationErrors`, so `errors.As` reaches each `*validator.FieldError`. Tags run **before**
+  the existing `Validator` interface and a tag failure skips `Validate`, so a `Validate` method may
+  assume each field is individually well-formed and check only cross-field invariants. Opt-in by
+  design — a struct with no `validate` tags would pass vacuously, so enabling it implicitly would imply
+  a guarantee that is not there. Additive: a `Load` call without the option behaves exactly as before
+  (ADR-0033).
 
 ### Changed
 

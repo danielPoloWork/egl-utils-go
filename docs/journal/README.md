@@ -19,6 +19,10 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-26 — M10.6: config.WithStructValidation()](2026/07/2026-07-26-m10-config-struct-validation.md)
+  — roadmap 10.6 (spec v2 item 13, ADR-0033); opt-in option, tags run before `Validator` and a tag
+  failure skips `Validate`. Small code, but it establishes the module's **first internal package edge**
+  (`config → validator`, L2 → L2) — 10.8's depguard rules must permit it.
 - [2026-07-26 — M10.5: hash.HashPasswordCost (security-relevant)](2026/07/2026-07-26-m10-hash-password-cost.md)
   — roadmap 10.5 (spec v2 item 20 + §7, ADR-0032 extending ADR-0024); the cost range is validated
   **locally** because bcrypt silently promotes sub-`MinCost` values and honours costs 4–9 verbatim

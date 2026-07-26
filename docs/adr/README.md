@@ -48,3 +48,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0030](0030-spec-v2-reconciliation.md) | Spec v2.0 reconciliation — hybrid adoption: additive deltas in v1.x, breaking deferred to /v2 | Accepted |
 | [0031](0031-ratelimit-middleware-design.md) | ratelimit HTTP middleware — 429 shed via Allow (never Wait), constant Retry-After, ErrLimited sentinel | Accepted |
 | [0032](0032-hash-password-cost-design.md) | configurable bcrypt cost — floor of 10 enforced locally (upstream accepts weak costs silently), error not panic, rehash-on-login | Accepted |
+| [0033](0033-config-struct-validation.md) | config.WithStructValidation — opt-in tag validation, tags before Validate, and the module's first internal package edge | Accepted |
