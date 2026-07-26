@@ -34,6 +34,20 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   nothing (~30 ns/op, 0 allocs). One limiter bounds total throughput, not any one client's share —
   per-client limiting stays the consumer's decision. `ErrLimited` is the matching sentinel for
   callers gating their own work on `Allow`. Additive; the engine is unchanged (ADR-0031, ADR-0030).
+- `hash.HashPasswordCost()`, `hash.Cost()`, and `hash.ErrInvalidCost` — configurable bcrypt work
+  factor (roadmap 10.5, spec v2 item 20 and §7). `HashPasswordCost(pw, cost)` accepts cost **10–31**
+  and validates the range **locally**, before the value reaches bcrypt: upstream silently promotes a
+  cost below its own `MinCost` of 4 to the default (discarding the caller's intent) and honours costs
+  4–9 verbatim, so a misconfigured cost would otherwise produce a weak hash that looks normal. An
+  out-of-range cost returns a wrapped `ErrInvalidCost` naming the value and produces no hash at all.
+  `Cost(hash)` reads the factor back out of a stored hash (~112 ns) so a store can be upgraded by
+  verify-and-rehash-on-login. The package documentation adds the measured cost table, the
+  argon2id-for-new-systems recommendation with its migration path, and the login-DoS warning —
+  verification costs the same as hashing, so the cost is a per-login CPU multiplier; pair a high cost
+  with `ratelimit.(*Limiter).Middleware`. Additive: `HashPassword` still produces cost 10, now by
+  delegating to `HashPasswordCost` (ADR-0032, extending ADR-0024; control C-4 extended). Spec v2's
+  default-cost change 10 → 12 remains deferred to `/v2` as breaking — reachable today via
+  `HashPasswordCost(pw, 12)`.
 
 ### Changed
 

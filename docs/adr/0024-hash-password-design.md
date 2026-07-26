@@ -26,7 +26,11 @@ The frozen `HashPassword(pw string)` signature carries no cost parameter, so the
 is used: bcrypt's own default, and within OWASP's accepted range. A higher cost strengthens the hash
 but multiplies per-login CPU and thus the DoS surface of an unauthenticated login endpoint; 10 is the
 balanced default. A configurable-cost variant (`HashPasswordCost`) is a clean additive extension and
-is deferred.
+is deferred. *(Adopted in roadmap 10.5 — [ADR-0032](0032-hash-password-cost-design.md): the accepted
+range is 10–31, validated locally because bcrypt silently promotes sub-`MinCost` values and honours
+costs 4–9 verbatim. `HashPassword` now delegates to it at the default cost, so behaviour here is
+unchanged. The per-login DoS trade-off sketched above is now measured — verification costs the same as
+hashing — and its mitigation is ADR-0031's admission middleware.)*
 
 **Per-hash random salt, embedded in the output.** bcrypt generates a fresh salt per call and encodes
 the algorithm, cost, and salt into the returned string, so every call yields a different hash and no
@@ -81,7 +85,9 @@ in x/crypto's unused packages such as `ssh` are not reachable).
   a threat-model row (offline cracking / timing oracle / user enumeration).
 - **Milestone 8 (validation & security) is complete.**
 - Deferred, additive: configurable cost, a cost-upgrade helper (`bcrypt.Cost` + rehash-on-login),
-  argon2id behind a MAJOR bump.
+  argon2id behind a MAJOR bump. *(The first two shipped in roadmap 10.5 as `HashPasswordCost` and
+  `Cost` — [ADR-0032](0032-hash-password-cost-design.md). argon2id remains rejected for v1; 10.5 adds
+  the godoc recommendation and the verify-and-rehash-on-login migration path instead.)*
 
 ## References
 

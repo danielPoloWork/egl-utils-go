@@ -19,6 +19,12 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-26 — M10.5: hash.HashPasswordCost (security-relevant)](2026/07/2026-07-26-m10-hash-password-cost.md)
+  — roadmap 10.5 (spec v2 item 20 + §7, ADR-0032 extending ADR-0024); the cost range is validated
+  **locally** because bcrypt silently promotes sub-`MinCost` values and honours costs 4–9 verbatim
+  (verified empirically, pinned by a test); error not panic; `Cost()` makes rehash-on-login actionable;
+  cost-sizing report shows exact doubling and that verify costs the same as hash — the per-login DoS
+  trade-off, mitigated by 10.4's middleware. Control C-4 extended, 3 threat-model rows.
 - [2026-07-26 — M10.4: ratelimit.Middleware() + ErrLimited](2026/07/2026-07-26-m10-ratelimit-middleware.md)
   — roadmap 10.4 (spec v2 item 8, ADR-0031, the milestone's first new ADR); `(*Limiter).Middleware()`
   sheds via `Allow` rather than queueing via `Wait`, 429 + constant `Retry-After`, no logging (a
