@@ -19,6 +19,11 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-27 — M10.13: contrib/ submodules — **Milestone 10 complete**](2026/07/2026-07-27-m10-contrib-submodules.md)
+  — roadmap 10.13 (spec v2 item 22, ADR-0040); `contrib/redishealth` + `contrib/pgxhealth` as separate
+  modules requiring the released core (no `replace`, no `go.work`). Closed the three things that
+  silently ignore a nested module — the import-graph lint, the coverage gate and CI — since a contrib
+  directory losing its `go.mod` would drag a driver into the core unnoticed. Next: the v1.1.0 cut.
 - [2026-07-26 — M10.12: pubsub.WithDropOldest](2026/07/2026-07-26-m10-pubsub-drop-oldest.md) —
   roadmap 10.12 (spec v2 item 2, ADR-0039); opt-in policy that evicts the **oldest** buffered message, for
   state-like streams. **Best-effort by construction** — evicting from a channel is receive-then-send, and

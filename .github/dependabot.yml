@@ -17,3 +17,21 @@ updates:
     commit-message:
       prefix: "build"
     labels: ["build"]
+  # Each contrib/* submodule has its own go.mod, and Dependabot only watches the
+  # directories listed here — a nested module is invisible to the "/" entry above.
+  # These carry the driver dependencies the core is forbidden (ADR-0040), so they
+  # are the ones most in need of watching.
+  - package-ecosystem: "gomod"
+    directory: "/contrib/redishealth"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "build"
+    labels: ["build", "contrib"]
+  - package-ecosystem: "gomod"
+    directory: "/contrib/pgxhealth"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "build"
+    labels: ["build", "contrib"]
