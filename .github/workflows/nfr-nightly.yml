@@ -63,7 +63,7 @@ jobs:
       # entry cannot be overwritten once written).
       - name: Restore the previous nightly baseline
         id: baseline
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: baseline.txt
           key: nfr-baseline-${{ github.ref_name }}-${{ github.run_id }}
@@ -110,7 +110,7 @@ jobs:
       - name: Publish this run as the next baseline
         run: cp current.txt baseline.txt
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v6
         with:
           path: baseline.txt
           key: nfr-baseline-${{ github.ref_name }}-${{ github.run_id }}
