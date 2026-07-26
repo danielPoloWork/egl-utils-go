@@ -30,8 +30,14 @@ go test ./...
 ```
 
 - **Toolchain:** go build (go modules), go test (+ testify; rapid for property tests), gofumpt (gofmt superset), golangci-lint (govet, staticcheck, errcheck, revive, gosec).
-- **Supported platforms:** Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.24).
+- **Supported platforms:** Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.25).
 - Consumers import the public surface via: `import "github.com/danielPoloWork/egl-utils-go/workerpool"`.
+- **[`contrib/`](contrib) holds separate modules**, each with its own `go.mod` — driver-backed
+  `health.Check` probes for Redis and PostgreSQL, kept out of this module so a consumer inherits
+  no driver dependencies. `./...` does not descend into a nested module, so they are built and
+  tested from their own directories (`cd contrib/redishealth && go test ./...`) and version
+  independently. See [`contrib/README.md`](contrib/README.md) and
+  [ADR-0040](docs/adr/0040-contrib-submodules.md).
 
 See [`docs/development/local-build.md`](docs/development/local-build.md) for the full local
 setup.

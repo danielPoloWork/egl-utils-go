@@ -93,6 +93,20 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   met** — reads average 79 ns but a 90/10 mix averages 350 ns, because a single `sync.RWMutex` serialises
   readers behind every `Set`. Developer-facing only; no library behaviour changes (ADR-0037).
 
+- **`contrib/redishealth` and `contrib/pgxhealth`** — driver-backed `health.Check` probes, each a
+  **separate module** with its own `go.mod` and independent release tags (roadmap 10.13, spec v2
+  item 22, ADR-0003/ADR-0040). `redishealth.Check(name, client, …)` probes Redis with a `PING`;
+  `pgxhealth.Check(name, pool, …)` round-trips to PostgreSQL through a pgx pool. Both take the
+  driver's own type, honour the request context, offer `WithTimeout` to bound a single probe
+  (the per-probe timeout ADR-0026 left to the probe), and wrap the driver's error so `errors.Is`
+  reaches it while `health.Handler` keeps it out of the HTTP response.
+
+  **This module is unaffected**: it gains no dependency, and `go build ./...` / `go list ./...` do
+  not descend into a nested module — verified, and now asserted on every CI run, since a contrib
+  directory that lost its `go.mod` would silently join this module and bring the driver with it.
+  Install them separately (`go get github.com/danielPoloWork/egl-utils-go/contrib/redishealth`);
+  they tag as `contrib/<name>/vX.Y.Z` and are **not** released by this module's tags. See
+  [`contrib/README.md`](contrib/README.md).
 - `pubsub.WithDropOldest()` — opt-in slow-subscriber policy (roadmap 10.12, spec v2 item 2). When a
   subscription's buffer is full, the **oldest buffered** message is evicted to make room for the new one,
   so the subscriber sees the most recent messages: the right choice for state-like streams where a later
@@ -116,6 +130,9 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   32.9 ns, `Get` miss 15.1 → 20.1 ns, `Set` 52.0 → 60.5 ns) — a deliberate trade, recorded in ADR-0038.
   A cache still owns **exactly one** sweeper goroutine however many shards it has, now verified at a
   thousand caches.
+- `README.md`'s build section now states the module floor as Go 1.25, matching `go.mod` and the CI
+  matrix, instead of the stale 1.24 (the same correction ADR-0036 made to AGENTS.md §10), and
+  documents that `contrib/` holds separate modules built from their own directories.
 - AGENTS.md §10's quality bar: the coverage row moves from the provisional "new code ≥ 80% line
   (finalized in an ADR)" to "≥ 85% of statements per package", finalized in ADR-0036 as that row always
   promised; and its build-matrix row now states the module floor as Go 1.25, matching `go.mod` and the CI

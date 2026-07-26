@@ -1,0 +1,37 @@
+# golangci-lint v2 configuration for the contrib/* submodules.
+#
+# golangci-lint searches upward from its working directory, so this file shadows
+# the repository root's config for every module under contrib/ — one file, no
+# duplication between the two submodules.
+#
+# It is the root config minus **depguard**, and that omission is the point rather
+# than an oversight. The root's depguard rules encode two *core-module* policies:
+# ADR-0004's dependency rings (each vetted third-party module confined to the one
+# package that justified it) and spec §3's layered import graph (feature packages
+# do not import each other, and no package imports a database driver or cache
+# client). A contrib module exists precisely to break both of those on purpose —
+# it imports a driver, and it imports the core's health package — so applying them
+# here would forbid the module's whole reason for existing. Verified rather than
+# assumed: with the root config in force, linting contrib/redishealth reports the
+# go-redis import and the health import as violations.
+#
+# What keeps the core clean is not this file but the module boundary itself, and
+# `tools/import_graph_lint.py` asserts that boundary exists — every contrib
+# directory must carry its own go.mod, or its driver dependencies would join the
+# root module's graph (ADR-0040).
+#
+# Everything else matches the root: warnings are errors, no broad disables, and a
+# targeted //nolint needs an in-line reason.
+version: "2"
+
+linters:
+  enable:
+    - revive
+    - gosec
+  exclusions:
+    rules:
+      # Mirrors the root config: property-style tests use seeded math/rand/v2
+      # deliberately so a failure reproduces exactly. Scoped to G404 in test files.
+      - path: _test\.go$
+        linters: [gosec]
+        text: "G404"

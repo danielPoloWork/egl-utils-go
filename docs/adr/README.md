@@ -55,3 +55,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0037](0037-nfr-benchmark-methodology.md) | NFR benchmark methodology — gate the hardware-independent NFRs, report the rest; NFR-01's 0-alloc target unachievable | Accepted |
 | [0038](0038-cache-sharding.md) | cache sharding — 32 shards hashed with maphash.Comparable; 7.5x on the mixed path, ~5ns tax uncontended | Accepted |
 | [0039](0039-pubsub-drop-oldest.md) | pubsub.WithDropOldest — opt-in slow-subscriber policy, best-effort by construction (Publish must not block) | Accepted |
+| [0040](0040-contrib-submodules.md) | contrib/* nested submodules — require the released core, no replace/workspace; the module boundary is the enforcement | Accepted |

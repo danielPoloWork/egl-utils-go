@@ -106,6 +106,46 @@ jobs:
 
 
   # ---------------------------------------------------------------------------
+  # contrib/* submodules (ADR-0003, ADR-0040). Each carries its own go.mod, and
+  # `go test ./...` from the repository root does NOT descend into a nested module
+  # — so without this job the submodules would never be built or tested at all.
+  # One matrix entry per module, so a failure names which one.
+  # ---------------------------------------------------------------------------
+  contrib:
+    name: contrib / ${{ matrix.module }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [redishealth, pgxhealth]
+    defaults:
+      run:
+        working-directory: contrib/${{ matrix.module }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@v7
+        with: { go-version: '1.26', cache: true }
+
+      - name: Build, vet and test under the race detector
+        run: |
+          go build ./...
+          go vet ./...
+          go test -race ./...
+
+      - name: gofumpt
+        run: go install mvdan.cc/gofumpt@v0.10.0 && test -z "$(gofumpt -l .)"
+
+      # contrib/.golangci.yml shadows the root config here: the root's depguard
+      # rules forbid driver imports, which is exactly what a contrib module is for.
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          working-directory: contrib/${{ matrix.module }}
+
+      - name: govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.4.0 && govulncheck ./...
+
+  # ---------------------------------------------------------------------------
   # Coverage gate (spec v2 §7, ADR-0036) — 85% of statements *per package*, so the
   # threshold binds the weakest package instead of being absorbed by an average.
   # ---------------------------------------------------------------------------

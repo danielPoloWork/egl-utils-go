@@ -29,6 +29,7 @@ the ADR.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 
@@ -190,28 +191,95 @@ def check_module_graph(problems: list[str]) -> None:
             )
 
 
+def check_contrib_is_separately_moduled(problems: list[str]) -> None:
+    """Every contrib/* package directory must carry its own go.mod.
+
+    This is the load-bearing check for the contrib topology (ADR-0003, ADR-0040).
+    contrib modules deliberately import database drivers and cache clients, which
+    the core module is forbidden to touch; the only thing keeping those
+    dependencies out of the core is that each contrib directory is a *separate
+    module*, which `go list ./...` does not descend into.
+
+    Delete or rename one of those go.mod files and the failure is silent: the .go
+    files underneath simply join the root module, the driver joins the core's
+    dependency graph, and every other check here keeps passing because it asks
+    `go list ./...` what the module contains. So this check looks at the
+    filesystem instead.
+    """
+    contrib = "contrib"
+    if not os.path.isdir(contrib):
+        return
+    for name in sorted(os.listdir(contrib)):
+        d = os.path.join(contrib, name)
+        if not os.path.isdir(d):
+            continue
+        has_go = any(f.endswith(".go") for f in os.listdir(d))
+        if not has_go:
+            continue
+        mod = os.path.join(d, "go.mod")
+        if not os.path.isfile(mod):
+            problems.append(
+                "%s holds Go files but no go.mod, so it is part of the ROOT module -- "
+                "its driver dependencies would enter the core's graph. Every contrib/* "
+                "package is a separate module (ADR-0003, ADR-0040)." % d
+            )
+            continue
+        want = "%s/%s/%s" % (MODULE, contrib, name)
+        with open(mod, encoding="utf-8") as fh:
+            first = fh.readline().strip()
+        if first != "module " + want:
+            problems.append(
+                "%s declares %r but its directory implies module path %r; a mismatch "
+                "breaks `go get` for that submodule." % (mod, first, want)
+            )
+
+
+def report(problems: list[str]) -> int:
+    print("Import-graph lint: %d violation(s)\n" % len(problems))
+    for p in problems:
+        print("  [!]   %s" % p)
+    print(
+        "\nPolicy: docs/adr/0004-runtime-dependency-policy.md (dependency rings),\n"
+        "        docs/adr/0035-import-graph-enforcement.md (this gate),\n"
+        "        docs/adr/0033-config-struct-validation.md (the one internal edge),\n"
+        "        docs/adr/0040-contrib-submodules.md (the contrib topology)."
+    )
+    return 1
+
+
 def main() -> int:
+    # The contrib check runs first and short-circuits, because it is the one
+    # failure that breaks the tools underneath it. A contrib directory without a
+    # go.mod joins the root module, and `go list ./...` then dies on the driver
+    # import it cannot resolve -- an opaque "no required module provides package"
+    # error rather than the real problem. Diagnosing first, then measuring.
     problems: list[str] = []
+    check_contrib_is_separately_moduled(problems)
+    if problems:
+        return report(problems)
+
     check_direct_requirements(problems)
     check_package_imports(problems)
     check_edges_are_reachable(problems)
     check_module_graph(problems)
 
     if problems:
-        print("Import-graph lint: %d violation(s)\n" % len(problems))
-        for p in problems:
-            print("  [!]   %s" % p)
-        print(
-            "\nPolicy: docs/adr/0004-runtime-dependency-policy.md (dependency rings),\n"
-            "        docs/adr/0035-import-graph-enforcement.md (this gate),\n"
-            "        docs/adr/0033-config-struct-validation.md (the one internal edge)."
-        )
-        return 1
+        return report(problems)
 
+    contrib = sorted(
+        n for n in (os.listdir("contrib") if os.path.isdir("contrib") else [])
+        if os.path.isfile(os.path.join("contrib", n, "go.mod"))
+    )
     print(
         "Import-graph lint: OK - %d runtime deps in their owning packages, "
-        "%d sanctioned internal edge(s), no test-only deps in production."
-        % (len(RUNTIME_DEPS), len(ALLOWED_INTERNAL_EDGES))
+        "%d sanctioned internal edge(s), no test-only deps in production, "
+        "%d contrib submodule(s) held outside the core graph%s."
+        % (
+            len(RUNTIME_DEPS),
+            len(ALLOWED_INTERNAL_EDGES),
+            len(contrib),
+            (" (" + ", ".join(contrib) + ")") if contrib else "",
+        )
     )
     return 0
 

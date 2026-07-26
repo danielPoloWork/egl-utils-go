@@ -21,6 +21,7 @@ package that fell short and by how much.
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -37,33 +38,53 @@ COVERAGE_RE = re.compile(r"^(?:ok|---\s*FAIL)\s+(\S+)\s+.*?coverage:\s+([0-9.]+)
 NO_STATEMENTS_RE = re.compile(r"^ok\s+(\S+)\s+.*coverage:\s+\[no statements\]")
 
 
+def module_dirs() -> list[str]:
+    """The root module plus every contrib submodule.
+
+    `go test ./...` does not descend into a nested module, so without this the
+    gate would silently stop covering contrib/* the moment those modules were
+    added — a coverage gate that quietly ignores new code is the failure mode this
+    tool exists to prevent (ADR-0036, ADR-0040).
+    """
+    dirs = ["."]
+    contrib = "contrib"
+    if os.path.isdir(contrib):
+        for name in sorted(os.listdir(contrib)):
+            d = os.path.join(contrib, name)
+            if os.path.isfile(os.path.join(d, "go.mod")):
+                dirs.append(d)
+    return dirs
+
+
 def main() -> int:
     report_only = "--report" in sys.argv[1:]
 
-    proc = subprocess.run(
-        ["go", "test", "./...", "-count=1", "-cover"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if proc.returncode != 0:
-        print(proc.stdout)
-        print(proc.stderr, file=sys.stderr)
-        return proc.returncode
-
     measured: list[tuple[str, float]] = []
     skipped: list[str] = []
-    for line in proc.stdout.splitlines():
-        if NO_STATEMENTS_RE.match(line):
-            skipped.append(NO_STATEMENTS_RE.match(line).group(1))
-            continue
-        m = COVERAGE_RE.match(line)
-        if m:
-            measured.append((m.group(1), float(m.group(2))))
+    for d in module_dirs():
+        proc = subprocess.run(
+            ["go", "test", "./...", "-count=1", "-cover"],
+            capture_output=True,
+            text=True,
+            check=False,
+            cwd=d,
+        )
+        if proc.returncode != 0:
+            print("module %s:" % d)
+            print(proc.stdout)
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+
+        for line in proc.stdout.splitlines():
+            if NO_STATEMENTS_RE.match(line):
+                skipped.append(NO_STATEMENTS_RE.match(line).group(1))
+                continue
+            m = COVERAGE_RE.match(line)
+            if m:
+                measured.append((m.group(1), float(m.group(2))))
 
     if not measured:
         print("Coverage gate: no coverage data parsed from `go test -cover`.")
-        print(proc.stdout)
         return 1
 
     def short(pkg: str) -> str:
