@@ -19,6 +19,12 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-26 — M10.10: the NFR suite (two NFRs do not hold)](2026/07/2026-07-26-m10-nfr-suite.md) —
+  roadmap 10.10 (spec v2 §5, ADR-0037 + [report](../benchmarks/2026-07-26-nfr-suite.md)); gates the
+  hardware-independent NFRs and reports the rest. **NFR-01's 0-alloc target is unachievable** (replaced by
+  a ratchet) and **NFR-06 is not met** — a single RWMutex serialises readers behind every `Set`, which is
+  10.11's sharding evidence. NFR-02/06 tails are unmeasurable on Windows (100% of adjacent
+  `Now`/`Since` pairs read 0 ns).
 - [2026-07-26 — M10.9: per-package coverage gate](2026/07/2026-07-26-m10-coverage-gate.md) —
   roadmap 10.9 (spec v2 §7, ADR-0036); 85% enforced **per package**, because with 16 of 21 packages at
   100% a module-wide gate could never fail. Real low-water mark is fanout 93.3%. Also discharges
