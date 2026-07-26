@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-27 — M10.13: contrib/ submodules — Milestone 10 complete](docs/journal/2026/07/2026-07-27-m10-contrib-submodules.md).
+  [2026-07-27 — v1.1.0 release cut](docs/journal/2026/07/2026-07-27-v1.1.0-release-cut.md).
 
 ### Agent guidance (model × effort)
 
@@ -168,12 +168,21 @@ Graceful shutdown, health, metrics, and the core utility pair
 
 ---
 
-## Milestone 10 — Spec v2 reconciliation (v1.x additive adoption)
+## Milestone 10 — Spec v2 reconciliation (v1.x additive adoption) — ✅ complete, released as v1.1.0
 
 The non-breaking deltas of the imported spec v2.0 draft ([`docs/specs/v2/`](docs/specs/v2/)),
 adopted per the hybrid disposition in [ADR-0030](docs/adr/0030-spec-v2-reconciliation.md) —
 breaking deltas stay ledgered there for a possible `/v2`. Post-1.0: every item is additive under
-the v1.0.0 API-stability commitment; the milestone releases as **v1.1.0**.
+the v1.0.0 API-stability commitment; the milestone released as
+**[v1.1.0](docs/releases/v1.1.0.md)** on 2026-07-27, all 13 items delivered with no exported
+signature changed.
+
+Two findings are carried forward deliberately rather than silently absorbed, both from 10.10:
+NFR-01's **0-allocs/op target is unachievable** (structural allocations in `context.WithValue`,
+`Request.WithContext` and `Header.Set`), enforced as a ratchet budget at the measured floor and
+needing a spec amendment; and `middleware.HeaderName` is **not Go's canonical header spelling**,
+costing 2 allocations per request for no wire-format difference — measured but not changed, since
+it is an API-visible constant under the v1 commitment.
 
 > **Agent guidance:** Claude Opus 4.8 · effort **high** — additive API surfaces and CI plumbing;
 > the NFR suite (10.10) and the contrib module topology (10.13) are the reasoning-heavy steps and

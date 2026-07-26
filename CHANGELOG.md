@@ -12,149 +12,13 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Added
 
-- `circuitbreaker.State` / `(*Breaker).State()` — observable breaker state (roadmap 10.2, spec v2
-  item 6): an exported `State` type (`StateClosed`/`StateOpen`/`StateHalfOpen`, with `String()`)
-  and a `State()` accessor. `State()` is a pure read-only observer — it reflects the lazy,
-  time-based transition (an open breaker whose cool-down has elapsed reports `StateHalfOpen`)
-  without performing it, so polling it for metrics never admits a probe, mutates the breaker, or
-  advances the generation. Additive; the existing `Do`/`ErrOpen` surface is unchanged (ADR-0030,
-  lifting ADR-0010's deferral).
-- `lifecycle.Trigger()` — programmatic shutdown (roadmap 10.3, spec v2 item 21): unblocks a pending
-  `WaitForSignals` exactly as a termination signal would, for code that decides to stop the process
-  itself (a fatal background error, an admin endpoint, a supervisor command). Idempotent and safe for
-  concurrent use; a `Trigger` that arrives before `WaitForSignals` latches instead of being lost.
-  Additive — `Register`, `Shutdown`, and `WaitForSignals` keep their signatures (ADR-0030).
-- `ratelimit.(*Limiter).Middleware()` and `ratelimit.ErrLimited` — HTTP admission middleware (roadmap
-  10.4, spec v2 item 8): a standard `func(http.Handler) http.Handler` decorator that admits each
-  request through the limiter and answers `429 Too Many Requests` with a `Retry-After` of
-  `ceil(1/rate)` seconds when the bucket is empty. Admission uses `Allow`, never `Wait`, so an
-  over-budget burst is shed rather than queued into parked goroutines and held connections; the
-  refusal body is the generic status text and discloses no limiter state, and denials are not logged
-  by the library (they surface as ordinary 429s to `middleware.Logger`). The admit path allocates
-  nothing (~30 ns/op, 0 allocs). One limiter bounds total throughput, not any one client's share —
-  per-client limiting stays the consumer's decision. `ErrLimited` is the matching sentinel for
-  callers gating their own work on `Allow`. Additive; the engine is unchanged (ADR-0031, ADR-0030).
-- `hash.HashPasswordCost()`, `hash.Cost()`, and `hash.ErrInvalidCost` — configurable bcrypt work
-  factor (roadmap 10.5, spec v2 item 20 and §7). `HashPasswordCost(pw, cost)` accepts cost **10–31**
-  and validates the range **locally**, before the value reaches bcrypt: upstream silently promotes a
-  cost below its own `MinCost` of 4 to the default (discarding the caller's intent) and honours costs
-  4–9 verbatim, so a misconfigured cost would otherwise produce a weak hash that looks normal. An
-  out-of-range cost returns a wrapped `ErrInvalidCost` naming the value and produces no hash at all.
-  `Cost(hash)` reads the factor back out of a stored hash (~112 ns) so a store can be upgraded by
-  verify-and-rehash-on-login. The package documentation adds the measured cost table, the
-  argon2id-for-new-systems recommendation with its migration path, and the login-DoS warning —
-  verification costs the same as hashing, so the cost is a per-login CPU multiplier; pair a high cost
-  with `ratelimit.(*Limiter).Middleware`. Additive: `HashPassword` still produces cost 10, now by
-  delegating to `HashPasswordCost` (ADR-0032, extending ADR-0024; control C-4 extended). Spec v2's
-  default-cost change 10 → 12 remains deferred to `/v2` as breaking — reachable today via
-  `HashPasswordCost(pw, 12)`.
-- `config.WithStructValidation()` — opt-in tag-based validation of a loaded config (roadmap 10.6, spec
-  v2 item 13): runs `validator.Struct` over the decoded value, so `validate:"required,email,min,max,
-  oneof"` tags are enforced in the same call that loads the file. Failures come back as a wrapped
-  `validator.ValidationErrors`, so `errors.As` reaches each `*validator.FieldError`. Tags run **before**
-  the existing `Validator` interface and a tag failure skips `Validate`, so a `Validate` method may
-  assume each field is individually well-formed and check only cross-field invariants. Opt-in by
-  design — a struct with no `validate` tags would pass vacuously, so enabling it implicitly would imply
-  a guarantee that is not there. Additive: a `Load` call without the option behaves exactly as before
-  (ADR-0033).
-- Fuzzing (roadmap 10.7, spec v2 §7): `FuzzConfigLoader` over the whole `config.Load` pipeline (read,
-  env expansion, format dispatch, both decoders, tag validation) and `FuzzValidatorTags` over the
-  `validator` tag grammar and rule evaluators, with hand-authored seed corpora committed under each
-  package's `testdata/fuzz/` — so they run as ordinary regression tests on every `go test` — and a CI
-  `fuzz` job spending §7's 10-minute budget as two 5-minute runs, uploading any reproducer as an
-  artifact. `FuzzValidatorTags` asserts a contract-shaped invariant rather than "never panics", because
-  `validator.Struct` panics by design on tag misuse: any panic must be a `validator: `-prefixed string
-  and never a `runtime.Error`, and any error must be a `ValidationErrors` (ADR-0034).
-- Import-graph enforcement (roadmap 10.8, spec v2 §3): ADR-0004's dependency rings and the layered
-  internal import graph are now build-breaking rules rather than prose. `depguard` rules in
-  `.golangci.yml` confine each governed module to the package whose ADR bought it (`yaml.v3` → `config`,
-  `client_golang` → `metrics`, `x/crypto` → `hash`, `x/sync` → `semaphore`), deny database-driver and
-  cache-client SDKs outright, and deny internal sibling imports everywhere except `config`'s sanctioned
-  `validator` edge. `tools/import_graph_lint.py` asserts the same policies over the *resolved* graph —
-  direct `go.mod` requirements, per-package direct imports, the internal edge set, and `go mod graph`
-  against the manifest — covering what depguard cannot see: a new direct module requirement, a blank
-  sibling import, and a sanctioned exception that has become dead. Developer-facing only; no library
-  behaviour changes (ADR-0035).
-- Coverage gate (roadmap 10.9, spec v2 §7): `tools/coverage_gate.py` and a `coverage` CI job enforce
-  **≥ 85% of statements per package**. Per package rather than module-wide, because with 16 of 21
-  packages at 100% the module-wide figure sits near 99% and could not fail for any realistic regression.
-  Packages with no statements are skipped rather than counted as zero. Developer-facing only; no library
-  behaviour changes (ADR-0036).
-- NFR benchmark suite (roadmap 10.10, spec v2 §5): benchmarks for NFR-01/02/03/04/06 with per-NFR
-  verdicts in [a report](docs/benchmarks/2026-07-26-nfr-suite.md), and an `nfr-nightly` workflow that
-  tracks them with `benchstat` and flags >10% movements. The suite is split by the *kind* of claim each
-  NFR makes: hardware-independent properties are **hard assertions in the test suite** — NFR-01's
-  allocation budget, NFR-04's ±1% admission accuracy (exact, via the injected clock), NFR-05's
-  zero-allocation steady state — while throughput and latency are measured and reported rather than
-  gated, because shared CI runners move microbenchmarks by more than 10% between identical runs.
-  Measured: NFR-03 met by 12.7×, NFR-02 throughput met by 4.4×, NFR-04 met exactly; **NFR-01's
-  0-allocs/op target is unachievable** (`context.WithValue`, `r.WithContext` and each `Header.Set`
-  allocate structurally) and is replaced by an enforced ratchet at the measured floor; **NFR-06 is not
-  met** — reads average 79 ns but a 90/10 mix averages 350 ns, because a single `sync.RWMutex` serialises
-  readers behind every `Set`. Developer-facing only; no library behaviour changes (ADR-0037).
-
-- **`contrib/redishealth` and `contrib/pgxhealth`** — driver-backed `health.Check` probes, each a
-  **separate module** with its own `go.mod` and independent release tags (roadmap 10.13, spec v2
-  item 22, ADR-0003/ADR-0040). `redishealth.Check(name, client, …)` probes Redis with a `PING`;
-  `pgxhealth.Check(name, pool, …)` round-trips to PostgreSQL through a pgx pool. Both take the
-  driver's own type, honour the request context, offer `WithTimeout` to bound a single probe
-  (the per-probe timeout ADR-0026 left to the probe), and wrap the driver's error so `errors.Is`
-  reaches it while `health.Handler` keeps it out of the HTTP response.
-
-  **This module is unaffected**: it gains no dependency, and `go build ./...` / `go list ./...` do
-  not descend into a nested module — verified, and now asserted on every CI run, since a contrib
-  directory that lost its `go.mod` would silently join this module and bring the driver with it.
-  Install them separately (`go get github.com/danielPoloWork/egl-utils-go/contrib/redishealth`);
-  they tag as `contrib/<name>/vX.Y.Z` and are **not** released by this module's tags. See
-  [`contrib/README.md`](contrib/README.md).
-- `pubsub.WithDropOldest()` — opt-in slow-subscriber policy (roadmap 10.12, spec v2 item 2). When a
-  subscription's buffer is full, the **oldest buffered** message is evicted to make room for the new one,
-  so the subscriber sees the most recent messages: the right choice for state-like streams where a later
-  message supersedes an earlier one (a gauge, a price tick, a progress percentage). The default stays
-  drop-newest, unchanged. The drop handler receives the message that was actually lost — the *evicted*
-  one under this policy — and every message is still, per subscription, either delivered or reported
-  dropped exactly once. The policy is best-effort: evicting from a channel is a receive followed by a
-  send, so if a concurrent publisher refills the buffer in between, that one message is dropped instead
-  of retrying without bound (`Publish` still never blocks). It is a no-op for a rendezvous subscription
-  (`WithSubscriberBuffer(0)`), which has nothing buffered to evict. Costs ~63 ns extra only on the
-  already-saturated path; fan-out throughput is unchanged (ADR-0039).
-
 ### Changed
-
-- `cache.Cache` is now **sharded internally** — 32 independently locked shards, selected with
-  `hash/maphash.Comparable` against a per-cache seed (roadmap 10.11, spec v2 item 17). This is invisible
-  in the API (key ordering was never promised and iteration is not offered) and fixes NFR-06: the 90/10
-  read/write mix at 1 M entries across 8 goroutines goes from **349.8 ns to 46.6 ns (7.5× faster)**, now
-  inside the 200 ns target, because a `Set` no longer takes an exclusive lock over the whole keyspace.
-  Uncontended single-goroutine operations pay about **5 ns more** for the shard hash (`Get` hit 27.2 →
-  32.9 ns, `Get` miss 15.1 → 20.1 ns, `Set` 52.0 → 60.5 ns) — a deliberate trade, recorded in ADR-0038.
-  A cache still owns **exactly one** sweeper goroutine however many shards it has, now verified at a
-  thousand caches.
-- `README.md`'s build section now states the module floor as Go 1.25, matching `go.mod` and the CI
-  matrix, instead of the stale 1.24 (the same correction ADR-0036 made to AGENTS.md §10), and
-  documents that `contrib/` holds separate modules built from their own directories.
-- AGENTS.md §10's quality bar: the coverage row moves from the provisional "new code ≥ 80% line
-  (finalized in an ADR)" to "≥ 85% of statements per package", finalized in ADR-0036 as that row always
-  promised; and its build-matrix row now states the module floor as Go 1.25, matching `go.mod` and the CI
-  matrix, instead of the stale 1.24.
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
-
-- `go.mod` / `go.sum`: re-tidied after the `prometheus/client_golang` 1.24.1 bump (#44), which left
-  the transitive `prometheus/common`, `prometheus/procfs`, and `protobuf` pins at their pre-bump
-  versions and `go.sum` without the matching entries — `go build ./...` failed on a clean module
-  cache with *missing go.sum entry for go.mod file*.
-- `config.Load` now returns the **zero** `T` on every error path, as its documentation has always
-  promised. It previously returned the decode target, and both `encoding/json` and `gopkg.in/yaml.v3`
-  populate the fields they read before the one that fails — so a malformed file handed back a
-  partially configured struct behind an error (`{"addr":"kept","port":"not-an-int"}` yielded
-  `{Addr:"kept", Port:0}`), risking a security-relevant setting silently left at its zero value. Found
-  by the roadmap 10.7 fuzz target; a bug fix rather than a breaking change, since the documented
-  behaviour was always the zero value (ADR-0034).
 
 ### Security
 
@@ -164,5 +28,6 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| [v1.1.0](docs/changelog/v1/v1.1.0.md) | 2026-07-27 | M10 — spec v2.0 reconciliation: observable breaker state, programmatic shutdown, 429 rate-limit middleware, configurable bcrypt cost, config tag validation, fuzzing, import-graph + coverage gates, the NFR suite, cache sharding (7.5×), pubsub drop-oldest, and the contrib/* health probes |
 | [v1.0.0](docs/changelog/v1/v1.0.0.md) | 2026-07-15 | Feature-complete 1.0 — M2–M9: concurrency, resilience, HTTP middleware, config, structured logging, caching & DB, validation & bcrypt, diagnostics & lifecycle; API-stability commitment |
 | [v0.1.0](docs/changelog/v0/v0.1.0.md) | 2026-07-12 | M1 — project bootstrap & CI: module, quality gates, ADR-0003/0004 |
