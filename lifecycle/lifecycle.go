@@ -17,7 +17,12 @@
 // ones after it (each error is collected and the combined error returned) —
 // and later Shutdown calls (or concurrent ones) wait for the first to finish
 // and return its result. The package owns no goroutines: WaitForSignals is a
-// blocking receive on the signal channel, not a watcher goroutine.
+// blocking select over the signal channel and the Trigger channel, not a
+// watcher goroutine.
+//
+// Code that must start the shutdown itself — a fatal background error, an
+// admin endpoint, a supervisor command — calls Trigger, which unblocks a
+// pending WaitForSignals as a signal would.
 package lifecycle
 
 import (
@@ -34,15 +39,17 @@ import (
 // exists as a type (rather than bare package vars) so tests can run against a
 // fresh instance.
 type coordinator struct {
-	mu       sync.Mutex
-	hooks    []func(context.Context) error
-	started  bool          // a Shutdown has begun; hooks are frozen
-	finished chan struct{} // closed when the first Shutdown completes
-	result   error         // written before finished is closed
+	mu          sync.Mutex
+	hooks       []func(context.Context) error
+	started     bool          // a Shutdown has begun; hooks are frozen
+	finished    chan struct{} // closed when the first Shutdown completes
+	result      error         // written before finished is closed
+	triggerOnce sync.Once     // guards the close of triggered
+	triggered   chan struct{} // closed by the first Trigger
 }
 
 func newCoordinator() *coordinator {
-	return &coordinator{finished: make(chan struct{})}
+	return &coordinator{finished: make(chan struct{}), triggered: make(chan struct{})}
 }
 
 // std is the process-wide coordinator the exported functions delegate to —
@@ -66,6 +73,20 @@ func Register(fn func(ctx context.Context) error) { std.register(fn) }
 // the cancelled context and decides for itself how to abort.
 func Shutdown(ctx context.Context) error { return std.shutdown(ctx) }
 
+// Trigger requests shutdown programmatically, unblocking a pending
+// WaitForSignals exactly as a termination signal would — for code that decides
+// to stop the process itself: a fatal background error, an admin endpoint, a
+// supervisor command.
+//
+// Trigger is idempotent and safe for concurrent use: the first call arms the
+// request and every later call is a no-op. It never blocks and never runs the
+// hooks itself — WaitForSignals runs them when it wakes. Triggering before
+// WaitForSignals is called is therefore not a lost wakeup: the request latches,
+// and WaitForSignals returns as soon as it is entered. A process that never
+// calls WaitForSignals sees no effect from Trigger; it should call Shutdown
+// instead.
+func Trigger() { std.trigger() }
+
 // notifySignal and stopSignal indirect os/signal so tests can inject a fake
 // signal source instead of delivering real process signals (impossible to do
 // portably — Windows has no kill(2)).
@@ -74,12 +95,13 @@ var (
 	stopSignal   = signal.Stop
 )
 
-// WaitForSignals blocks until one of the given signals is delivered, then runs
-// Shutdown with a background context and returns. Any shutdown error is logged
-// at Error level on slog.Default before returning. Called with no signals it
-// waits for os.Interrupt and syscall.SIGTERM — the common termination pair
-// (on Windows only Interrupt/Ctrl+C is ever delivered; SIGTERM is accepted but
-// never fires).
+// WaitForSignals blocks until one of the given signals is delivered or Trigger
+// is called, then runs Shutdown with a background context and returns. Any
+// shutdown error is logged at Error level on slog.Default before returning.
+// Called with no signals it waits for os.Interrupt and syscall.SIGTERM — the
+// common termination pair (on Windows only Interrupt/Ctrl+C is ever delivered;
+// SIGTERM is accepted but never fires). A Trigger that arrived before this call
+// returns immediately.
 //
 // No timeout is imposed on the hooks: the platform's own kill escalation
 // (systemd/Kubernetes SIGKILL after their grace period) is the ultimate bound.
@@ -92,7 +114,10 @@ func WaitForSignals(sigs ...os.Signal) {
 	ch := make(chan os.Signal, 1)
 	notifySignal(ch, sigs...)
 	defer stopSignal(ch)
-	<-ch
+	select {
+	case <-ch:
+	case <-std.triggered:
+	}
 	if err := Shutdown(context.Background()); err != nil {
 		slog.Default().LogAttrs(context.Background(), slog.LevelError,
 			"lifecycle: shutdown error", slog.Any("error", err))
@@ -109,6 +134,14 @@ func (c *coordinator) register(fn func(ctx context.Context) error) {
 		panic("lifecycle: Register after Shutdown")
 	}
 	c.hooks = append(c.hooks, fn)
+}
+
+// trigger latches the shutdown request by closing triggered. sync.Once makes
+// the close idempotent under concurrency — closing an already-closed channel
+// panics — and needs no coordination with mu, which guards the hook slice and
+// the Shutdown state machine, neither of which trigger touches.
+func (c *coordinator) trigger() {
+	c.triggerOnce.Do(func() { close(c.triggered) })
 }
 
 func (c *coordinator) shutdown(ctx context.Context) error {

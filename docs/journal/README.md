@@ -19,6 +19,11 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-26 — M10.3: lifecycle.Trigger()](2026/07/2026-07-26-m10-lifecycle-trigger.md) —
+  roadmap 10.3 (spec v2 item 21, ADR-0030); coordinator-scoped `triggered` channel closed once via
+  `sync.Once`, `WaitForSignals` selects over signals + trigger, so a trigger arriving first latches
+  rather than being lost. Also re-tidied `go.mod`/`go.sum`, which the #44 Dependabot bump had left
+  unbuildable.
 - [2026-07-16 — M10.2: circuitbreaker.State()](2026/07/2026-07-16-m10-circuitbreaker-state.md) —
   roadmap 10.2 (spec v2 item 6, ADR-0030, PR #38); exported State type + String() and a pure read-only
   `(*Breaker).State()` that reflects the lazy transition without performing it (no mutation, no

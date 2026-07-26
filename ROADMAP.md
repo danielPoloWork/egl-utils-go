@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-16 — M10.2: circuitbreaker.State()](docs/journal/2026/07/2026-07-16-m10-circuitbreaker-state.md).
+  [2026-07-26 — M10.3: lifecycle.Trigger()](docs/journal/2026/07/2026-07-26-m10-lifecycle-trigger.md).
 
 ### Agent guidance (model × effort)
 
@@ -181,7 +181,7 @@ the v1.0.0 API-stability commitment; the milestone releases as **v1.1.0**.
 
 - [x] 10.1 Governance — import the spec v2.0 draft verbatim under `docs/specs/v2/` and record the reconciliation disposition → [ADR-0030](docs/adr/0030-spec-v2-reconciliation.md) — *agent: Fable 5 · max (as built) — gap analysis + three-bucket disposition (adopt/defer/deviate)*
 - [x] 10.2 circuitbreaker.State() — observable breaker state (v2 item 6; lifts the ADR-0010 deferral) → [ADR-0030](docs/adr/0030-spec-v2-reconciliation.md) — *agent: Opus 4.8 · medium (as built) — exported State type (StateClosed/Open/HalfOpen) + String(); (*Breaker).State() is a pure read-only observer that reflects the lazy time transition (open-past-cooldown reports half-open) without mutating state, advancing the generation, or admitting a probe*
-- [ ] 10.3 lifecycle.Trigger() — programmatic shutdown that unblocks WaitForSignals (v2 item 21, §6 example) — *agent: Opus 4.8 · medium — coordinator-scoped trigger channel, idempotent*
+- [x] 10.3 lifecycle.Trigger() — programmatic shutdown that unblocks WaitForSignals (v2 item 21, §6 example) → [ADR-0030](docs/adr/0030-spec-v2-reconciliation.md) — *agent: Opus 5 · medium (as built) — coordinator-scoped `triggered` channel closed once via sync.Once (idempotent, concurrency-safe); WaitForSignals selects over the signal channel and the trigger channel, so a Trigger arriving first latches rather than being lost; Register/Shutdown/WaitForSignals signatures unchanged*
 - [ ] 10.4 ratelimit.Middleware() + ErrLimited — 429-on-deny HTTP middleware over the existing engine (v2 item 8) — *agent: Opus 4.8 · medium*
 - [ ] 10.5 hash.HashPasswordCost (cost 10–31) + argon2id migration godoc note + cost-sizing benchmark (v2 item 20, §7) — *agent: Opus 4.8 · high — security-relevant: extends ADR-0024/control C-4, auditor sign-off*
 - [ ] 10.6 config.WithStructValidation() — wire validator.Struct into config.Load as an option (v2 item 13) — *agent: Opus 4.8 · low*
