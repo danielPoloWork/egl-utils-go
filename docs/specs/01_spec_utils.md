@@ -42,6 +42,20 @@
 >   stability for every exported identifier". It now binds the whole exported surface and states
 >   that the list is a map, not the boundary**, which widens the spec to match what was already
 >   published rather than changing the promise. ROADMAP 12.1.
+> - *2026-07-27* — **§4's "packages compose only through stdlib contracts … adoptable in
+>   isolation" SUPERSEDED** by [ADR-0033](../adr/0033-config-struct-validation.md). `go list` shows
+>   `config` imports `validator` — the module's one internal package edge, mandated by spec item 13
+>   (validation inside configuration loading) and live since 10.6. Struck in place rather than
+>   rewritten, per the 11.2 precedent for a replaced rule, but **no new ADR**: ADR-0033 already
+>   holds the decision, so this is a pointer to it. Worth stating precisely, because the edge is a
+>   *governed exception*, not an erosion — `import_graph_lint.py` fails both if an unsanctioned
+>   edge appears and if this one disappears (ADR-0035). ROADMAP 12.2.
+> - *2026-07-27* — **§6's test-strategy counts and §3's dependency list corrected.** rapid was
+>   credited with three areas and runs in **eight** packages (adds circuitbreaker, middleware,
+>   ratelimit, validator); benchmarks were credited to four packages and exist in **seven** (adds
+>   cache, hash, pubsub); §3's dependency sentence omitted `prometheus/client_model`, a direct
+>   `go.mod` require that no non-test file imports. Understatements rather than false claims, but a
+>   spec that under-describes its own gates invites re-deriving them. ROADMAP 12.2.
 
 ## 1. Objective & Business Context
 
@@ -91,7 +105,7 @@ allocation-conscious hot paths via pointer discipline and sync.Pool object reuse
 - Zero goroutine leaks: every goroutine-spawning component stops via context or close(done); per-component leak assertions in tests (go.uber.org/goleak)
 - Race-free: go test -race green in CI on every PR — the canonical concurrency gate
 - Allocation-conscious hot paths: -benchmem benchmarks for pooled and middleware paths; syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun
-- Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + vetted few (prometheus/client_golang, a YAML parser); test-only deps: testify, goleak, rapid
+- Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + vetted few (prometheus/client_golang, a YAML parser); test-only deps: testify, goleak, rapid, prometheus/client_model (a direct require: the metrics test reads its `dto` types; it also arrives transitively through client_golang)
 - Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.25
 - Coverage: at least 85 percent line coverage enforced in CI **per package** (not as a module-wide average)
 - Compatibility: ~~SemVer, pre-1.0 milestone-driven; breaking changes to the public interface require a MAJOR-intent note in the PR~~ — **SUPERSEDED by [ADR-0042](../adr/0042-post-1.0-compatibility-contract.md)**: the module is post-1.0, and under the v1.0.0 commitment a breaking change is not mergeable into v1.x with a note — it is deferred to the `/v2` ledger (ADR-0030 §2). The struck text is the pre-1.0 regime, retained as the historical contract.
@@ -105,8 +119,17 @@ allocation-conscious hot paths via pointer discipline and sync.Pool object reuse
      entities, relations, normal form, migration policy — within ADR-0004's secondary-SQL frame. -->
 A flat collection of small, orthogonal packages — one concern per package — under a
 single Go module (github.com/danielPoloWork/egl-utils-go). There is no cross-package
-framework: packages compose only through stdlib contracts (context.Context,
-net/http.Handler, error), so each is adoptable in isolation.
+framework: ~~packages compose only through stdlib contracts (context.Context,
+net/http.Handler, error), so each is adoptable in isolation.~~ — **the absolute is
+SUPERSEDED by [ADR-0033](../adr/0033-config-struct-validation.md)**: packages compose
+through stdlib contracts (context.Context, net/http.Handler, error) with **exactly one
+sanctioned internal edge**, `config → validator`, which spec item 13 mandates by
+requiring validation inside configuration loading. The edge is not an erosion of the
+rule but a governed exception to it: `tools/import_graph_lint.py` fails both when an
+unsanctioned edge appears **and when this one disappears**, and the rule it enforces is
+"same-layer edges only where the spec mandates the composition", not "L2 is a
+free-for-all" (ADR-0035). Every other package remains adoptable in isolation; adopting
+`config` also brings `validator`, which costs nothing since both ship in this module.
 
   concurrency:   workerpool | pubsub | fanin | fanout | semaphore
   resilience:    circuitbreaker | retry | ratelimit
@@ -168,12 +191,14 @@ Every functional requirement maps to package-level table-driven unit tests (go t
 the Spec Coverage Map in ROADMAP.md keeps one row per spec section (spec-map lint gate).
 Concurrency components additionally carry: a leak assertion (no leaked goroutines
 after Stop/Close/cancel, asserted with go.uber.org/goleak), mandatory go test -race in CI, and deterministic
-clocks for timing-sensitive logic (retry, ratelimit, cache TTL). Property-based tests (rapid) cover
-pubsub delivery/filtering, fanin/fanout completeness (no message lost or duplicated),
-and backoff bound invariants. Static gates on every PR: gofumpt, golangci-lint (govet,
+clocks for timing-sensitive logic (retry, ratelimit, cache TTL). Property-based tests (rapid) run in
+eight packages: pubsub delivery/filtering, fanin/fanout completeness (no message lost or duplicated),
+backoff bound invariants, breaker state-machine transitions, request-ID generation, rate-limit
+admission, and the validator tag grammar. Static gates on every PR: gofumpt, golangci-lint (govet,
 staticcheck, errcheck, revive, gosec), govulncheck. Coverage gate: at least 85 percent
 line coverage per package (go test -coverprofile). Benchmarks (go test -bench -benchmem) for
-workerpool, ratelimit, middleware, and syncpool, recorded under docs/benchmarks;
+workerpool, ratelimit, middleware, syncpool, cache, hash, and pubsub, with the measured
+reports recorded under docs/benchmarks;
 syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun.
 Manual-only gates: none — every requirement above has a mechanical check.
 

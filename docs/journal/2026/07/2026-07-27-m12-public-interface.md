@@ -58,3 +58,34 @@ Unchanged carry-overs: the EADOS bundle's `go.yaml` profile still asserts the re
 and must be fixed upstream (`.eados-core/` is gitignored); `egl-util-cpp` ships `it/d4np/util`
 against ADR-0041's `utils`; the ADR-0030 `/v2` ledger; the NFR-01 spec amendment; the
 `middleware.HeaderName` canonicalisation decision; and first tags for the two contrib modules.
+
+## Addendum — roadmap 12.2, §4 superseded and the §6/§3 understatements corrected (same session)
+
+12.1 merged as `7cb90b3`; 12.2 follows on `docs/spec-architecture-and-tests`.
+
+- **§4's absolute is struck in place and superseded by the *existing* [ADR-0033](../../../adr/0033-config-struct-validation.md).**
+  The claim was "packages compose only through stdlib contracts (context.Context,
+  net/http.Handler, error), so each is adoptable in isolation"; `go list` shows `config` imports
+  `validator`. **No new ADR was minted** — that is the decision worth recording here. 11.2's
+  compatibility clause needed ADR-0042 because no prior record held the replacement rule; this one
+  is fully decided in ADR-0033, so a fourth governance document would contribute a pointer and no
+  information. The supersede marker *is* the pointer.
+- **The replacement wording says "governed exception", not "one exception".** That distinction is
+  the whole reason the edge is tolerable: `import_graph_lint.py` fails **in both directions** — when
+  an unsanctioned edge appears *and* when `config → validator` disappears (ADR-0035) — and the rule
+  it enforces is "same-layer edges only where the spec mandates the composition", not "L2 is a
+  free-for-all". Spec item 13 is what mandates this one, by requiring validation inside
+  configuration loading. Written loosely, the amendment would have read as the architecture rule
+  eroding; it is the opposite, an exception with a lock on it.
+- **The isolation property is qualified, not dropped.** Every other package is still adoptable
+  alone, and adopting `config` also brings `validator` — which costs nothing, since both ship in
+  this module.
+- **§6 and §3 were understatements rather than false claims**, and corrected against `grep`/
+  `go list` rather than memory: rapid was credited with three areas and runs in **eight** packages
+  (adds circuitbreaker, middleware, ratelimit, validator); benchmarks were credited to four
+  packages and exist in **seven** (adds cache, hash, pubsub); §3's dependency sentence omitted
+  `prometheus/client_model`, a direct `go.mod` require that no non-test file imports. A spec that
+  under-describes its own gates invites the next reader to re-derive them.
+
+**Milestone 12 now stands at 2/3.** The remaining item, 12.3, is the reason all four of these
+accumulated: none was caught by a gate.
