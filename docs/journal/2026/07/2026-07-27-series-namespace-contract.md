@@ -50,15 +50,40 @@ turned out to require correcting the premise twice.
   is now amended in place with a dated note at both hazardous spots, so the record still shows what
   the interview asked while the generator can no longer act on it.
 
+- **A second thread opened from the first, and closed as 11.2.** Correcting the stale `Go 1.24`
+  language floor (nine places: AGENTS §1/§5/§10, README, `local-build.md`, both GitHub templates,
+  four `project.yaml` fields) led into `docs/specs/01_spec_utils.md`, which is **frozen** — and
+  which had diverged in **four** places, not one. The useful discovery was that they are not the
+  same kind of divergence:
+  - **Three were facts that had drifted**, and the spec's own header authorises fixing them in
+    place ("diverging implementation updates this spec in the same PR or adds an ADR"): the
+    language floor (1.24 → 1.25), the coverage floor (80% → **85% per package** since
+    10.9/ADR-0036 — "per package" being the half that matters, since with most packages at 100% a
+    module-wide average could never fail), and the §3/§6 hedge promising "an in-repo stack-based
+    guard until ROADMAP 2.6 lands the test-only deps", describing a state that ended in M2.
+  - **One was a rule that had been replaced**, which is a different thing entirely. §3's
+    compatibility clause said breaking changes "require a MAJOR-intent note in the PR" — i.e. they
+    were **mergeable**, conditionally. Under the v1.0.0 commitment they are not mergeable into
+    v1.x at all; ADR-0030's bucket 2 has been deferring them for a milestone. So it took the ADR
+    branch: **[ADR-0042](../../../adr/0042-post-1.0-compatibility-contract.md)** states the
+    post-1.0 contract, retires the MAJOR-intent note, and makes the `/v2` ledger the only
+    sanctioned destination for a breaking change. **The original clause is struck in place, not
+    rewritten** — overwriting it would erase the evidence that a promise to consumers had changed,
+    inside the one document whose purpose is to be the frozen contract.
+  - The spec now carries a dated **Amendments** block that keeps the two branches visibly
+    distinct, so the next divergence has a precedent to follow rather than a judgment call to
+    re-make.
+
 ## Where the project stands
 
-**Milestone 11 complete (1/1)**, documentation only — no code, no version bump, no consumer-visible
+**Milestone 11 complete (2/2)**, documentation only — no code, no version bump, no consumer-visible
 change, so `version.go` stays at 1.1.0 and `CHANGELOG.md` gets no entry (the 10.1 precedent: pure
 governance items do not appear in a Keep-a-Changelog file). v1.1.0 remains the released version.
 
 ## How the next session resumes
 
-Three things were found during this session and deliberately **not** fixed in it:
+Two things were found during this session and deliberately **not** fixed in it (a third, the stale
+1.24 language floor, was fixed as part of 11.2):
 
 - **The EADOS bundle's Go profile still asserts the tree.**
   `.eados-core/orchestrator/profiles/go.yaml` says the module is placed "under
@@ -69,10 +94,12 @@ Three things were found during this session and deliberately **not** fixed in it
 - **`egl-util-cpp` ships `it/d4np/util` (singular)** where ADR-0041's contract says `utils`. Under
   the component-name rule one of the two must move. It affects another repository, so it is a
   series-level call and was not taken here.
-- **AGENTS.md contradicts itself on the language floor.** `go.mod` declares `go 1.25.0` and §10's
-  build-matrix row says "module floor 1.25" (corrected by 10.9/ADR-0036), but three other places
-  still say 1.24 — §1 line 20, the §5 layout block, and §10's "Language standard" line. A separate
-  one-item `docs:` PR, kept out of this one to preserve the one-item-per-PR rule.
+The one open question 11.2 leaves for the maintainer is **how much else of the frozen spec has
+drifted**. Four divergences surfaced from a sweep that was only looking for one number, and nothing
+mechanically checks the spec against reality — `consistency_lint.py`'s spec-map check verifies that
+every §ction has a fulfilling roadmap item, not that the §ction's *claims* are still true. A
+deliberate read-through of `01_spec_utils.md` against as-built behaviour is the obvious next
+governance item; the Amendments block is now the place its findings would land.
 
 Otherwise the carry-overs from the v1.1.0 cut are unchanged: the ADR-0030 `/v2` ledger, the NFR-01
 spec amendment, the `middleware.HeaderName` canonicalisation decision, and first tags for the two

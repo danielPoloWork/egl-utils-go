@@ -217,12 +217,19 @@ The milestone also discharges the **regeneration caveat ADR-0003 left open**: th
 the factory re-renders from still asserted that packages live under `src/main/go/it/d4np/utils`,
 so a regeneration would have silently re-imposed the layout ADR-0003 removed.
 
+Pulling that thread exposed a second, unrelated class of drift, which 11.2 closes: the **frozen v1
+specification had diverged from the as-built project in four places**. Three were facts that had
+gone stale and are amended in place; the fourth — §3's compatibility clause — is a governance rule
+that was *replaced* rather than drifted, and takes an ADR instead ([ADR-0042](docs/adr/0042-post-1.0-compatibility-contract.md)).
+The spec now carries a dated **Amendments** block so that no post-freeze edit is silent.
+
 > **Agent guidance:** Claude Opus 5 · effort **max** — a one-way, series-wide identity decision
 > whose alternatives (vanity module path, GitHub organisation) are breaking and hard to unwind
 > once published; the reasoning, not the diff, is the deliverable.
 
 - [x] 11.1 Record the series logical namespace `it.d4np.utils.<component>` and close the ADR-0003
       regeneration caveat → [ADR-0041](docs/adr/0041-series-logical-namespace.md) — *agent: Opus 5 · max (as built) — the decision reframes ADR-0002's premise: a **physical** layout cannot be a cross-language contract, because in most of these languages the layout is not free (Maven dictates Java's, the include model dictates C/C++'s, the module system dictates Go's), whereas a **namespace** can be. Verified rather than assumed: `egl-util-cpp` keeps the tree, `egl-utils-c` rejected it in its own ADR-0002 (`d4np/<module>/` at the root), `egl-utils-java` is unscaffolded — so the tree was 1-for-3, not the norm. **Module path deliberately NOT changed**: the two options that would render the namespace literally in Go source (vanity `go.d4np.it/utils`, org `github.com/d4np/…`) are both module-*identity* changes and therefore breaking, and the vanity one converts a documentation preference into a permanent supply-chain obligation (a domain that must resolve and a `go-import` tag that must be served for as long as anyone runs `go get`). Recorded in the ADR-0030 ledger as declined-with-a-condition: **the move is free at a `/v2` boundary and only there**, since consumers rewrite every import at such a boundary anyway. `orchestrator/project.yaml` amended in place with a dated note (the interview record still shows what was asked; the generator can no longer act on it). **Two findings carried forward, neither fixed here:** the EADOS bundle's `go.yaml` profile still asserts the tree but `.eados-core/` is gitignored, so the correction must be carried upstream; and `egl-util-cpp` ships `it/d4np/util` (singular) against this contract's `utils` — a series-level call, not this repo's to make*
+- [x] 11.2 Reconcile the frozen v1 spec §3/§6 with as-built reality — language floor, coverage gate, leak-detection mechanism, and the post-1.0 compatibility contract → [ADR-0042](docs/adr/0042-post-1.0-compatibility-contract.md) — *agent: Opus 5 · high (as built) — the sweep that began as "fix the stale 1.24 floor" turned up **four** divergences in a document declared frozen, and they are not the same kind of thing. Three were **facts that had drifted** and were amended in place under the spec's own divergence rule: the language floor (1.24 → 1.25, false since the M9/M10 dependency work), the coverage floor (80% → **85% per package** — "per package" is the operative half, since with most packages at 100% a module-wide average could never fail; stricter since 10.9/ADR-0036), and the §3/§6 hedge promising "an in-repo stack-based guard until ROADMAP 2.6 lands the test-only deps", which described a state that ended in M2. The fourth took the **ADR branch** instead: §3's compatibility clause made a breaking change *mergeable with a MAJOR-intent note*, while the v1.0.0 commitment makes it not mergeable into v1.x at all — a rule that was **replaced**, not a number that drifted, so the original text is **struck in place and retained** rather than rewritten, because overwriting it would erase the evidence that the promise to consumers ever changed. **ADR-0042 retires the MAJOR-intent note and makes ADR-0030 §2's ledger the only sanctioned destination for a breaking change** — the ledger stops being a filing cabinet and becomes the enforcement point. The frozen spec now carries a dated **Amendments** block that distinguishes the two kinds of post-freeze edit, so future divergences inherit the split. No code, tooling or CI change: the rule has been in force since v1.0.0 (bucket 2's seven deferred deltas are the proof) and is only now written down*
 
 ---
 
@@ -236,7 +243,7 @@ progress · ✅ done · ❎ N/A.
 |--------|-------------|---------------|--------|
 | §1 | Objective & business context | 1.1; delivered by M2–M9 | ✅ |
 | §2 | Functional requirements | 2.1–9.5 (all 25 features) | ✅ |
-| §3 | Non-functional requirements | 1.3, 1.4 (gates live); per-feature from M2 | ✅ |
+| §3 | Non-functional requirements | 1.3, 1.4 (gates live); per-feature from M2; 11.2 (ADR-0042) | ✅ |
 | §4 | Logical architecture | 1.1, 1.6 (ADR-0003); 11.1 (ADR-0041) | ✅ |
 | §5 | Public interface | 2.1–9.5 | ✅ |
-| §6 | Verification & test strategy | 1.2, 1.4 (framework + CI live); per-feature suites M2–M9 | ✅ |
+| §6 | Verification & test strategy | 1.2, 1.4 (framework + CI live); per-feature suites M2–M9; 11.2 | ✅ |
