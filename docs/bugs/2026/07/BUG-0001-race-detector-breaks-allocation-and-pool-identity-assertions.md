@@ -6,7 +6,7 @@ severity: high
 reporter: internal
 discovered: 2026-07-27
 affected-versions: ">=1.1.0"
-fixed-in: unreleased
+fixed-in: v1.1.1
 ---
 
 # BUG-0001: The race detector breaks allocation-count and sync.Pool identity assertions, holding master red

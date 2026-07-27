@@ -59,3 +59,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0041](0041-series-logical-namespace.md) | series logical namespace `it.d4np.utils.<component>` — realized per language, Go keeps the module root; the module-path move is free only at a /v2 boundary | Accepted |
 | [0042](0042-post-1.0-compatibility-contract.md) | post-1.0 compatibility contract — v1.x is frozen for every exported identifier; the MAJOR-intent note is retired and the /v2 ledger is the only destination for a breaking change | Accepted |
 | [0043](0043-spec-api-lint.md) | spec §5 gated against `go doc` — fails both on shipped-but-unlisted and listed-but-gone; the fourth policy checker | Accepted |
+| [0044](0044-canonical-header-key-for-map-access.md) | canonical header key for map access — 2 allocs/request removed without touching HeaderName's exported value, so a PATCH rather than the MAJOR 10.10 assumed | Accepted |

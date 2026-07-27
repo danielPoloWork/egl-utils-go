@@ -2,7 +2,7 @@
 
 > Production-ready Go utilities for concurrency, resilience, HTTP middleware, configuration, and observability.
 
-![Status](https://img.shields.io/badge/Status-v1.1.0-blue)
+![Status](https://img.shields.io/badge/Status-v1.1.1-blue)
 
 Part of the **Enterprise-Grade Libraries** series. A
 library written in **Go 1.25+**, built and governed to an enterprise quality
