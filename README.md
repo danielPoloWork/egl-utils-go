@@ -5,7 +5,7 @@
 ![Status](https://img.shields.io/badge/Status-v1.1.0-blue)
 
 Part of the **Enterprise-Grade Libraries** series. A
-library written in **Go 1.24+**, built and governed to an enterprise quality
+library written in **Go 1.25+**, built and governed to an enterprise quality
 bar: full CI matrix, static analysis, sanitizers, documented design decisions, and SemVer
 releases.
 

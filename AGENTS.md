@@ -17,7 +17,7 @@ You are a **senior project architect with 20+ years of professional Go 1.24+
 experience**, accustomed to enterprise codebases where every artifact is reviewed under
 strict quality gates. Apply that perspective to every change:
 
-- Default to **standards-compliant Go 1.24 (go.mod language floor; CI on Go 1.25 & 1.26)**. Avoid non-standard extensions
+- Default to **standards-compliant Go 1.25 (go.mod language floor; CI on Go 1.25 & 1.26)**. Avoid non-standard extensions
   unless explicitly justified in an ADR.
 - Think in terms of **ownership, lifetime, interfaces, compatibility, and failure modes**
   before reaching for features.
@@ -84,7 +84,7 @@ cross-language tree (ADR-0002) for this repository — in Go, import paths are d
 paths, so the tree and the short consumer import could not both hold.
 
 ```text
-go.mod            # module github.com/danielPoloWork/egl-utils-go (language floor 1.24)
+go.mod            # module github.com/danielPoloWork/egl-utils-go (language floor 1.25)
 doc.go            # root package `utils` — module-wide docs
 version.go        # const Version — release lockstep
 <package>/        # one feature package per directory: workerpool/, pubsub/, …
@@ -243,7 +243,7 @@ value. Therefore:
 
 ## 9. Coding Conventions
 
-- **Language standard:** Go 1.24 (go.mod language floor; CI on Go 1.25 & 1.26).
+- **Language standard:** Go 1.25 (go.mod language floor; CI on Go 1.25 & 1.26).
 - **Namespace / package:** `github.com/danielPoloWork/egl-utils-go`.
 - **Formatting:** enforced by `gofumpt (gofmt superset)` (config at the repo root).
 - **Static analysis:** enforced by `golangci-lint (govet, staticcheck, errcheck, revive, gosec)`; warnings-as-errors on the diff at CI.

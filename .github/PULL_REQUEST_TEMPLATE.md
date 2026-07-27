@@ -18,7 +18,7 @@ Link to the spec section, ADR, roadmap item, or issue that prompted this work.
 
 ## Verification
 
-- [ ] Builds cleanly on the full CI matrix (Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.24))
+- [ ] Builds cleanly on the full CI matrix (Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.25))
 - [ ] Unit tests pass; new/changed behavior covered (≥ 80% line)
 - [ ] `gofumpt (gofmt superset)` clean; `golangci-lint (govet, staticcheck, errcheck, revive, gosec)` clean on the diff
 - [ ] go test -race (data-race detector), go vet, govulncheck green (where applicable)

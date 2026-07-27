@@ -1,11 +1,11 @@
 # Local Build & Test
 
 How to build, test, and check `egl-utils-go` on your machine. CI runs the same commands
-on Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.24); reproducing them locally avoids a red round-trip.
+on Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.25); reproducing them locally avoids a red round-trip.
 
 ## Prerequisites
 
-- **Go 1.24+** toolchain.
+- **Go 1.25+** toolchain.
 - **Build system:** go build (go modules).
 - **Package manager:** go modules (go.mod / go.sum).
 - **Formatter / linter:** gofumpt (gofmt superset), golangci-lint (govet, staticcheck, errcheck, revive, gosec).

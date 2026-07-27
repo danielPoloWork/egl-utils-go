@@ -20,7 +20,7 @@ body:
     id: env
     attributes:
       label: Platform / toolchain
-      placeholder: "OS, Go 1.24+ version, build tool"
+      placeholder: "OS, Go 1.25+ version, build tool"
     validations:
       required: true
   - type: textarea

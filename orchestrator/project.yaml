@@ -34,8 +34,8 @@ ownership:                   # Q4.1–Q4.2 (imported from repo facts: git remote
 
 language:                    # Phase 1: Q1.1 imported (Go, from the brief); Q1.3 + version floor asked
   lang:            go
-  lang_name:       "Go 1.24+"
-  lang_standard:   "Go 1.24 (go.mod language floor; CI on Go 1.25 & 1.26)"
+  lang_name:       "Go 1.25+"
+  lang_standard:   "Go 1.25 (go.mod language floor; CI on Go 1.25 & 1.26)"   # AMENDED 2026-07-27: the interview recorded 1.24; go.mod now declares `go 1.25.0` (raised during M9/M10 dependency work), so 1.24 no longer builds the module
   secondary_lang:  ""                 # Q1.2 (defaulted): none — db.Transaction wraps database/sql, owns no schema
   group_path:      "it/d4np"          # Q1.3 (asked) -> {{GROUP_PATH}}
   group_dotted:    "it.d4np"          # -> {{GROUP_DOTTED}}
@@ -65,7 +65,7 @@ toolchain:                   # Phase 3 (defaulted): profiles/go.yaml resolved pe
     bench:        "go test -bench=. -benchmem ./..."
 
 ci:                          # Phase 3 (asked): profile matrix updated to the chosen Go floor/pair
-  tier1_platforms: "Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.24)"
+  tier1_platforms: "Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.25)"
   matrix:
     - { os: ubuntu-24.04, toolchain: "go-1.25", preset: test }
     - { os: ubuntu-24.04, toolchain: "go-1.26", preset: test }
@@ -170,7 +170,7 @@ spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, m
     - "Race-free: go test -race green in CI on every PR — the canonical concurrency gate"
     - "Allocation-conscious hot paths: -benchmem benchmarks for pooled and middleware paths; syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun"
     - "Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + vetted few (prometheus/client_golang, a YAML parser); test-only deps: testify, goleak, rapid"
-    - "Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.24"
+    - "Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.25"
     - "Coverage: at least 80 percent line coverage enforced in CI"
     - "Compatibility: SemVer, pre-1.0 milestone-driven; breaking changes to the public interface require a MAJOR-intent note in the PR"
   architecture: |
