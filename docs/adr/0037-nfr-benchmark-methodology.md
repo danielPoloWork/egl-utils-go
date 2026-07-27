@@ -73,7 +73,9 @@ measured floor**.
   nothing, with no effect on the wire format (net/http canonicalises when writing). Rejected *for this
   PR*: 10.10 is the measurement item, the constant's value is API-visible under the v1 stability
   commitment, and measure-first discipline says the optimisation is a separate, evidenced change. It is
-  recorded as a follow-up with its numbers.
+  recorded as a follow-up with its numbers. **(Correct conclusion, faulty middle step — see the
+  Consequences note above. The fix never required touching the exported constant, so it landed as a
+  PATCH in v1.1.1 rather than waiting on a major: [ADR-0044](0044-canonical-header-key-for-map-access.md).)**
 - **Per-operation percentile sampling** for NFR-02 and NFR-06. Rejected as unsound on the available
   platform, having been tried: `time.Now()` on Windows is a coarse cached counter — **100% of adjacent
   `Now`/`Since` pairs read exactly 0 ns** — so the first Submit benchmark reported a p99 of exactly 0 ns.
@@ -110,8 +112,13 @@ measured floor**.
   wasting an idle window's refill against the cap; and the clock behaviour above.
 - The local workstation cannot verify two of the six NFRs. That is a real limitation of this report, and
   CI is the authority for them — the same posture the repo already takes for `-race` and `-fuzz`.
-- Deferred: the same-runner A/B PR gate; the `middleware.HeaderName` canonicalisation (worth 2 allocs/op);
-  a spec amendment for NFR-01's allocation target; and re-measuring NFR-06 after 10.11.
+- Deferred: the same-runner A/B PR gate; a spec amendment for NFR-01's allocation target; and
+  re-measuring NFR-06 after 10.11.
+- **Resolved 2026-07-27 (v1.1.1):** the `middleware.HeaderName` canonicalisation, worth the 2
+  allocs/op measured here. This ADR deferred it as needing an API-visible change; it did not —
+  see [ADR-0044](0044-canonical-header-key-for-map-access.md). The alternative rejected below was
+  the right call *for that PR* (a measurement PR should not carry a behaviour change) but its
+  stated reason, that the fix requires touching the exported constant, was wrong.
 
 ## References
 

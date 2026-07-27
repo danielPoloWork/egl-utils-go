@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-27 — contrib v0.1.0 released; BUG-0001, a red master nobody could see](docs/journal/2026/07/2026-07-27-contrib-release-and-bug-0001.md).
+  [2026-07-27 — v1.1.1 release cut: a patch that was supposed to need a major](docs/journal/2026/07/2026-07-27-v1.1.1-release-cut.md).
 
 ### Agent guidance (model × effort)
 
@@ -182,7 +182,11 @@ NFR-01's **0-allocs/op target is unachievable** (structural allocations in `cont
 `Request.WithContext` and `Header.Set`), enforced as a ratchet budget at the measured floor and
 needing a spec amendment; and `middleware.HeaderName` is **not Go's canonical header spelling**,
 costing 2 allocations per request for no wire-format difference — measured but not changed, since
-it is an API-visible constant under the v1 commitment.
+it is an API-visible constant under the v1 commitment. **The second was resolved in v1.1.1
+([ADR-0044](docs/adr/0044-canonical-header-key-for-map-access.md)): the blocker was misattributed.
+The constant's value and the cost of using it as a map key are separable, so the middleware takes
+the canonical spelling through an unexported constant, `HeaderName` is untouched, and the two
+allocations went away in a PATCH.** The first stands.
 
 > **Agent guidance:** Claude Opus 4.8 · effort **high** — additive API surfaces and CI plumbing;
 > the NFR suite (10.10) and the contrib module topology (10.13) are the reasoning-heavy steps and

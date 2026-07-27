@@ -44,26 +44,28 @@ import (
 // latency and throughput NFRs these are hard assertions rather than reported
 // measurements. They run in the ordinary test suite on every CI cell.
 //
-// One finding worth acting on separately: middleware.HeaderName is
-// "X-Request-ID", which is *not* Go's canonical form ("X-Request-Id"), so
-// textproto.CanonicalMIMEHeaderKey builds a new string on every Get and every
-// Set — two allocations per request that buy nothing. The wire format is
-// unaffected (net/http canonicalises header names when writing, so the header on
-// the wire is X-Request-Id either way). Changing the constant's value is an
-// API-visible change and belongs to its own PR under the v1 stability rules, so
-// 10.10 measures it and leaves the decision to the maintainer; the budget below
-// therefore includes those two allocations.
+// The two allocations 10.10 found and left for the maintainer are gone as of
+// v1.1.1, and the way they went is worth keeping. The cost came from passing
+// middleware.HeaderName ("X-Request-ID") to Header.Get and Header.Set:
+// textproto.CanonicalMIMEHeaderKey allocates whenever its argument is not
+// already canonical, and Go's canonical form is "X-Request-Id". 10.10 recorded
+// this as blocked behind an API-visible change to the exported constant — but
+// the constant's *value* and the *cost of using it as a map key* are separable.
+// RequestID now uses an unexported canonical spelling for map access while
+// HeaderName keeps its documented value, so nothing observable changed (Set
+// stores under the canonical key regardless) and no MAJOR bump was needed.
+// The budgets below no longer carry those two allocations.
 
 // allocBudget is the per-request allocation ceiling for each middleware, measured
 // on the adopt path (a valid inbound X-Request-ID) unless noted. Lowering an entry
 // is always welcome; raising one requires a reason in the PR.
 var allocBudget = map[string]int{
-	"RequestID":       6,
+	"RequestID":       4, // v1.1.1: 6 before the canonical-key fix
 	"Recoverer":       1,
 	"Cors":            1,
-	"Chain":           8, // RequestID + Recoverer + Cors
+	"Chain":           6, // RequestID + Recoverer + Cors; 8 before
 	"Logger":          1,
-	"ChainWithLogger": 11,
+	"ChainWithLogger": 9, // 11 before
 }
 
 func measureAllocs(t *testing.T, h http.Handler, r *http.Request) int {

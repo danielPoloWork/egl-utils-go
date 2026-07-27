@@ -19,6 +19,15 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-27 — v1.1.1 release cut: a patch that was supposed to need a major](2026/07/2026-07-27-v1.1.1-release-cut.md) —
+  master green again (0 failing jobs, both `-race` included). Asked whether v1.2.0 was due: **no** —
+  ADR-0030's additive bucket was fully consumed by M10, so MINOR has nothing to carry. **v1.1.1
+  instead, and it overturns a decision carried since 10.10**: the `middleware.HeaderName` allocation
+  cost was recorded as blocked behind a MAJOR-only change to the exported constant, but the
+  constant's *value* and the *cost of using it as a map key* are separable. An unexported canonical
+  spelling for map access removes **2 allocs/request** with `HeaderName` untouched
+  ([ADR-0044](../adr/0044-canonical-header-key-for-map-access.md)); ratchet lowered and proved to
+  bind. BUG-0001's `fixed-in` resolves to v1.1.1.
 - [2026-07-27 — contrib v0.1.0 released; BUG-0001, a red master nobody could see](2026/07/2026-07-27-contrib-release-and-bug-0001.md) —
   `contrib/redishealth/v0.1.0` + `contrib/pgxhealth/v0.1.0` tagged and **verified live on
   proxy.golang.org and sum.golang.org**. Then found `master` red since 2026-07-26 — **the `v1.1.0`
