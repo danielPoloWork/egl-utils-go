@@ -1,4 +1,4 @@
-# 2026-07-27 — Series namespace contract (Milestone 11)
+# 2026-07-27 — Governance: namespace contract & spec reconciliation (Milestone 11)
 
 ## What got done
 

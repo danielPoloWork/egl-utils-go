@@ -19,8 +19,8 @@ _(newest first)_
 
 #### 07 — July
 
-- [2026-07-27 — Series namespace contract](2026/07/2026-07-27-series-namespace-contract.md) —
-  Milestone 11 (1/1, docs only). "Can we move to `src/main/go/it/d4np/utils`?" answered with the
+- [2026-07-27 — Governance: namespace contract & spec reconciliation](2026/07/2026-07-27-series-namespace-contract.md) —
+  Milestone 11 (2/2, docs only). "Can we move to `src/main/go/it/d4np/utils`?" answered with the
   language: in Go an import path *is* a directory path, and the tree is 1-for-3 across the siblings
   anyway. [ADR-0041](../adr/0041-series-logical-namespace.md) replaces the physical tree with the
   **logical namespace `it.d4np.utils.<component>`**; module path deliberately unchanged, the

@@ -68,7 +68,7 @@ setup.
 | 8 | Validation & security | ✅ done |
 | 9 | Diagnostics & lifecycle | ✅ done |
 | 10 | Spec v2 reconciliation (v1.x additive) | ✅ done |
-| 11 | Series namespace contract | ✅ done |
+| 11 | Governance: namespace contract & spec reconciliation | ✅ done |
 
 
 ## License

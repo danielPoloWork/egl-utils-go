@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-27 — Series namespace contract](docs/journal/2026/07/2026-07-27-series-namespace-contract.md).
+  [2026-07-27 — Governance: namespace contract & spec reconciliation](docs/journal/2026/07/2026-07-27-series-namespace-contract.md).
 
 ### Agent guidance (model × effort)
 
@@ -205,7 +205,7 @@ it is an API-visible constant under the v1 commitment.
 
 ---
 
-## Milestone 11 — Series namespace contract — ✅ complete
+## Milestone 11 — Governance: namespace contract & spec reconciliation — ✅ complete
 
 Governance only: no code, no version bump, no consumer-visible change. The series' shared
 identity is restated as the **logical namespace `it.d4np.utils.<component>`** rather than
