@@ -62,9 +62,10 @@ decisions, stricter review, and a maintained compliance-docs surface. The raised
 ├── README.md                       # human-facing project landing page
 ├── ROADMAP.md                      # numbered checkbox roadmap, updated as work completes
 ├── LICENSE
-├── go.mod                          # module github.com/danielPoloWork/egl-utils-go — see §5
+├── go.mod                          # module github.com/danielPoloWork/egl-utils-go/v2 — see §5
 ├── version.go                      # const Version — release-lockstep source of truth
-├── <package>/                      # one feature package per directory (workerpool/, …) — see §5
+├── pkg/<package>/                  # one feature package per directory (pkg/workerpool/, …) — see §5
+├── contrib/<name>/                 # independently versioned submodules (ADR-0040)
 ├── docs/
 │   ├── adr/                        # Architecture Decision Records
 │   ├── patterns/                   # design-patterns catalogue + taxonomy
@@ -83,37 +84,44 @@ decisions, stricter review, and a maintained compliance-docs surface. The raised
 ## 5. Source Tree & Layout
 
 Code follows the **idiomatic Go root layout** decided in
-[ADR-0003](docs/adr/0003-adopt-idiomatic-go-root-layout.md), which supersedes the series'
-cross-language tree (ADR-0002) for this repository — in Go, import paths are directory
-paths, so the tree and the short consumer import could not both hold.
+[ADR-0045](docs/adr/0045-pkg-layout-and-v2.md), which supersedes ADR-0003 (root layout) and,
+through it, the series' cross-language tree (ADR-0002). In Go an import path *is* the
+directory path, so depth is charged to every consumer: `pkg/` costs 7 characters where
+`src/main/go/it/d4np/utils/` costs 34, and both declutter the root identically.
 
 ```text
-go.mod            # module github.com/danielPoloWork/egl-utils-go (language floor 1.25)
+go.mod            # module github.com/danielPoloWork/egl-utils-go/v2 (language floor 1.25)
 doc.go            # root package `utils` — module-wide docs
 version.go        # const Version — release lockstep
-<package>/        # one feature package per directory: workerpool/, pubsub/, …
+pkg/<package>/    # one feature package per directory: pkg/workerpool/, pkg/pubsub/, …
+contrib/<name>/   # independently versioned submodules (ADR-0040) — NOT under pkg/
 ```
 
 For this repository:
 
-- Module / namespace: **`github.com/danielPoloWork/egl-utils-go`**
+- Module / namespace: **`github.com/danielPoloWork/egl-utils-go/v2`** — the `/v2` is a module
+  path suffix, **not a directory**: it lives in `go.mod` and in the tag, and the tree is not
+  duplicated.
 - Series logical namespace: **`it.d4np.utils.<component>`** — the series' unit of identity
   per [ADR-0041](docs/adr/0041-series-logical-namespace.md), realized here by the module
-  root, so `it.d4np.utils.workerpool` **is**
-  `github.com/danielPoloWork/egl-utils-go/workerpool`. What is shared with the sibling
+  path, so `it.d4np.utils.workerpool` **is**
+  `github.com/danielPoloWork/egl-utils-go/v2/pkg/workerpool`. What is shared with the sibling
   repositories is the **component name**, not the directory shape: `<component>` is spelled
   identically everywhere, and each language binds it with its own native idiom.
-- Consumers import via: `import "github.com/danielPoloWork/egl-utils-go/workerpool"`
+- Consumers import via: `import "github.com/danielPoloWork/egl-utils-go/v2/pkg/workerpool"`,
+  and the module root itself as `import "github.com/danielPoloWork/egl-utils-go/v2"` for
+  `utils.Version`. **Module metadata stays beside `go.mod`** — `doc.go`, `version.go` and
+  `version_test.go` are not features and do not live under `pkg/`.
 - Tests are co-located `_test.go` files (white-box in-package and external `_test`
   packages); benchmarks are co-located `Benchmark*` functions (`go test -bench`).
 
 Subdivision is by **component**, not by file type. **This layout is normative.** Do not
 introduce any other shape without first superseding
-[ADR-0003](docs/adr/0003-adopt-idiomatic-go-root-layout.md). The
-`src/main/go/it/d4np/utils/` tree specifically is not merely superseded but **rejected
-permanently for Go** ([ADR-0041](docs/adr/0041-series-logical-namespace.md)): an import path
-is a directory path, and neither a vanity `go-import` path nor a nested `go.mod` shortens
-it. If a generated artefact reintroduces the tree, the generator is wrong, not the repo.
+[ADR-0045](docs/adr/0045-pkg-layout-and-v2.md). The `src/main/go/it/d4np/utils/` tree
+specifically is **rejected on measurement, not on taste**: it was built, verified green, and
+reverted (ADR-0045) once the working version showed it costs 86-character consumer imports
+against `pkg/`'s 59, for a root listing indistinguishable from `pkg/`'s. If a generated
+artefact reintroduces it, the generator is wrong, not the repo.
 
 ## 6. Git Workflow
 
@@ -252,7 +260,7 @@ value. Therefore:
 ## 9. Coding Conventions
 
 - **Language standard:** Go 1.25 (go.mod language floor; CI on Go 1.25 & 1.26).
-- **Namespace / package:** `github.com/danielPoloWork/egl-utils-go`.
+- **Namespace / package:** `github.com/danielPoloWork/egl-utils-go/v2` (feature packages under `pkg/`).
 - **Formatting:** enforced by `gofumpt (gofmt superset)` (config at the repo root).
 - **Static analysis:** enforced by `golangci-lint (govet, staticcheck, errcheck, revive, gosec)`; warnings-as-errors on the diff at CI.
 - **Documentation:** all public symbols documented with `godoc / pkg.go.dev`-compatible comments.

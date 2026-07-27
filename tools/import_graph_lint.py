@@ -33,7 +33,27 @@ import os
 import subprocess
 import sys
 
-MODULE = "github.com/danielPoloWork/egl-utils-go"
+# REPO is the repository path; MODULE carries the major suffix. They differ from v2 on,
+# and the difference matters: the core's packages live under MODULE, while contrib/*
+# submodules are versioned independently (ADR-0040) and keep repository-rooted paths with
+# no major suffix of the core's.
+REPO = "github.com/danielPoloWork/egl-utils-go"
+MODULE = REPO + "/v2"
+
+# SRC_ROOT is the in-repo source tree the core's packages sit under. Stripping it as well
+# as MODULE keeps every allowlist below written in short package names ("cache") rather
+# than full paths, which is what makes them readable and diffable.
+SRC_ROOT = "pkg"
+
+
+def short_pkg(import_path: str) -> str:
+    """A package's short name: import path minus the module and the source root."""
+    rest = import_path[len(MODULE) :].lstrip("/") if import_path.startswith(MODULE) else import_path
+    if rest == SRC_ROOT:
+        return "(root)"
+    if rest.startswith(SRC_ROOT + "/"):
+        rest = rest[len(SRC_ROOT) + 1 :]
+    return rest or "(root)"
 
 # ---------------------------------------------------------------------------
 # ADR-0004 ring 2 and 3: every non-stdlib runtime module, and the single package
@@ -112,7 +132,7 @@ def check_package_imports(problems: list[str]) -> None:
         if not line.strip():
             continue
         pkg_path, _, imports = line.partition("\t")
-        pkg = pkg_path[len(MODULE) :].lstrip("/") or "(root)"
+        pkg = short_pkg(pkg_path)
 
         for imp in imports.split():
             # Ring 2/3: a governed module may only be imported by its owner.
@@ -135,7 +155,7 @@ def check_package_imports(problems: list[str]) -> None:
 
             # Spec section 3: internal edges.
             if imp == MODULE or imp.startswith(MODULE + "/"):
-                target = imp[len(MODULE) :].lstrip("/") or "(root)"
+                target = short_pkg(imp)
                 if (pkg, target) not in ALLOWED_INTERNAL_EDGES:
                     problems.append(
                         "internal edge %s -> %s is not sanctioned (spec section 3, ADR-0033).\n"
@@ -153,10 +173,10 @@ def check_edges_are_reachable(problems: list[str]) -> None:
     actual = set()
     for line in out.splitlines():
         pkg_path, _, imports = line.partition("\t")
-        pkg = pkg_path[len(MODULE) :].lstrip("/") or "(root)"
+        pkg = short_pkg(pkg_path)
         for imp in imports.split():
             if imp.startswith(MODULE + "/"):
-                actual.add((pkg, imp[len(MODULE) :].lstrip("/")))
+                actual.add((pkg, short_pkg(imp)))
     for edge in sorted(ALLOWED_INTERNAL_EDGES - actual):
         problems.append(
             "sanctioned internal edge %s -> %s no longer exists; drop it from "
@@ -224,7 +244,7 @@ def check_contrib_is_separately_moduled(problems: list[str]) -> None:
                 "package is a separate module (ADR-0003, ADR-0040)." % d
             )
             continue
-        want = "%s/%s/%s" % (MODULE, contrib, name)
+        want = "%s/%s/%s" % (REPO, contrib, name)   # contrib carries no core major suffix
         with open(mod, encoding="utf-8") as fh:
             first = fh.readline().strip()
         if first != "module " + want:

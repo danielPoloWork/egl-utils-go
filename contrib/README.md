@@ -41,6 +41,14 @@ They tag as `contrib/redishealth/vX.Y.Z` and `contrib/pgxhealth/vX.Y.Z` — Go's
 convention for nested modules — so a fix to one never forces a release of the core
 or of its sibling.
 
+> **These modules still target the core's v1 line.** The core opened `/v2` in
+> [ADR-0045](../docs/adr/0045-pkg-layout-and-v2.md), but this README and the `require`
+> lines below deliberately still say v1: ADR-0040 forbids a `replace` and requires the
+> **released** core, so contrib cannot reference `/v2` until `v2.0.0` is tagged. Migrating
+> them is a Milestone 13 item that runs *after* the tag. Their own module paths and tag
+> scheme are unaffected by the core's major — a contrib path never carries the core's
+> version suffix.
+
 ## Using
 
 ```go

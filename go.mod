@@ -1,4 +1,4 @@
-module github.com/danielPoloWork/egl-utils-go
+module github.com/danielPoloWork/egl-utils-go/v2
 
 go 1.25.0
 

@@ -56,6 +56,17 @@
 >   cache, hash, pubsub); §3's dependency sentence omitted `prometheus/client_model`, a direct
 >   `go.mod` require that no non-test file imports. Understatements rather than false claims, but a
 >   spec that under-describes its own gates invites re-deriving them. ROADMAP 12.2.
+> - *2026-07-27* — **§4 layout and §5 import path updated for v2.0.0**
+>   ([ADR-0045](../adr/0045-pkg-layout-and-v2.md)). Feature packages move from the module root to
+>   `pkg/`, and the module opens its second major:
+>   `import "github.com/danielPoloWork/egl-utils-go/v2/pkg/<component>"`. The twenty-one-package
+>   root had grown to forty entries; `pkg/` costs a consumer 7 characters where the series' Maven
+>   tree — built, measured and reverted — costs 34, for the same tidy root. **This document is
+>   amended rather than replaced by a v2 spec**: it has been the module's live contract since
+>   intake, it already carries the amendment mechanism, and forking it would leave two documents
+>   disagreeing about one codebase. Each remaining Milestone 13 item amends §5 again for its own
+>   API change; `tools/spec_api_lint.py` (ADR-0043) makes that mechanical rather than remembered.
+>   ROADMAP 13.1.
 > - *2026-07-27* — **§5 gains `workerpool.ErrPoolClosed`, and §5 is now mechanically gated**
 >   ([ADR-0043](../adr/0043-spec-api-lint.md)). The identifier was found by `tools/spec_api_lint.py`
 >   on its first run, having survived both Milestone 10 and the M11 read-through: it is the *second*
@@ -151,16 +162,19 @@ free-for-all" (ADR-0035). Every other package remains adoptable in isolation; ad
 Concurrency components own their goroutines and stop deterministically (context /
 close(done)); construction uses functional options for forward compatibility. HTTP
 concerns follow the standard func(http.Handler) http.Handler decorator chain.
-Packages live at the module root — one directory per feature package — per ADR-0003
-(idiomatic Go root layout, superseding the cross-language tree for this repository);
-go.mod sits at the repository root with module path github.com/danielPoloWork/egl-utils-go.
+Packages live under `pkg/` — one directory per feature package — per
+[ADR-0045](../adr/0045-pkg-layout-and-v2.md) (superseding ADR-0003's root layout and, through
+it, the cross-language tree); go.mod sits at the repository root with module path
+github.com/danielPoloWork/egl-utils-go/v2, and module metadata (doc.go, version.go) stays
+beside it rather than under `pkg/`.
 
 ## 5. Public Interface
 
 <!-- The API contract (the design "api" fold): each operation with its payload shapes, the error
      model (the failure taxonomy, not just the happy path), and the versioning / SemVer surface.
      A service/web project may keep the written-out contract under docs/api/ (capabilities.api_spec). -->
-Consumers import via `import "github.com/danielPoloWork/egl-utils-go/workerpool"`. The public surface:
+Consumers import via `import "github.com/danielPoloWork/egl-utils-go/v2/pkg/workerpool"`, and the
+module root as `import "github.com/danielPoloWork/egl-utils-go/v2"` for `utils.Version`. The public surface:
 
 - utils (root): const Version — the released version, kept in lockstep with the tag and the changelog
 - workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Stop(ctx) error; WithNonBlockingSubmit() Option; WithPanicHandler(func(recovered any)) Option; Task func(ctx); ErrQueueFull; ErrPoolClosed

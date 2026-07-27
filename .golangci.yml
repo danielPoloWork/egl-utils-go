@@ -70,7 +70,7 @@ linters:
         internal-edges-only-where-mandated:
           files: ['$all', '!$test', '!**/config/*.go']
           deny:
-            - pkg: github.com/danielPoloWork/egl-utils-go
+            - pkg: github.com/danielPoloWork/egl-utils-go/v2
               desc: "Spec §3/ADR-0033: feature packages do not import each other. The one sanctioned edge is config → validator (spec item 13). Compose in the consumer, or open an ADR to sanction a new edge."
         config-imports-only-validator:
           files: ['**/config/*.go', '!$test']
@@ -78,9 +78,9 @@ linters:
           allow:
             - $gostd
             - gopkg.in/yaml.v3
-            - github.com/danielPoloWork/egl-utils-go/validator
+            - github.com/danielPoloWork/egl-utils-go/v2/pkg/validator
           deny:
-            - pkg: github.com/danielPoloWork/egl-utils-go
+            - pkg: github.com/danielPoloWork/egl-utils-go/v2
               desc: "ADR-0033 sanctions exactly one internal edge from config: validator. Any other sibling import needs its own ADR."
 
   exclusions:
