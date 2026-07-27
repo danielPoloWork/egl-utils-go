@@ -72,7 +72,11 @@ decisions, stricter review, and a maintained compliance-docs surface. The raised
 │   ├── workflow/                   # git, documentation, release & maintenance conventions
 │   ├── journal/                    # dated session checkpoints
 │   └── bugs/                       # in-repo bug ledger
-├── tools/consistency_lint.py       # agent-runnable cross-artifact congruence checker
+├── tools/                          # the four agent-runnable policy checkers (all four gate CI)
+│   ├── consistency_lint.py         # cross-artifact congruence (version lockstep, ADR index, …)
+│   ├── import_graph_lint.py        # dependency rings + internal edges (ADR-0035)
+│   ├── coverage_gate.py            # ≥ 85% statements per package (ADR-0036)
+│   └── spec_api_lint.py            # spec §5 ↔ the real exported surface (ADR-0043)
 └── .github/                        # CI + release workflows, PR/issue templates, CODEOWNERS, Dependabot
 ```
 
@@ -182,10 +186,14 @@ Squash is the only merge method, so the PR title/body **becomes the commit on
 professional summary (context, change, verification) — never a one-line collapse. Write it as it
 should read in `git log` forever.
 
-**Pre-PR congruence check (mandatory).** Before drafting any PR, run and pass:
+**Pre-PR congruence check (mandatory).** Before drafting any PR, run and pass all four policy
+tools — each gates CI, so a failure here is a red build either way:
 
 ```bash
-python tools/consistency_lint.py
+python tools/consistency_lint.py     # cross-artifact congruence
+python tools/import_graph_lint.py    # dependency rings + internal edges (ADR-0035)
+python tools/coverage_gate.py        # >= 85% statements per package (ADR-0036)
+python tools/spec_api_lint.py        # spec section 5 <-> exported surface (ADR-0043)
 ```
 
 It asserts cross-artifact congruence (version lockstep, ADR index ↔ files, catalogued
@@ -270,7 +278,7 @@ Every PR must clear, at minimum:
 | API docs | `godoc / pkg.go.dev` builds without warnings |
 | Performance claims | backed by a reproducible co-located benchmark (`go test -bench`, ADR-0003) |
 | Versioning | SemVer; `CHANGELOG.md` updated for user-visible changes |
-| Congruence | `python tools/consistency_lint.py` passes |
+| Congruence | all four policy tools pass: `consistency_lint.py`, `import_graph_lint.py`, `coverage_gate.py`, `spec_api_lint.py` |
 | Review (enterprise) | **two** approving reviews before merge; a security-relevant change also requires the `security-auditor`'s sign-off |
 | Security ADR (enterprise) | every security-relevant decision carries an ADR (§7) — no undocumented judgment calls |
 | Compliance (enterprise) | `docs/compliance/` control register current; a touched control's row updated in the same PR |

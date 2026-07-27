@@ -30,8 +30,13 @@ _(newest first)_
   ADR-0033 — **no new ADR minted**, since that record already holds the decision; the replacement
   says *governed* exception, because `import_graph_lint.py` fails both if an unsanctioned edge
   appears and if `config → validator` disappears. Plus §6/§3 understatements (rapid in 8 packages
-  not 3, benchmarks in 7 not 4, `prometheus/client_model` omitted). 12.3 (`spec_api_lint.py`) is the
-  last item and the reason all four accumulated.
+  not 3, benchmarks in 7 not 4, `prometheus/client_model` omitted). *Addendum 2, 12.3:*
+  `tools/spec_api_lint.py` ([ADR-0043](../adr/0043-spec-api-lint.md)) gates §5 against `go doc` in
+  **both** directions and **found a tenth divergence on its first run** — `workerpool.ErrPoolClosed`,
+  invisible to every earlier scan because it is the *second* member of a `var (…)` block. It reports
+  **130** identifiers where 12.1's throwaway checker saw 110. Verified by deliberate violation in
+  three shapes; also documented the three policy tools that had never reached AGENTS.md or the PR
+  template. **Milestone 12 complete (3/3).**
 - [2026-07-27 — Governance: namespace contract & spec reconciliation](2026/07/2026-07-27-series-namespace-contract.md) —
   Milestone 11 (2/2, docs only). "Can we move to `src/main/go/it/d4np/utils`?" answered with the
   language: in Go an import path *is* a directory path, and the tree is 1-for-3 across the siblings
