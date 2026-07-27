@@ -53,7 +53,8 @@ turned out to require correcting the premise twice.
 - **A second thread opened from the first, and closed as 11.2.** Correcting the stale `Go 1.24`
   language floor (nine places: AGENTS §1/§5/§10, README, `local-build.md`, both GitHub templates,
   four `project.yaml` fields) led into `docs/specs/01_spec_utils.md`, which is **frozen** — and
-  which had diverged in **four** places, not one. The useful discovery was that they are not the
+  which had diverged in **four** places in §3/§6 alone, not one (a full read-through later in the
+  session put the real total at nine — see below). The useful discovery was that they are not the
   same kind of divergence:
   - **Three were facts that had drifted**, and the spec's own header authorises fixing them in
     place ("diverging implementation updates this spec in the same PR or adds an ADR"): the
@@ -94,12 +95,47 @@ Two things were found during this session and deliberately **not** fixed in it (
 - **`egl-util-cpp` ships `it/d4np/util` (singular)** where ADR-0041's contract says `utils`. Under
   the component-name rule one of the two must move. It affects another repository, so it is a
   series-level call and was not taken here.
-The one open question 11.2 leaves for the maintainer is **how much else of the frozen spec has
-drifted**. Four divergences surfaced from a sweep that was only looking for one number, and nothing
-mechanically checks the spec against reality — `consistency_lint.py`'s spec-map check verifies that
-every §ction has a fulfilling roadmap item, not that the §ction's *claims* are still true. A
-deliberate read-through of `01_spec_utils.md` against as-built behaviour is the obvious next
-governance item; the Amendments block is now the place its findings would land.
+**The read-through 11.2 called for was then run in the same session**, against `go doc` / `go list`
+output rather than by eye. It found **five more divergences on top of 11.2's four — nine in a
+164-line document — and not one of them was caught by a gate.** They are scoped to **Milestone 12**
+rather than retrofitted into 11.2, because §5 is a rewrite and its closing line is a contract
+question, not a typo:
+
+1. **§5 does not list the public surface v1.1.0 shipped**, and its closing line scopes the promise
+   to "SemVer over all exported identifiers **above**". Twelve identifiers from M10 are absent —
+   `(*Breaker).State`/`State`/`StateClosed|Open|HalfOpen`/`State.String` (10.2), `lifecycle.Trigger`
+   (10.3), `(*Limiter).Middleware`/`ErrLimited` (10.4), `HashPasswordCost`/`Cost`/`ErrInvalidCost`
+   (10.5), `config.WithStructValidation` (10.6), `pubsub.WithDropOldest` (10.12) — so **as written
+   they fall outside the stability commitment**, which the v1.0.0 changelog stated as "API
+   stability for every exported identifier". §5 narrows what was published. Pre-M10 omissions too:
+   `middleware.HeaderName`, `errors.StackTracer`, `validator.ValidationErrors`/`FieldError`,
+   `config.ErrUnsupportedFormat`/`Validator`/`WithoutEnvExpansion`, `hash.ErrMismatch`/
+   `ErrPasswordTooLong`, `logger.Field` and its five constructors, `workerpool.Task`, and all
+   thirteen `WithX` option constructors.
+2. **One §5 signature is simply wrong:** `NewBroker[T](opts ...Option)` — the real option type is
+   **generic**, `Option[T]`. Code written to the spec does not compile.
+3. **§4's "packages compose only through stdlib contracts … each is adoptable in isolation" is
+   false.** `go list` shows `config` imports `validator` — deliberate since 10.6/ADR-0033, and
+   ADR-0035's `import_graph_lint.py` now *fails if the edge disappears*. Same class as the
+   compatibility clause, but it needs **no new ADR**: a supersede marker pointing at ADR-0033 is
+   enough, since that ADR already holds the decision.
+4. **§6 understates the test strategy:** rapid is named for three areas but runs in eight packages
+   (adds circuitbreaker, middleware/requestid, ratelimit, validator); benchmarks are named for four
+   packages but also exist in cache, hash and pubsub.
+5. **§3's dependency sentence omits `prometheus/client_model`**, a direct `go.mod` require (a test
+   reads `dto`; it also arrives transitively via client_golang).
+
+Verified correct and needing nothing: §2's twenty-five functional requirements all exist;
+`retry.Policy{MaxAttempts, BaseDelay, MaxDelay, Jitter}` matches exactly; every other §5 signature;
+§4's layer grouping; the module path and root layout; and §6's "manual-only gates: none".
+
+The structural lesson is the last line of finding 5: **nothing checks a spec claim against
+reality.** `consistency_lint.py`'s spec-map gate verifies that every section has a fulfilling
+roadmap item, never that the section's *claims* are true — which is why nine divergences accumulated
+across ten milestones without a single red build. M12 should therefore ship a
+`tools/spec_api_lint.py` that diffs §5 against `go doc`, so the public-interface section cannot
+drift silently again; the other four findings are one-off corrections that a lint would not have
+prevented.
 
 Otherwise the carry-overs from the v1.1.0 cut are unchanged: the ADR-0030 `/v2` ledger, the NFR-01
 spec amendment, the `middleware.HeaderName` canonicalisation decision, and first tags for the two

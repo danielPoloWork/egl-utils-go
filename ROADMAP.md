@@ -218,10 +218,16 @@ the factory re-renders from still asserted that packages live under `src/main/go
 so a regeneration would have silently re-imposed the layout ADR-0003 removed.
 
 Pulling that thread exposed a second, unrelated class of drift, which 11.2 closes: the **frozen v1
-specification had diverged from the as-built project in four places**. Three were facts that had
-gone stale and are amended in place; the fourth — §3's compatibility clause — is a governance rule
-that was *replaced* rather than drifted, and takes an ADR instead ([ADR-0042](docs/adr/0042-post-1.0-compatibility-contract.md)).
-The spec now carries a dated **Amendments** block so that no post-freeze edit is silent.
+specification had diverged from the as-built project**. 11.2 closes the §3/§6 divergences: three
+facts that had gone stale are amended in place, while §3's compatibility clause — a governance rule
+that was *replaced* rather than drifted — takes an ADR instead
+([ADR-0042](docs/adr/0042-post-1.0-compatibility-contract.md)). The spec now carries a dated
+**Amendments** block so that no post-freeze edit is silent.
+
+A full read-through of the spec then ran against the as-built API and found the divergence is wider
+than §3/§6: **§5 does not list the public surface v1.1.0 shipped, and §4 states an architectural
+invariant that 10.6 deliberately broke.** Those are scoped to **Milestone 12**, not retrofitted
+here — see the journal for the enumerated findings.
 
 > **Agent guidance:** Claude Opus 5 · effort **max** — a one-way, series-wide identity decision
 > whose alternatives (vanity module path, GitHub organisation) are breaking and hard to unwind
