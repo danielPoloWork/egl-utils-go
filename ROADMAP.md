@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-27 — M12: §5 reconciled with the real exported surface, then gated](docs/journal/2026/07/2026-07-27-m12-public-interface.md).
+  [2026-07-27 — contrib v0.1.0 released; BUG-0001, a red master nobody could see](docs/journal/2026/07/2026-07-27-contrib-release-and-bug-0001.md).
 
 ### Agent guidance (model × effort)
 

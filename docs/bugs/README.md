@@ -16,8 +16,6 @@ a `fixed` record names its `fixed-in`) is enforced by the consistency lint's `bu
 
 ## Index
 
-_No defects recorded yet._
-
 | Bug | Title | Severity | Status | Fixed in |
 |-----|-------|----------|--------|----------|
-| —   | —     | —        | —      | —        |
+| [BUG-0001](2026/07/BUG-0001-race-detector-breaks-allocation-and-pool-identity-assertions.md) | The race detector breaks allocation-count and sync.Pool identity assertions, holding master red | high | fixed | unreleased |
