@@ -56,3 +56,5 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0038](0038-cache-sharding.md) | cache sharding — 32 shards hashed with maphash.Comparable; 7.5x on the mixed path, ~5ns tax uncontended | Accepted |
 | [0039](0039-pubsub-drop-oldest.md) | pubsub.WithDropOldest — opt-in slow-subscriber policy, best-effort by construction (Publish must not block) | Accepted |
 | [0040](0040-contrib-submodules.md) | contrib/* nested submodules — require the released core, no replace/workspace; the module boundary is the enforcement | Accepted |
+| [0041](0041-series-logical-namespace.md) | series logical namespace `it.d4np.utils.<component>` — realized per language, Go keeps the module root; the module-path move is free only at a /v2 boundary | Accepted |
+| [0042](0042-post-1.0-compatibility-contract.md) | post-1.0 compatibility contract — v1.x is frozen for every exported identifier; the MAJOR-intent note is retired and the /v2 ledger is the only destination for a breaking change | Accepted |

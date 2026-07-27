@@ -34,8 +34,8 @@ ownership:                   # Q4.1–Q4.2 (imported from repo facts: git remote
 
 language:                    # Phase 1: Q1.1 imported (Go, from the brief); Q1.3 + version floor asked
   lang:            go
-  lang_name:       "Go 1.24+"
-  lang_standard:   "Go 1.24 (go.mod language floor; CI on Go 1.25 & 1.26)"
+  lang_name:       "Go 1.25+"
+  lang_standard:   "Go 1.25 (go.mod language floor; CI on Go 1.25 & 1.26)"   # AMENDED 2026-07-27: the interview recorded 1.24; go.mod now declares `go 1.25.0` (raised during M9/M10 dependency work), so 1.24 no longer builds the module
   secondary_lang:  ""                 # Q1.2 (defaulted): none — db.Transaction wraps database/sql, owns no schema
   group_path:      "it/d4np"          # Q1.3 (asked) -> {{GROUP_PATH}}
   group_dotted:    "it.d4np"          # -> {{GROUP_DOTTED}}
@@ -65,7 +65,7 @@ toolchain:                   # Phase 3 (defaulted): profiles/go.yaml resolved pe
     bench:        "go test -bench=. -benchmem ./..."
 
 ci:                          # Phase 3 (asked): profile matrix updated to the chosen Go floor/pair
-  tier1_platforms: "Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.24)"
+  tier1_platforms: "Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.25)"
   matrix:
     - { os: ubuntu-24.04, toolchain: "go-1.25", preset: test }
     - { os: ubuntu-24.04, toolchain: "go-1.26", preset: test }
@@ -170,7 +170,7 @@ spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, m
     - "Race-free: go test -race green in CI on every PR — the canonical concurrency gate"
     - "Allocation-conscious hot paths: -benchmem benchmarks for pooled and middleware paths; syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun"
     - "Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + vetted few (prometheus/client_golang, a YAML parser); test-only deps: testify, goleak, rapid"
-    - "Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.24"
+    - "Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.25"
     - "Coverage: at least 80 percent line coverage enforced in CI"
     - "Compatibility: SemVer, pre-1.0 milestone-driven; breaking changes to the public interface require a MAJOR-intent note in the PR"
   architecture: |
@@ -192,9 +192,17 @@ spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, m
     Concurrency components own their goroutines and stop deterministically (context /
     close(done)); construction uses functional options for forward compatibility. HTTP
     concerns follow the standard func(http.Handler) http.Handler decorator chain.
-    Packages live under the normative cross-language tree (src/main/go/it/d4np/utils);
-    go.mod placement reconciling consumer import ergonomics with that tree is decided and
-    recorded as an ADR in Milestone 1.
+    Packages live at the repository root, one feature package per directory, with the
+    module root as the package namespace.
+    AMENDED 2026-07-27 (ADR-0003, ADR-0041) — the Milestone 1 ADR called for below was
+    decided as ADR-0003, which SUPERSEDES ADR-0002's cross-language tree for this
+    repository. The interview recorded "packages live under the normative cross-language
+    tree (src/main/go/it/d4np/utils)"; that sentence is retained only inside this note,
+    because in Go the import path IS the directory path, so the tree and the short
+    consumer import cannot both hold. A regeneration MUST NOT re-impose the tree. The
+    series' shared identity is the LOGICAL namespace it.d4np.utils.<component>
+    (ADR-0041), realized here by the module root:
+    it.d4np.utils.workerpool == github.com/danielPoloWork/egl-utils-go/workerpool.
   architecture_style: ""     # library — commits to no app architecture (design-patterns.md §5)
   patterns:
     - { name: "Worker Pool", why: "bounded concurrency with backpressure (workerpool.Pool)" }
@@ -250,7 +258,7 @@ spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, m
     syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun.
     Manual-only gates: none — every requirement above has a mechanical check.
   milestone1_items:
-    - "Record the Go module layout decision as an ADR: module path github.com/danielPoloWork/egl-utils-go, go.mod placement vs the normative src/main/go tree, consumer import ergonomics"
+    - "Record the Go module layout decision as an ADR: module path github.com/danielPoloWork/egl-utils-go, go.mod placement vs the normative src/main/go tree, consumer import ergonomics (DECIDED as ADR-0003 — feature packages at the module root; the tree is rejected for Go and MUST NOT be regenerated)"
     - "Record the dependency policy as an ADR: runtime = stdlib + golang.org/x/* + vetted few (prometheus/client_golang, YAML parser); test-only = testify, goleak, rapid; govulncheck as the supply-chain gate"
   milestones:
     - number: 2

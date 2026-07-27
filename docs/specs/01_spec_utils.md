@@ -1,7 +1,32 @@
-# Software Specification: Go Concurrency & Backend Utilities Library (Go 1.24+)
+# Software Specification: Go Concurrency & Backend Utilities Library (Go 1.25+)
 
 > Rendered from the intake interview (Phase 5). Frozen contract: diverging implementation
 > updates this spec in the same PR or adds an ADR superseding the relevant section.
+>
+> **Amendments** (this document is frozen; every edit after the Phase 5 render is logged here):
+>
+> - *2026-07-27* — **language floor 1.24 → 1.25** in the title and in §3's portability line.
+>   `go.mod` has declared `go 1.25.0` since the M9/M10 dependency work, so 1.24 no longer builds
+>   the module and the stated floor was false. Toolchain fact only: no functional, API, or
+>   behavioural contract is altered, and the v1.0.0 API-stability commitment is untouched.
+>   Amended under this document's own divergence rule rather than by a superseding ADR, because
+>   there is no decision to record — only a number that had gone stale. Ledgered in ROADMAP 11.1.
+> - *2026-07-27* — **§3 and §6 coverage floor 80% → 85%, enforced per package.** (§6 states it
+>   twice — the gate list and the toolchain line — and both were missed on the first pass; found by
+>   the full read-through.) Raised by spec v2 §7 and
+>   implemented in 10.9 / [ADR-0036](../adr/0036-coverage-gate.md); "per package" is the operative
+>   half, since with most packages at 100% a module-wide 85% average could never fail. The stated
+>   80% understated a gate that had been stricter for a milestone. ROADMAP 11.2.
+> - *2026-07-27* — **§3 and §6: the goleak hedge removed.** Both said leak assertions used "an
+>   in-repo stack-based guard" until ROADMAP 2.6 landed the test-only dependencies. 2.6 landed in
+>   M2; `go.uber.org/goleak` has been the assertion mechanism ever since, so the hedge described a
+>   state that had ended. ROADMAP 11.2.
+> - *2026-07-27* — **§3 compatibility clause SUPERSEDED, not amended**, by
+>   [ADR-0042](../adr/0042-post-1.0-compatibility-contract.md). This one is a governance change
+>   rather than a stale fact — the pre-1.0 clause made a breaking change *mergeable with a note*,
+>   while the v1.0.0 commitment makes it not mergeable into v1.x at all — so it takes the ADR
+>   branch of the divergence rule and the original text is struck in place, not rewritten.
+>   ROADMAP 11.2.
 
 ## 1. Objective & Business Context
 
@@ -48,13 +73,13 @@ allocation-conscious hot paths via pointer discipline and sync.Pool object reuse
      fold): a value per hard NFR axis — throughput / concurrency, p99 latency, memory ceiling,
      target FPS, cold-start budget — each phrased so CI could prove a violation. -->
 - Idiomatic Go: gofumpt-clean and golangci-lint (govet, staticcheck, errcheck, revive, gosec) green on every PR
-- Zero goroutine leaks: every goroutine-spawning component stops via context or close(done); per-component leak assertions in tests (goleak once ROADMAP 2.6 lands the test-only deps; an in-repo stack-based guard until then)
+- Zero goroutine leaks: every goroutine-spawning component stops via context or close(done); per-component leak assertions in tests (go.uber.org/goleak)
 - Race-free: go test -race green in CI on every PR — the canonical concurrency gate
 - Allocation-conscious hot paths: -benchmem benchmarks for pooled and middleware paths; syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun
 - Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + vetted few (prometheus/client_golang, a YAML parser); test-only deps: testify, goleak, rapid
-- Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.24
-- Coverage: at least 80 percent line coverage enforced in CI
-- Compatibility: SemVer, pre-1.0 milestone-driven; breaking changes to the public interface require a MAJOR-intent note in the PR
+- Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.25
+- Coverage: at least 85 percent line coverage enforced in CI **per package** (not as a module-wide average)
+- Compatibility: ~~SemVer, pre-1.0 milestone-driven; breaking changes to the public interface require a MAJOR-intent note in the PR~~ — **SUPERSEDED by [ADR-0042](../adr/0042-post-1.0-compatibility-contract.md)**: the module is post-1.0, and under the v1.0.0 commitment a breaking change is not mergeable into v1.x with a note — it is deferred to the `/v2` ledger (ADR-0030 §2). The struck text is the pre-1.0 regime, retained as the historical contract.
 
 
 ## 4. Logical Architecture & Core Algorithm
@@ -126,17 +151,16 @@ Consumers import via `import "github.com/danielPoloWork/egl-utils-go/workerpool"
 Every functional requirement maps to package-level table-driven unit tests (go test);
 the Spec Coverage Map in ROADMAP.md keeps one row per spec section (spec-map lint gate).
 Concurrency components additionally carry: a leak assertion (no leaked goroutines
-after Stop/Close/cancel — goleak once ROADMAP 2.6 lands the test-only dependencies, an
-in-repo stack-based guard until then), mandatory go test -race in CI, and deterministic
+after Stop/Close/cancel, asserted with go.uber.org/goleak), mandatory go test -race in CI, and deterministic
 clocks for timing-sensitive logic (retry, ratelimit, cache TTL). Property-based tests (rapid) cover
 pubsub delivery/filtering, fanin/fanout completeness (no message lost or duplicated),
 and backoff bound invariants. Static gates on every PR: gofumpt, golangci-lint (govet,
-staticcheck, errcheck, revive, gosec), govulncheck. Coverage gate: at least 80 percent
-line coverage (go test -coverprofile). Benchmarks (go test -bench -benchmem) for
+staticcheck, errcheck, revive, gosec), govulncheck. Coverage gate: at least 85 percent
+line coverage per package (go test -coverprofile). Benchmarks (go test -bench -benchmem) for
 workerpool, ratelimit, middleware, and syncpool, recorded under docs/benchmarks;
 syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun.
 Manual-only gates: none — every requirement above has a mechanical check.
 
 Toolchain: built with go build (go modules), tested with go test (+ testify; rapid for property tests), checked with
-go test -race (data-race detector), go vet, govulncheck, coverage target ≥ 80% line. Every functional and
+go test -race (data-race detector), go vet, govulncheck, coverage target ≥ 85% line per package. Every functional and
 non-functional requirement above maps to a CI gate (see [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)).
