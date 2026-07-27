@@ -1,7 +1,16 @@
-# Software Specification: Go Concurrency & Backend Utilities Library (Go 1.24+)
+# Software Specification: Go Concurrency & Backend Utilities Library (Go 1.25+)
 
 > Rendered from the intake interview (Phase 5). Frozen contract: diverging implementation
 > updates this spec in the same PR or adds an ADR superseding the relevant section.
+>
+> **Amendments** (this document is frozen; every edit after the Phase 5 render is logged here):
+>
+> - *2026-07-27* — **language floor 1.24 → 1.25** in the title and in §3's portability line.
+>   `go.mod` has declared `go 1.25.0` since the M9/M10 dependency work, so 1.24 no longer builds
+>   the module and the stated floor was false. Toolchain fact only: no functional, API, or
+>   behavioural contract is altered, and the v1.0.0 API-stability commitment is untouched.
+>   Amended under this document's own divergence rule rather than by a superseding ADR, because
+>   there is no decision to record — only a number that had gone stale. Ledgered in ROADMAP 11.1.
 
 ## 1. Objective & Business Context
 
@@ -52,7 +61,7 @@ allocation-conscious hot paths via pointer discipline and sync.Pool object reuse
 - Race-free: go test -race green in CI on every PR — the canonical concurrency gate
 - Allocation-conscious hot paths: -benchmem benchmarks for pooled and middleware paths; syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun
 - Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + vetted few (prometheus/client_golang, a YAML parser); test-only deps: testify, goleak, rapid
-- Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.24
+- Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.25
 - Coverage: at least 80 percent line coverage enforced in CI
 - Compatibility: SemVer, pre-1.0 milestone-driven; breaking changes to the public interface require a MAJOR-intent note in the PR
 
