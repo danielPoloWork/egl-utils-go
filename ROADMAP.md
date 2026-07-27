@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-27 — v1.1.0 release cut](docs/journal/2026/07/2026-07-27-v1.1.0-release-cut.md).
+  [2026-07-27 — Series namespace contract](docs/journal/2026/07/2026-07-27-series-namespace-contract.md).
 
 ### Agent guidance (model × effort)
 
@@ -205,6 +205,27 @@ it is an API-visible constant under the v1 commitment.
 
 ---
 
+## Milestone 11 — Series namespace contract — ✅ complete
+
+Governance only: no code, no version bump, no consumer-visible change. The series' shared
+identity is restated as the **logical namespace `it.d4np.utils.<component>`** rather than
+ADR-0002's physical tree, which two of the three scaffolded sibling repositories had already
+abandoned independently — each because its language binds names to paths differently. Go
+realizes the namespace at the module root, so imports are unchanged.
+
+The milestone also discharges the **regeneration caveat ADR-0003 left open**: the manifest that
+the factory re-renders from still asserted that packages live under `src/main/go/it/d4np/utils`,
+so a regeneration would have silently re-imposed the layout ADR-0003 removed.
+
+> **Agent guidance:** Claude Opus 5 · effort **max** — a one-way, series-wide identity decision
+> whose alternatives (vanity module path, GitHub organisation) are breaking and hard to unwind
+> once published; the reasoning, not the diff, is the deliverable.
+
+- [x] 11.1 Record the series logical namespace `it.d4np.utils.<component>` and close the ADR-0003
+      regeneration caveat → [ADR-0041](docs/adr/0041-series-logical-namespace.md) — *agent: Opus 5 · max (as built) — the decision reframes ADR-0002's premise: a **physical** layout cannot be a cross-language contract, because in most of these languages the layout is not free (Maven dictates Java's, the include model dictates C/C++'s, the module system dictates Go's), whereas a **namespace** can be. Verified rather than assumed: `egl-util-cpp` keeps the tree, `egl-utils-c` rejected it in its own ADR-0002 (`d4np/<module>/` at the root), `egl-utils-java` is unscaffolded — so the tree was 1-for-3, not the norm. **Module path deliberately NOT changed**: the two options that would render the namespace literally in Go source (vanity `go.d4np.it/utils`, org `github.com/d4np/…`) are both module-*identity* changes and therefore breaking, and the vanity one converts a documentation preference into a permanent supply-chain obligation (a domain that must resolve and a `go-import` tag that must be served for as long as anyone runs `go get`). Recorded in the ADR-0030 ledger as declined-with-a-condition: **the move is free at a `/v2` boundary and only there**, since consumers rewrite every import at such a boundary anyway. `orchestrator/project.yaml` amended in place with a dated note (the interview record still shows what was asked; the generator can no longer act on it). **Two findings carried forward, neither fixed here:** the EADOS bundle's `go.yaml` profile still asserts the tree but `.eados-core/` is gitignored, so the correction must be carried upstream; and `egl-util-cpp` ships `it/d4np/util` (singular) against this contract's `utils` — a series-level call, not this repo's to make*
+
+---
+
 ## Spec Coverage Map
 
 Tracks which spec section is fulfilled by which roadmap item(s). Every spec section has a
@@ -216,6 +237,6 @@ progress · ✅ done · ❎ N/A.
 | §1 | Objective & business context | 1.1; delivered by M2–M9 | ✅ |
 | §2 | Functional requirements | 2.1–9.5 (all 25 features) | ✅ |
 | §3 | Non-functional requirements | 1.3, 1.4 (gates live); per-feature from M2 | ✅ |
-| §4 | Logical architecture | 1.1, 1.6 (ADR-0003) | ✅ |
+| §4 | Logical architecture | 1.1, 1.6 (ADR-0003); 11.1 (ADR-0041) | ✅ |
 | §5 | Public interface | 2.1–9.5 | ✅ |
 | §6 | Verification & test strategy | 1.2, 1.4 (framework + CI live); per-feature suites M2–M9 | ✅ |

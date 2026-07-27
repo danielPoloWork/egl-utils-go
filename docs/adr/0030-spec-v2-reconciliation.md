@@ -54,6 +54,18 @@ behavioral contract (login latency ×4), so under spec §5's own rule it is majo
 ships additively in 10.5 (`HashPasswordCost(pw, 12)`). No `/v2` is scheduled by this ADR; if opened,
 it follows Go's `/v2` module path rule.
 
+**Addendum 2026-07-27 — the module path itself, raised and declined.** Rendering the series
+namespace `it.d4np.utils.<component>` literally in Go source would require changing the module
+path (a vanity `go.d4np.it/utils`, or a `github.com/d4np/…` organisation) — a module *identity*
+change, hence breaking, hence a ledger candidate. It is **not** ledgered as pending work:
+[ADR-0041](0041-series-logical-namespace.md) realizes the namespace logically and imports stay on
+`github.com/danielPoloWork/egl-utils-go`. The reason it is recorded here anyway is the timing
+asymmetry — **the move is free at a `/v2` boundary and only there**, because consumers rewrite
+every import at such a boundary regardless, so the marginal cost of also changing the path is
+zero. If this bucket is ever opened, re-evaluate the module path in the same breath; outside such
+a boundary it stays declined, and the vanity option carries a permanent hosting obligation that
+ADR-0041 weighs in full.
+
 ### 3 · Deviations maintained (documented judgment calls, no change)
 
 - **Proportional jitter + last-error-verbatim** in retry (v2: full jitter, attempt-wrapped) — kept

@@ -19,6 +19,14 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-27 — Series namespace contract](2026/07/2026-07-27-series-namespace-contract.md) —
+  Milestone 11 (1/1, docs only). "Can we move to `src/main/go/it/d4np/utils`?" answered with the
+  language: in Go an import path *is* a directory path, and the tree is 1-for-3 across the siblings
+  anyway. [ADR-0041](../adr/0041-series-logical-namespace.md) replaces the physical tree with the
+  **logical namespace `it.d4np.utils.<component>`**; module path deliberately unchanged, the
+  vanity/org alternatives declined and ledgered in ADR-0030 §2 as *free only at a `/v2` boundary*.
+  Closes the regeneration caveat ADR-0003 left open. Upstream action still open: the EADOS `go.yaml`
+  profile.
 - [2026-07-27 — v1.1.0 release cut](2026/07/2026-07-27-v1.1.0-release-cut.md) — Milestone 10 cut as
   **[v1.1.0](../releases/v1.1.0.md)**: `[Unreleased]` moved into `docs/changelog/v1/v1.1.0.md`, version
   constant/badge/release notes in lockstep (verified the gate fails on a mismatch). Two findings carried

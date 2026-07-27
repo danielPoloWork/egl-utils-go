@@ -93,13 +93,23 @@ version.go        # const Version — release lockstep
 For this repository:
 
 - Module / namespace: **`github.com/danielPoloWork/egl-utils-go`**
+- Series logical namespace: **`it.d4np.utils.<component>`** — the series' unit of identity
+  per [ADR-0041](docs/adr/0041-series-logical-namespace.md), realized here by the module
+  root, so `it.d4np.utils.workerpool` **is**
+  `github.com/danielPoloWork/egl-utils-go/workerpool`. What is shared with the sibling
+  repositories is the **component name**, not the directory shape: `<component>` is spelled
+  identically everywhere, and each language binds it with its own native idiom.
 - Consumers import via: `import "github.com/danielPoloWork/egl-utils-go/workerpool"`
 - Tests are co-located `_test.go` files (white-box in-package and external `_test`
   packages); benchmarks are co-located `Benchmark*` functions (`go test -bench`).
 
 Subdivision is by **component**, not by file type. **This layout is normative.** Do not
 introduce any other shape without first superseding
-[ADR-0003](docs/adr/0003-adopt-idiomatic-go-root-layout.md).
+[ADR-0003](docs/adr/0003-adopt-idiomatic-go-root-layout.md). The
+`src/main/go/it/d4np/utils/` tree specifically is not merely superseded but **rejected
+permanently for Go** ([ADR-0041](docs/adr/0041-series-logical-namespace.md)): an import path
+is a directory path, and neither a vanity `go-import` path nor a nested `go.mod` shortens
+it. If a generated artefact reintroduces the tree, the generator is wrong, not the repo.
 
 ## 6. Git Workflow
 
