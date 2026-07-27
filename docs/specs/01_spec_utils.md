@@ -11,7 +11,9 @@
 >   behavioural contract is altered, and the v1.0.0 API-stability commitment is untouched.
 >   Amended under this document's own divergence rule rather than by a superseding ADR, because
 >   there is no decision to record — only a number that had gone stale. Ledgered in ROADMAP 11.1.
-> - *2026-07-27* — **§3 coverage floor 80% → 85%, enforced per package.** Raised by spec v2 §7 and
+> - *2026-07-27* — **§3 and §6 coverage floor 80% → 85%, enforced per package.** (§6 states it
+>   twice — the gate list and the toolchain line — and both were missed on the first pass; found by
+>   the full read-through.) Raised by spec v2 §7 and
 >   implemented in 10.9 / [ADR-0036](../adr/0036-coverage-gate.md); "per package" is the operative
 >   half, since with most packages at 100% a module-wide 85% average could never fail. The stated
 >   80% understated a gate that had been stricter for a milestone. ROADMAP 11.2.
@@ -153,12 +155,12 @@ after Stop/Close/cancel, asserted with go.uber.org/goleak), mandatory go test -r
 clocks for timing-sensitive logic (retry, ratelimit, cache TTL). Property-based tests (rapid) cover
 pubsub delivery/filtering, fanin/fanout completeness (no message lost or duplicated),
 and backoff bound invariants. Static gates on every PR: gofumpt, golangci-lint (govet,
-staticcheck, errcheck, revive, gosec), govulncheck. Coverage gate: at least 80 percent
-line coverage (go test -coverprofile). Benchmarks (go test -bench -benchmem) for
+staticcheck, errcheck, revive, gosec), govulncheck. Coverage gate: at least 85 percent
+line coverage per package (go test -coverprofile). Benchmarks (go test -bench -benchmem) for
 workerpool, ratelimit, middleware, and syncpool, recorded under docs/benchmarks;
 syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun.
 Manual-only gates: none — every requirement above has a mechanical check.
 
 Toolchain: built with go build (go modules), tested with go test (+ testify; rapid for property tests), checked with
-go test -race (data-race detector), go vet, govulncheck, coverage target ≥ 80% line. Every functional and
+go test -race (data-race detector), go vet, govulncheck, coverage target ≥ 85% line per package. Every functional and
 non-functional requirement above maps to a CI gate (see [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)).
