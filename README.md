@@ -69,6 +69,7 @@ setup.
 | 9 | Diagnostics & lifecycle | ✅ done |
 | 10 | Spec v2 reconciliation (v1.x additive) | ✅ done |
 | 11 | Governance: namespace contract & spec reconciliation | ✅ done |
+| 12 | Public-interface reconciliation | 🚧 in progress |
 
 
 ## License
