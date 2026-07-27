@@ -102,6 +102,22 @@ duration of a milestone.
   `it/d4np/util` (singular) where this contract says `utils`. Under the component-name rule one of
   the two must move. That is a series-level decision affecting another repository and is therefore
   *not* taken here.
+
+  > **Ruled 2026-07-27 by the maintainer: `utils` (plural) is canonical — the sibling repositories
+  > move, not the contract.** So this ADR's spelling stands unchanged and needs no amendment; what
+  > changes is that the question is closed rather than open.
+  >
+  > **Only `egl-util-cpp` is actually affected**, and it is worth stating why the other two are not,
+  > since "the siblings must move" reads wider than it is. `egl-utils-c` is **already compliant by
+  > construction**: the realization table above gives C `d4np/<component>/` → `d4np_<component>_*`,
+  > with no `utils` segment at all, because prefixed public headers are the language's native
+  > binding idiom and the logical namespace is what the contract fixes — not the spelling of any
+  > intermediate directory. `egl-utils-java` is unscaffolded and will get
+  > `src/main/java/it/d4np/utils/` correct for free, since Maven mandates it.
+  >
+  > The remediation is the maintainer's, on their own schedule and in `egl-util-cpp`'s own
+  > repository. Recorded here because this ADR is where a reader learns the contract, and an
+  > unresolved question left standing beside it would be inherited as still open.
 - The series loses physical uniformity as a stated goal and gains namespace uniformity in its
   place. An agent arriving in a sibling repository must now read that repository's layout ADR
   rather than assume the tree — which is already the situation in three of the four repositories,
