@@ -66,7 +66,13 @@ measured floor**.
   propagates a value through the context and writes a response header allocates. A target that can only
   ever fail enforces nothing, so the measured floor is pinned as a ratchet budget instead
   (`TestNFR01AllocationBudget`); raising an entry requires a stated reason in the PR. The spec target
-  needs amendment, which is noted for the /v2 ledger rather than silently ignored.
+  needs amendment, which is noted for the /v2 ledger rather than silently ignored. **(Amendment made
+  2026-07-27 — and the /v2 ledger was the wrong bucket. Nothing about this module's API blocks the
+  target and no major release would make zero reachable, so ledgering it would have filed it
+  somewhere it could never be resolved. It is recorded instead as a maintained deviation in
+  [ADR-0030](0030-spec-v2-reconciliation.md) §3, which is the register for "v2 asks X, we do Y, here
+  is why". The target itself is not edited: it lives in `docs/specs/v2/`, a verbatim import marked
+  unmodifiable, and the frozen v1 contract never made the claim.)**
 - **Fixing the non-canonical `middleware.HeaderName` in this PR.** Measuring showed
   `"X-Request-ID"` is not Go's canonical `"X-Request-Id"`, so `textproto.CanonicalMIMEHeaderKey`
   allocates a fresh string on every `Get` and every `Set` — 2 of `RequestID`'s 6 allocations, for

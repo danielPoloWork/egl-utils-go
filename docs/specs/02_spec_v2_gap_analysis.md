@@ -78,6 +78,23 @@ genuine divergence, not a forced one.
 
 ## 4. NFRs & verification (v2 §5, §7)
 
+> **Resolved since this analysis — the table below is the 2026-07-15 snapshot and is left as
+> written.** Every `🟡 never benchmarked` row was answered by Milestone 10: the suite and its
+> methodology are [ADR-0037](../adr/0037-nfr-benchmark-methodology.md), the measurements and
+> verdicts are [`docs/benchmarks/2026-07-26-nfr-suite.md`](../benchmarks/2026-07-26-nfr-suite.md),
+> and the dispositions are ADR-0030 §1 and §3. In short: NFR-02 met 4.4×, NFR-03 met 12.7×, NFR-04
+> met exactly, NFR-05 already gated, NFR-06 met after the 10.11 sharding (350 → 46.6 ns), the
+> methodology and fuzzing rows delivered by 10.7/10.10, and the coverage gate raised to ≥ 85 %
+> per package by 10.9.
+>
+> **NFR-01 is the one that did not resolve into a pass.** Its latency half is met (≤ 1 µs), but the
+> **`0 allocs/op` half is unreachable, not merely unmet** — `context.WithValue`, the `*http.Request`
+> copy in `r.WithContext`, and each `Header().Set` allocate structurally. It is recorded as a
+> **maintained deviation in ADR-0030 §3** and enforced as a ratchet budget at the measured floor
+> instead. That is the "spec amendment for NFR-01" this analysis and 10.10 both called for; it lands
+> as a disposition rather than an edit, because the target lives in `docs/specs/v2/`, which is an
+> unmodifiable verbatim import, and the frozen v1 contract never made the claim.
+
 | Requirement | Status |
 |---|---|
 | NFR-01 middleware chain ≤1 µs / 0 allocs (non-logging), Logger ≤3 allocs | 🟡 never benchmarked |

@@ -177,10 +177,14 @@ the v1.0.0 API-stability commitment; the milestone released as
 **[v1.1.0](docs/releases/v1.1.0.md)** on 2026-07-27, all 13 items delivered with no exported
 signature changed.
 
-Two findings are carried forward deliberately rather than silently absorbed, both from 10.10:
-NFR-01's **0-allocs/op target is unachievable** (structural allocations in `context.WithValue`,
-`Request.WithContext` and `Header.Set`), enforced as a ratchet budget at the measured floor and
-needing a spec amendment; and `middleware.HeaderName` is **not Go's canonical header spelling**,
+Two findings are carried forward deliberately rather than silently absorbed, both from 10.10.
+**Both are now discharged.** NFR-01's **0-allocs/op target is unachievable** (structural allocations
+in `context.WithValue`, `Request.WithContext` and `Header.Set`), enforced as a ratchet budget at the
+measured floor and needing a spec amendment — **made 2026-07-27 as a maintained deviation in
+[ADR-0030](docs/adr/0030-spec-v2-reconciliation.md) §3 rather than a `/v2` ledger entry, which was
+the wrong bucket: no major release would make zero reachable. The target itself is not edited —
+it lives in the unmodifiable `docs/specs/v2/` import, and the frozen v1 contract never made the
+claim.** And `middleware.HeaderName` is **not Go's canonical header spelling**,
 costing 2 allocations per request for no wire-format difference — measured but not changed, since
 it is an API-visible constant under the v1 commitment. **The second was resolved in v1.1.1
 ([ADR-0044](docs/adr/0044-canonical-header-key-for-map-access.md)): the blocker was misattributed.
