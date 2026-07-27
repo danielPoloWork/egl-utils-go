@@ -20,14 +20,5 @@ func TestPutDiscardsOversizedBuffer(t *testing.T) {
 	require.NotSame(t, big, got, "an oversized buffer must not be retained (it would pin memory)")
 }
 
-func TestPutRetainsBufferAtCap(t *testing.T) {
-	defer goleak.VerifyNone(t)
-	p := NewBufferPool()
-
-	small := p.Get()
-	small.Grow(1 << 10) // well under the cap
-	require.LessOrEqual(t, small.Cap(), maxRetainedCap)
-	p.Put(small)
-
-	require.Same(t, small, p.Get(), "a within-cap buffer is pooled for reuse")
-}
+// TestPutRetainsBufferAtCap lives in syncpool_internal_norace_test.go: it asserts
+// pool *identity*, which the race detector does not preserve (BUG-0001).

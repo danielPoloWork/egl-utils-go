@@ -20,6 +20,14 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Fixed
 
+- CI's two `-race` jobs are green again, red on every push since 2026-07-26 — the `v1.1.0`
+  release commit included ([BUG-0001](docs/bugs/2026/07/BUG-0001-race-detector-breaks-allocation-and-pool-identity-assertions.md)).
+  No data race was ever involved: four test assertions measure allocation counts and `sync.Pool`
+  object identity, both of which the race detector deliberately perturbs, so they described an
+  instrumented binary rather than the one consumers run. They are now excluded from `-race` builds
+  via `//go:build !race` and still gate on all four ordinary CI cells. Test-only change; no
+  library behaviour is affected.
+
 ### Security
 
 ---

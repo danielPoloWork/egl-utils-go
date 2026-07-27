@@ -19,7 +19,16 @@ _(newest first)_
 
 #### 07 — July
 
-- [2026-07-27 — M12 opens: §5 reconciled with the real exported surface](2026/07/2026-07-27-m12-public-interface.md) —
+- [2026-07-27 — contrib v0.1.0 released; BUG-0001, a red master nobody could see](2026/07/2026-07-27-contrib-release-and-bug-0001.md) —
+  `contrib/redishealth/v0.1.0` + `contrib/pgxhealth/v0.1.0` tagged and **verified live on
+  proxy.golang.org and sum.golang.org**. Then found `master` red since 2026-07-26 — **the `v1.1.0`
+  release commit included** — in the two `-race` jobs.
+  **[BUG-0001](../bugs/2026/07/BUG-0001-race-detector-breaks-allocation-and-pool-identity-assertions.md)**:
+  no data race, four assertions measuring allocation counts and `sync.Pool` identity, both of which
+  `-race` perturbs. Fixed by `//go:build !race` exclusion, **not** by raising the budgets — that
+  would mask the regressions the ratchet exists to catch. Nobody saw it because `-race` needs cgo
+  and this workstation has no C compiler, so every "local gauntlet green" skipped it entirely.
+- [2026-07-27 — M12: §5 reconciled with the real exported surface, then gated](2026/07/2026-07-27-m12-public-interface.md) —
   roadmap 12.1. §5 had never been updated after M10, so **twelve identifiers shipped in v1.1.0 were
   missing** and `pubsub.NewBroker`'s option type was given as `Option` where it is generic
   `Option[T]` — code written to the spec would not compile. Rebuilt from `go doc`; **110 identifiers

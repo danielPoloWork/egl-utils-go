@@ -1,3 +1,14 @@
+//go:build !race
+
+// Excluded from `-race` builds (BUG-0001). Every test in this file counts
+// allocations with testing.AllocsPerRun, and the race detector adds its own:
+// the same chain measures 2 allocs where the budget is 1, and 13 where it is 11.
+// Those numbers describe an instrumented binary, not the one consumers run, so
+// asserting on them under -race gates nothing and fails always.
+//
+// The budgets still gate. This file runs in the ordinary `go test ./...` on every
+// CI cell (Linux/Windows/macOS x Go 1.25/1.26) — only the two -race jobs skip it.
+
 package middleware_test
 
 import (
