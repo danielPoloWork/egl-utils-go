@@ -27,7 +27,13 @@ _(newest first)_
   constant's *value* and the *cost of using it as a map key* are separable. An unexported canonical
   spelling for map access removes **2 allocs/request** with `HeaderName` untouched
   ([ADR-0044](../adr/0044-canonical-header-key-for-map-access.md)); ratchet lowered and proved to
-  bind. BUG-0001's `fixed-in` resolves to v1.1.1.
+  bind. BUG-0001's `fixed-in` resolves to v1.1.1. *Addendum:* v1.1.1 tagged (CI checked green on the
+  merge commit **before** tagging); **branch protection applied to `master`**, which had been
+  unprotected; and the **NFR-01 amendment**, which turned out not to be an edit — the target lives
+  in an unmodifiable verbatim import, the gap analysis is a dated snapshot, and the frozen v1
+  contract never made the claim, so it lands as a **maintained deviation in ADR-0030 §3**.
+  ADR-0037 had filed it under the `/v2` ledger, a bucket with no exit. **Both of 10.10's
+  carried-forward findings are now discharged.**
 - [2026-07-27 — contrib v0.1.0 released; BUG-0001, a red master nobody could see](2026/07/2026-07-27-contrib-release-and-bug-0001.md) —
   `contrib/redishealth/v0.1.0` + `contrib/pgxhealth/v0.1.0` tagged and **verified live on
   proxy.golang.org and sum.golang.org**. Then found `master` red since 2026-07-26 — **the `v1.1.0`

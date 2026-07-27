@@ -82,6 +82,20 @@ ADR-0041 weighs in full.
   as the pragmatic resolution. 10.8 makes that budget mechanically enforced.
 - **slog default keys** (v2: RFC 3339 UTC/source tuning) — kept per ADR-0019; `WithReplaceAttr`
   remains the deferred escape hatch.
+- **NFR-01's `0 allocs/op` middleware target** (v2 §5) — **added 2026-07-27; this is the "spec
+  amendment" 10.10 and [ADR-0037](0037-nfr-benchmark-methodology.md) said was needed.** The target
+  is not merely unmet but **unreachable**: a middleware that propagates a value through the request
+  context and writes a response header must allocate. `context.WithValue`, the shallow
+  `*http.Request` copy in `r.WithContext` (mandatory — mutating the caller's Request is not an
+  option), and the `[]string{value}` each `Header().Set` stores are structural, so the floor for
+  RequestID + Recoverer + Cors is several allocations, never zero. Enforced instead as a **ratchet
+  budget at the measured floor** (`TestNFR01AllocationBudget`), which fails when the count grows —
+  converting a target that could only ever fail into a live regression gate. The floor is now
+  **6 for the chain and 4 for RequestID**, lowered in v1.1.1 when [ADR-0044](0044-canonical-header-key-for-map-access.md)
+  removed two allocations; v2's *latency* half of NFR-01 (≤ 1 µs) is met and unaffected.
+  **It is a deviation and not a `/v2` ledger item**: nothing about our API blocks it and no major
+  release would make zero reachable, so deferring it would file it somewhere it can never be
+  resolved. ADR-0037 described it as "noted for the /v2 ledger", which was the wrong bucket.
 
 ## Alternatives Considered
 
