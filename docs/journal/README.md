@@ -19,6 +19,14 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-27 — M12 opens: §5 reconciled with the real exported surface](2026/07/2026-07-27-m12-public-interface.md) —
+  roadmap 12.1. §5 had never been updated after M10, so **twelve identifiers shipped in v1.1.0 were
+  missing** and `pubsub.NewBroker`'s option type was given as `Option` where it is generic
+  `Option[T]` — code written to the spec would not compile. Rebuilt from `go doc`; **110 identifiers
+  verified present** by script. The substantive half: the versioning clause bound "all exported
+  identifiers **above**", making the enumeration the boundary of the promise and leaving the drifted
+  ones outside it — **narrower than the v1.0.0 changelog**. Now binds the whole surface. 12.2 and
+  12.3 (`spec_api_lint.py`) planned and unstarted.
 - [2026-07-27 — Governance: namespace contract & spec reconciliation](2026/07/2026-07-27-series-namespace-contract.md) —
   Milestone 11 (2/2, docs only). "Can we move to `src/main/go/it/d4np/utils`?" answered with the
   language: in Go an import path *is* a directory path, and the tree is 1-for-3 across the siblings

@@ -27,6 +27,21 @@
 >   while the v1.0.0 commitment makes it not mergeable into v1.x at all — so it takes the ADR
 >   branch of the divergence rule and the original text is struck in place, not rewritten.
 >   ROADMAP 11.2.
+> - *2026-07-27* — **§5 reconciled with the module's actual exported surface, and its versioning
+>   clause widened.** §5 had never been updated after Milestone 10, so twelve identifiers shipped in
+>   v1.1.0 were absent (`(*Breaker).State` and the `State` type, `lifecycle.Trigger`,
+>   `(*Limiter).Middleware` and `ErrLimited`, `HashPasswordCost`/`Cost`/`ErrInvalidCost`,
+>   `config.WithStructValidation`, `pubsub.WithDropOldest`), along with pre-M10 omissions
+>   (`middleware.HeaderName`, `errors.StackTracer`, `validator.ValidationErrors`/`FieldError`,
+>   `logger.Field` and its constructors, `workerpool.Task`, every `WithX` option constructor, and
+>   the root `Version`). One listed signature was **wrong**: `NewBroker[T](opts ...Option)` — the
+>   real option type is generic, `Option[T]`, so code written to the spec would not compile.
+>   Rebuilt from `go doc` output rather than by hand. **The closing versioning clause said "SemVer
+>   over all exported identifiers *above*", which made the enumeration the boundary of the promise
+>   and so left every unlisted identifier outside it — narrower than the v1.0.0 changelog's "API
+>   stability for every exported identifier". It now binds the whole exported surface and states
+>   that the list is a map, not the boundary**, which widens the spec to match what was already
+>   published rather than changing the promise. ROADMAP 12.1.
 
 ## 1. Objective & Business Context
 
@@ -117,33 +132,34 @@ go.mod sits at the repository root with module path github.com/danielPoloWork/eg
      A service/web project may keep the written-out contract under docs/api/ (capabilities.api_spec). -->
 Consumers import via `import "github.com/danielPoloWork/egl-utils-go/workerpool"`. The public surface:
 
-- workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Stop(ctx) error; ErrQueueFull
-- pubsub: NewBroker[T](opts ...Option) *Broker[T]; (*Broker[T]).Publish(topic string, msg T); (*Broker[T]).Subscribe(topic string, filter func(T) bool) (<-chan T, func()); (*Broker[T]).Close() — additive shutdown surface (ADR-0006)
-- fanin: Merge[T](ctx, ins ...<-chan T) <-chan T
-- fanout: Split[T](ctx, in <-chan T, outs ...chan<- T)
-- semaphore: NewWeighted(capacity int64) *Weighted; Acquire(ctx, weight) error; Release(weight)
-- circuitbreaker: New(opts ...Option) *Breaker; (*Breaker).Do(ctx, func() error) error; ErrOpen
+- utils (root): const Version — the released version, kept in lockstep with the tag and the changelog
+- workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Stop(ctx) error; WithNonBlockingSubmit() Option; WithPanicHandler(func(recovered any)) Option; Task func(ctx); ErrQueueFull
+- pubsub: NewBroker[T any](opts ...Option[T]) *Broker[T] — note the option type is **generic**; (*Broker[T]).Publish(topic string, msg T); (*Broker[T]).Subscribe(topic string, filter func(T) bool) (<-chan T, func()); (*Broker[T]).Close() — additive shutdown surface (ADR-0006); WithSubscriberBuffer[T](n int) Option[T]; WithDropHandler[T](func(topic string, msg T)) Option[T]; WithDropOldest[T]() Option[T] (ADR-0039)
+- fanin: Merge[T any](ctx, ins ...<-chan T) <-chan T
+- fanout: Split[T any](ctx, in <-chan T, outs ...chan<- T)
+- semaphore: NewWeighted(capacity int64) *Weighted; (*Weighted).Acquire(ctx, weight int64) error; (*Weighted).Release(weight int64)
+- circuitbreaker: New(opts ...Option) *Breaker; (*Breaker).Do(ctx, func() error) error; (*Breaker).State() State (ADR-0030); State uint8 with StateClosed/StateOpen/StateHalfOpen and String(); WithFailureThreshold(n int) Option; WithOpenTimeout(d time.Duration) Option; WithSuccessThreshold(n int) Option; ErrOpen
 - retry: Backoff(ctx, policy Policy, fn func(ctx) error) error — Policy{MaxAttempts, BaseDelay, MaxDelay, Jitter}
-- ratelimit: NewLimiter(rate float64, burst int) *Limiter; (*Limiter).Allow() bool; (*Limiter).Wait(ctx) error
-- middleware: RequestID(next http.Handler) http.Handler; RequestIDFrom(ctx) string
+- ratelimit: NewLimiter(rate float64, burst int) *Limiter; (*Limiter).Allow() bool; (*Limiter).Wait(ctx) error; (*Limiter).Middleware() func(http.Handler) http.Handler (ADR-0031); ErrLimited
+- middleware: RequestID(next http.Handler) http.Handler; RequestIDFrom(ctx) string; const HeaderName
 - middleware: Logger(l *slog.Logger) func(http.Handler) http.Handler — logs method, path, status, duration, bytes
 - middleware: Recoverer(next http.Handler) http.Handler — 500 on panic, stack to the structured logger
-- middleware: Cors(cfg CorsConfig) func(http.Handler) http.Handler
-- config: Load[T any](path string, opts ...Option) (T, error) — JSON/YAML/env with validation
+- middleware: Cors(cfg CorsConfig) func(http.Handler) http.Handler — CorsConfig{AllowedOrigins, AllowedMethods, AllowedHeaders, ExposedHeaders []string, AllowCredentials bool, MaxAge time.Duration}
+- config: Load[T any](path string, opts ...Option) (T, error) — JSON/YAML/env with validation; WithStructValidation() Option (ADR-0033); WithoutEnvExpansion() Option; Validator interface{ Validate() error }; ErrUnsupportedFormat
 - env: GetDefault(key, fallback string) string; GetInt/GetBool/GetDuration variants
-- logger: NewStructured(opts ...Option) *slog.Logger — JSON handler tuned for log aggregation
-- logger: WithFields(ctx, ...Field) context.Context; FromContext(ctx) *slog.Logger
-- cache: NewInMemory[K comparable, V any](ttl time.Duration, opts ...Option) *Cache[K, V]; Get/Set/Delete; Close(); ErrNotFound
+- logger: NewStructured(opts ...Option) *slog.Logger — JSON handler tuned for log aggregation; WithWriter(io.Writer) Option; WithLevel(slog.Leveler) Option; WithSource() Option; WithAttrs(...slog.Attr) Option
+- logger: WithFields(ctx, ...Field) context.Context; FromContext(ctx) *slog.Logger; Field = slog.Attr (alias) with String/Int/Bool/Duration/Any constructors
+- cache: NewInMemory[K comparable, V any](ttl time.Duration, opts ...Option) *Cache[K, V]; Get/Set/Delete; Close(); WithCleanupInterval(d time.Duration) Option; ErrNotFound
 - db: Transaction(ctx, db *sql.DB, fn func(*sql.Tx) error) error — commit on nil, rollback on error or panic
-- validator: Struct(v any) error — tag grammar: required, email, min, max, oneof
-- hash: HashPassword(pw string) (string, error); CheckPassword(pw, hash string) error
-- lifecycle: Register(fn func(ctx) error); WaitForSignals(sig ...os.Signal); Shutdown(ctx) error
-- health: Handler(checks ...Check) http.Handler — Check{Name, Probe func(ctx) error}
+- validator: Struct(v any) error — tag grammar: required, email, min, max, oneof; ValidationErrors []*FieldError with Error() and Unwrap() []error; FieldError{Field, Tag, Param string}
+- hash: HashPassword(pw string) (string, error); HashPasswordCost(pw string, cost int) (string, error) (ADR-0032); CheckPassword(pw, hash string) error; Cost(hash string) (int, error); ErrMismatch; ErrPasswordTooLong; ErrInvalidCost
+- lifecycle: Register(fn func(ctx) error); WaitForSignals(sig ...os.Signal); Shutdown(ctx) error; Trigger() (ADR-0030)
+- health: Handler(checks ...Check) http.Handler — Check{Name string, Probe func(ctx) error}
 - metrics: Prometheus(reg prometheus.Registerer) func(http.Handler) http.Handler; Handler() http.Handler
 - syncpool: NewBufferPool() *BufferPool; (*BufferPool).Get() *bytes.Buffer; (*BufferPool).Put(*bytes.Buffer)
-- errors: Wrap(err error, msg string) error; Wrapf(err, format, args...) error — errors.Is/As/Unwrap compatible
+- errors: Wrap(err error, msg string) error; Wrapf(err, format, args...) error — errors.Is/As/Unwrap compatible; StackTracer interface{ StackTrace() []uintptr }
 - Error model: exported sentinel errors per package (ErrQueueFull, ErrOpen, ErrNotFound, ...); context cancellation surfaces ctx.Err(); all wrapping is errors.Is/As transparent
-- Versioning surface: SemVer over all exported identifiers above; MAJOR = any breaking change to these signatures or their documented behavioral contracts
+- Versioning surface: SemVer over **every exported identifier of the module**, whether or not it is enumerated above; MAJOR = any breaking change to those signatures or their documented behavioral contracts. The enumeration is a reader's map, not the boundary of the promise — the boundary is what `go doc` reports. `contrib/*` submodules are outside it, versioning independently (ADR-0040).
 
 
 ## 6. Verification & Test Strategy

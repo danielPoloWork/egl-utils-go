@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-07-27 — Governance: namespace contract & spec reconciliation](docs/journal/2026/07/2026-07-27-series-namespace-contract.md).
+  [2026-07-27 — M12 opens: §5 reconciled with the real exported surface](docs/journal/2026/07/2026-07-27-m12-public-interface.md).
 
 ### Agent guidance (model × effort)
 
@@ -239,6 +239,26 @@ here — see the journal for the enumerated findings.
 
 ---
 
+## Milestone 12 — Public-interface reconciliation — 🚧 in progress
+
+The five divergences the M11 read-through found and did not fix. They were held back from 11.2
+because they are a different size of change: §5 is a rewrite, and its closing line is a question
+about the promise made to consumers rather than a stale number.
+
+The milestone's real target is the **root cause**, which 12.3 addresses: nothing checks a spec
+claim against reality. `consistency_lint.py`'s spec-map gate verifies that every section has a
+fulfilling roadmap item — never that the section's *claims* are true. That is how nine divergences
+accumulated across ten milestones without a single red build.
+
+> **Agent guidance:** Claude Opus 5 · effort **high** — 12.1 touches the versioning surface, which
+> is a consumer-facing promise; 12.3 is ordinary tool work and can drop a tier.
+
+- [x] 12.1 §5 reconciled with the module's actual exported surface, and the versioning clause widened to bind it → *agent: Opus 5 · high (as built) — §5 had never been updated after Milestone 10: **twelve identifiers shipped in v1.1.0 were missing** (`(*Breaker).State` + the `State` type, `lifecycle.Trigger`, `(*Limiter).Middleware` + `ErrLimited`, `HashPasswordCost`/`Cost`/`ErrInvalidCost`, `config.WithStructValidation`, `pubsub.WithDropOldest`), plus pre-M10 omissions (`middleware.HeaderName`, `errors.StackTracer`, `validator.ValidationErrors`/`FieldError`, `logger.Field` + its five constructors, `workerpool.Task`, all thirteen `WithX` option constructors, and the root `Version`). **One listed signature was outright wrong** — `NewBroker[T](opts ...Option)`, where the real option type is generic `Option[T]`, so code written to the spec does not compile. Rebuilt from `go doc` output, not by hand. **The substantive half is the closing clause:** it read "SemVer over all exported identifiers **above**", which made the enumeration the boundary of the promise and left every unlisted identifier outside it — **narrower than the v1.0.0 changelog's "API stability for every exported identifier"**. It now binds the whole exported surface and says the list is a reader's map, not the boundary, with `go doc` as the authority and `contrib/*` excluded per ADR-0040. That **widens the spec to match what was already published** rather than changing the promise, which is why it is an amendment and not an ADR*
+- [ ] 12.2 §4's isolation claim superseded, and §6/§3 understatements corrected — *agent: Opus 5 · medium — §4 states "packages compose only through stdlib contracts … each is adoptable in isolation", which `go list` disproves: `config` imports `validator`, deliberate since 10.6 and enforced by `import_graph_lint.py`, which now **fails if the edge disappears**. Same class as 11.2's compatibility clause — a stated invariant that was replaced — but it needs **no new ADR**: a supersede marker pointing at [ADR-0033](docs/adr/0033-config-struct-validation.md) is enough, since that ADR already holds the decision. Also: §6 names rapid for three areas where it runs in eight packages and benchmarks for four where they exist in seven; §3's dependency sentence omits `prometheus/client_model`, a direct require (a test reads `dto`; it also arrives transitively via client_golang)*
+- [ ] 12.3 `tools/spec_api_lint.py` — fail the build when §5 and `go doc` disagree — *agent: Opus 5 · medium — the mechanical guard the other four findings prove is missing. Diff the identifiers §5 enumerates against the module's real exported surface and fail on either direction: an identifier shipped but unlisted (how M10's twelve accumulated) or listed but gone (a stale promise). Must tolerate the prose around each signature, so parse identifiers rather than trying to match whole lines; must skip `contrib/*`, which is outside the versioning surface. Joins the three policy tools already run before every PR*
+
+---
+
 ## Spec Coverage Map
 
 Tracks which spec section is fulfilled by which roadmap item(s). Every spec section has a
@@ -251,5 +271,5 @@ progress · ✅ done · ❎ N/A.
 | §2 | Functional requirements | 2.1–9.5 (all 25 features) | ✅ |
 | §3 | Non-functional requirements | 1.3, 1.4 (gates live); per-feature from M2; 11.2 (ADR-0042) | ✅ |
 | §4 | Logical architecture | 1.1, 1.6 (ADR-0003); 11.1 (ADR-0041) | ✅ |
-| §5 | Public interface | 2.1–9.5 | ✅ |
+| §5 | Public interface | 2.1–9.5; 12.1 (surface + versioning clause) | ✅ |
 | §6 | Verification & test strategy | 1.2, 1.4 (framework + CI live); per-feature suites M2–M9; 11.2 | ✅ |
