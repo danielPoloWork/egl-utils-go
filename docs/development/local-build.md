@@ -29,8 +29,11 @@ golangci-lint run
 # Benchmark
 go test -bench=. -benchmem ./...
 
-# Cross-artifact congruence (run before drafting any PR)
-python tools/consistency_lint.py
+# The four policy checkers (run all before drafting any PR; each gates CI)
+python tools/consistency_lint.py     # cross-artifact congruence
+python tools/import_graph_lint.py    # dependency rings + internal edges
+python tools/coverage_gate.py        # >= 85% statements per package
+python tools/spec_api_lint.py        # spec section 5 <-> exported surface
 ```
 
 ## Before you open a PR
@@ -38,6 +41,7 @@ python tools/consistency_lint.py
 1. `test -z "$(gofumpt -l .)"` and `golangci-lint run` are clean.
 2. `go test ./...` passes; new/changed behavior is covered (≥ 80% line).
 3. go test -race (data-race detector), go vet, govulncheck are green where applicable.
-4. `python tools/consistency_lint.py` passes.
+4. All four policy checkers pass: `consistency_lint.py`, `import_graph_lint.py`,
+   `coverage_gate.py`, `spec_api_lint.py`.
 5. The relevant docs (README, ROADMAP, ADRs, patterns, changelog) are updated in the same
    PR — see [`../workflow/documentation.md`](../workflow/documentation.md).

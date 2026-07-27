@@ -56,6 +56,13 @@
 >   cache, hash, pubsub); §3's dependency sentence omitted `prometheus/client_model`, a direct
 >   `go.mod` require that no non-test file imports. Understatements rather than false claims, but a
 >   spec that under-describes its own gates invites re-deriving them. ROADMAP 12.2.
+> - *2026-07-27* — **§5 gains `workerpool.ErrPoolClosed`, and §5 is now mechanically gated**
+>   ([ADR-0043](../adr/0043-spec-api-lint.md)). The identifier was found by `tools/spec_api_lint.py`
+>   on its first run, having survived both Milestone 10 and the M11 read-through: it is the *second*
+>   member of a `var (…)` block whose first member, `ErrQueueFull`, was listed, so every scan that
+>   looked at column-zero declarations skipped it. From this entry on, §5 and `go doc` disagreeing
+>   is a red build in both directions — an exported identifier missing from §5, or §5 naming one
+>   the module no longer exports. ROADMAP 12.3.
 
 ## 1. Objective & Business Context
 
@@ -156,7 +163,7 @@ go.mod sits at the repository root with module path github.com/danielPoloWork/eg
 Consumers import via `import "github.com/danielPoloWork/egl-utils-go/workerpool"`. The public surface:
 
 - utils (root): const Version — the released version, kept in lockstep with the tag and the changelog
-- workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Stop(ctx) error; WithNonBlockingSubmit() Option; WithPanicHandler(func(recovered any)) Option; Task func(ctx); ErrQueueFull
+- workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Stop(ctx) error; WithNonBlockingSubmit() Option; WithPanicHandler(func(recovered any)) Option; Task func(ctx); ErrQueueFull; ErrPoolClosed
 - pubsub: NewBroker[T any](opts ...Option[T]) *Broker[T] — note the option type is **generic**; (*Broker[T]).Publish(topic string, msg T); (*Broker[T]).Subscribe(topic string, filter func(T) bool) (<-chan T, func()); (*Broker[T]).Close() — additive shutdown surface (ADR-0006); WithSubscriberBuffer[T](n int) Option[T]; WithDropHandler[T](func(topic string, msg T)) Option[T]; WithDropOldest[T]() Option[T] (ADR-0039)
 - fanin: Merge[T any](ctx, ins ...<-chan T) <-chan T
 - fanout: Split[T any](ctx, in <-chan T, outs ...chan<- T)

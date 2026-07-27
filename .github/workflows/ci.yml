@@ -170,7 +170,7 @@ jobs:
   # module requirement and a blank sibling import that depguard does not report.
   # ---------------------------------------------------------------------------
   imports:
-    name: imports / dependency rings + layer graph
+    name: imports / dependency rings + layer graph + spec surface
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -182,6 +182,13 @@ jobs:
           python-version: '3.12'
       - name: Assert the dependency rings and internal import graph
         run: python tools/import_graph_lint.py
+
+      # Spec section 5 enumerates the public interface and its closing clause binds
+      # SemVer to the exported surface, so the two must agree. Lives in this job
+      # because, like the import graph, it needs the Go toolchain to read the real
+      # surface (ADR-0043).
+      - name: Assert spec section 5 matches the exported surface
+        run: python tools/spec_api_lint.py
 
   # ---------------------------------------------------------------------------
   # Fuzzing gate (spec v2 §7) — the 10-minute PR budget, split evenly between the

@@ -23,7 +23,7 @@ Link to the spec section, ADR, roadmap item, or issue that prompted this work.
 - [ ] `gofumpt (gofmt superset)` clean; `golangci-lint (govet, staticcheck, errcheck, revive, gosec)` clean on the diff
 - [ ] go test -race (data-race detector), go vet, govulncheck green (where applicable)
 - [ ] Benchmark numbers attached (when perf-relevant)
-- [ ] `python tools/consistency_lint.py` passes
+- [ ] All four policy tools pass: `consistency_lint.py`, `import_graph_lint.py`, `coverage_gate.py`, `spec_api_lint.py`
 
 ## Documentation Impact
 

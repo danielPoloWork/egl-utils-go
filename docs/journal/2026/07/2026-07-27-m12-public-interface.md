@@ -89,3 +89,46 @@ against ADR-0041's `utils`; the ADR-0030 `/v2` ledger; the NFR-01 spec amendment
 
 **Milestone 12 now stands at 2/3.** The remaining item, 12.3, is the reason all four of these
 accumulated: none was caught by a gate.
+
+## Addendum 2 — roadmap 12.3, `spec_api_lint.py`; Milestone 12 complete (same session)
+
+12.2 merged as `ab4022f`; 12.3 follows on `docs/spec-api-lint`. **[ADR-0043](../../../adr/0043-spec-api-lint.md)**.
+
+- **The tool found a tenth divergence on its first run.** `workerpool.ErrPoolClosed` is exported,
+  was absent from §5, and had survived both Milestone 10 *and* the M11 read-through. The reason is
+  worth keeping: it is the **second member of a `var (…)` block** whose first member,
+  `ErrQueueFull`, *was* listed. Anything scanning column-zero declarations sees `var (` and moves
+  on.
+- **Which is why the throwaway checker from 12.1 was not good enough, and I should say so
+  plainly.** It reported "110 exported identifiers, none missing"; this tool reports **130**. The
+  twenty it could not see were const/var block members, struct fields and interface methods. The
+  claim in 12.1's PR was true as written — 110 *were* checked — and weaker than it sounded. **A
+  checker with a blind spot is worse than none, because it certifies the part it cannot see.**
+- **`go doc -all` is the authority, not a Python re-implementation of Go's grammar.** Parsing the
+  sources directly would mean re-deriving what "exported" means against build tags, embedded types,
+  generic constraints and grouped declarations — and every gap becomes a false negative in the one
+  tool whose job is to have none. Shelling out to the toolchain is also the house pattern
+  (`import_graph_lint.py` uses `go list`, `coverage_gate.py` uses `go test`).
+- **Both directions, because they are different bugs.** Shipped-but-unlisted is how M10's twelve
+  accumulated; listed-but-gone is a stale promise a consumer can compile against, and under
+  ADR-0042 a removal is a MAJOR-only event. The reverse direction recognises functions, methods and
+  sentinel errors — the shapes §5 writes unambiguously — and that limit is in the docstring rather
+  than left to be discovered; a *renamed* type is caught by the forward direction anyway, since the
+  new name is unlisted.
+- **Verified by deliberate violation in all three shapes**, per the ADR-0035/0036 precedent: an
+  identifier deleted from §5 (`ratelimit.ErrLimited` reported unlisted), a fabricated §5 entry
+  (`fanout.SplitBuffered`, `fanout.ErrNoSinks` reported gone), and — the realistic one — a new
+  exported function added to `fanout` with the spec untouched (`fanout.Drain` reported unlisted).
+  Two false positives showed up in the first run, both interface methods (`config.Validate`,
+  `errors.StackTrace`); the member regex now matches `Name(` as well as `Name Type`, which makes
+  them surface rather than noise, because interface methods *are* part of the API.
+- **Three policy tools were undocumented, not one.** Adding the fourth exposed that
+  `import_graph_lint.py` (10.8) and `coverage_gate.py` (10.9) had never reached AGENTS.md's source
+  tree, its quality-bar table, `docs/development/local-build.md` or the PR template — every one of
+  which still named `consistency_lint.py` alone. Fixed for all four. Same drift class this
+  milestone exists to close, found the same way: by looking.
+
+**Milestone 12 complete (3/3).** Ten divergences closed, and §5 — the one section with a
+machine-readable counterpart — can no longer drift silently. §1–§4 and §6 remain prose about intent
+with no such counterpart, so periodic human read-through is still their only control; ADR-0043
+narrows the surface that needs it rather than removing it.
