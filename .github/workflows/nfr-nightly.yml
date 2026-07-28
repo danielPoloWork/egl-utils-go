@@ -55,7 +55,8 @@ jobs:
       - name: Run the NFR suite
         run: |
           go test -run '^$' -bench 'NFR' -benchmem -count 10 \
-            ./middleware/ ./workerpool/ ./pubsub/ ./cache/ ./ratelimit/ ./syncpool/ \
+            ./pkg/middleware/ ./pkg/workerpool/ ./pkg/pubsub/ ./pkg/cache/ \
+            ./pkg/ratelimit/ ./pkg/syncpool/ \
             | tee current.txt
 
       # restore-keys prefix-matches, so the most recent nightly's baseline is
