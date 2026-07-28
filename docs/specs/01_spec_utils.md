@@ -87,6 +87,18 @@
 >   either fail the gate or be counted twice. The *decision* lives in the ADR; §5 records only what
 >   the module exports today. ROADMAP 13.2.
 
+> - *2026-07-28* — **`cache.Get` returns `(V, bool)`, `NewInMemory` becomes `New`, and
+>   `ErrNotFound` is removed. SUPERSEDED, not amended**, by
+>   [ADR-0047](../adr/0047-cache-comma-ok.md), which supersedes **only the `Get` signature and
+>   constructor name** of [ADR-0021](../adr/0021-cache-inmemory-design.md) — the rest of that ADR,
+>   including the Get-enforced expiry model this depends on, stands unchanged. `/v2` boundary
+>   ([ADR-0030](../adr/0030-spec-v2-reconciliation.md) §2, item 17). A cache miss is an ordinary
+>   outcome, not a failure, so it is reported comma-ok as Go readers expect; §5's error-model line no
+>   longer cites `ErrNotFound` among the sentinels, because **nothing returns it and an exported
+>   sentinel no code path produces is a promise with no behaviour behind it**. Absence and expiry
+>   remain deliberately indistinguishable — they were already one outcome under the error API, and
+>   separating them would promise something about eviction timing. ROADMAP 13.3.
+
 ## 1. Objective & Business Context
 
 Provide a production-ready Go utilities module — advanced concurrency primitives,
@@ -205,7 +217,7 @@ module root as `import "github.com/danielPoloWork/egl-utils-go/v2"` for `utils.V
 - env: GetDefault(key, fallback string) string; GetInt/GetBool/GetDuration variants
 - logger: NewStructured(opts ...Option) *slog.Logger — JSON handler tuned for log aggregation; WithWriter(io.Writer) Option; WithLevel(slog.Leveler) Option; WithSource() Option; WithAttrs(...slog.Attr) Option
 - logger: WithFields(ctx, ...Field) context.Context; FromContext(ctx) *slog.Logger; Field = slog.Attr (alias) with String/Int/Bool/Duration/Any constructors
-- cache: NewInMemory[K comparable, V any](ttl time.Duration, opts ...Option) *Cache[K, V]; Get/Set/Delete; Close(); WithCleanupInterval(d time.Duration) Option; ErrNotFound
+- cache: New[K comparable, V any](ttl time.Duration, opts ...Option) *Cache[K, V]; Get(key K) (V, bool) — comma-ok, false when absent or expired; Set/Delete; Close(); WithCleanupInterval(d time.Duration) Option (ADR-0047, supersedes ADR-0021's Get signature)
 - db: Transaction(ctx, db *sql.DB, fn func(*sql.Tx) error) error — commit on nil, rollback on error or panic
 - validator: Struct(v any) error — tag grammar: required, email, min, max, oneof; ValidationErrors []*FieldError with Error() and Unwrap() []error; FieldError{Field, Tag, Param string}
 - hash: HashPassword(pw string) (string, error); HashPasswordCost(pw string, cost int) (string, error) (ADR-0032); CheckPassword(pw, hash string) error; Cost(hash string) (int, error); ErrMismatch; ErrPasswordTooLong; ErrInvalidCost
@@ -214,7 +226,7 @@ module root as `import "github.com/danielPoloWork/egl-utils-go/v2"` for `utils.V
 - metrics: Prometheus(reg prometheus.Registerer) func(http.Handler) http.Handler; Handler() http.Handler
 - syncpool: NewBufferPool() *BufferPool; (*BufferPool).Get() *bytes.Buffer; (*BufferPool).Put(*bytes.Buffer)
 - errx: Wrap(err error, msg string) error; Wrapf(err, format, args...) error — message only, no capture; WithStack(err error) error — opt-in capture, idempotent, nil-transparent; Frames(err error) []Frame — lazily resolved, nil when nothing was captured; Frame{Function, File string; Line int}; StackTracer interface{ StackTrace() []Frame } — the extension point Frames searches; errors.Is/As/Unwrap compatible (ADR-0046, supersedes ADR-0029)
-- Error model: exported sentinel errors per package (ErrQueueFull, ErrOpen, ErrNotFound, ...); context cancellation surfaces ctx.Err(); all wrapping is errors.Is/As transparent
+- Error model: exported sentinel errors per package (ErrQueueFull, ErrOpen, ErrLimited, ...); an ordinary absence is reported comma-ok rather than as a sentinel (ADR-0047); context cancellation surfaces ctx.Err(); all wrapping is errors.Is/As transparent
 - Versioning surface: SemVer over **every exported identifier of the module**, whether or not it is enumerated above; MAJOR = any breaking change to those signatures or their documented behavioral contracts. The enumeration is a reader's map, not the boundary of the promise — the boundary is what `go doc` reports. `contrib/*` submodules are outside it, versioning independently (ADR-0040).
 
 

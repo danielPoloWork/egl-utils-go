@@ -12,7 +12,7 @@ import (
 // RunParallel, not b.Loop.
 
 func BenchmarkGetHit(b *testing.B) {
-	c := cache.NewInMemory[string, int](time.Hour)
+	c := cache.New[string, int](time.Hour)
 	defer c.Close()
 	c.Set("k", 42)
 	b.ReportAllocs()
@@ -23,7 +23,7 @@ func BenchmarkGetHit(b *testing.B) {
 }
 
 func BenchmarkGetMiss(b *testing.B) {
-	c := cache.NewInMemory[string, int](time.Hour)
+	c := cache.New[string, int](time.Hour)
 	defer c.Close()
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -33,7 +33,7 @@ func BenchmarkGetMiss(b *testing.B) {
 }
 
 func BenchmarkSet(b *testing.B) {
-	c := cache.NewInMemory[string, int](time.Hour)
+	c := cache.New[string, int](time.Hour)
 	defer c.Close()
 	keys := make([]string, 1024)
 	for i := range keys {
@@ -47,7 +47,7 @@ func BenchmarkSet(b *testing.B) {
 }
 
 func BenchmarkGetParallel(b *testing.B) {
-	c := cache.NewInMemory[string, int](time.Hour)
+	c := cache.New[string, int](time.Hour)
 	defer c.Close()
 	c.Set("k", 42)
 	b.ReportAllocs()

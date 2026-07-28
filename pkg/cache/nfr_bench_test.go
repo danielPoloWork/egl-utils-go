@@ -122,7 +122,7 @@ func parallelismFor(goroutines int) int {
 // Get and Set, not eviction.
 func newLoadedCache(b *testing.B) *cache.Cache[int, int] {
 	b.Helper()
-	c := cache.NewInMemory[int, int](nfrTTL)
+	c := cache.New[int, int](nfrTTL)
 	for i := range nfrEntries {
 		c.Set(i, i)
 	}
