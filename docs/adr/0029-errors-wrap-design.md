@@ -1,6 +1,6 @@
 # ADR-0029: errors.Wrap design — %w-transparent wrapping, one-time origin stack, errors package name
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0046
 - **Date:** 2026-07-15
 - **Deciders:** Maintainer (Daniel Polo), architect agent
 - **Related:** spec §2 feature 25, §5 (`Wrap(err error, msg string) error`, `Wrapf(err, format,

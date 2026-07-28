@@ -39,7 +39,7 @@ python tools/spec_api_lint.py        # spec section 5 <-> exported surface
 ## Before you open a PR
 
 1. `test -z "$(gofumpt -l .)"` and `golangci-lint run` are clean.
-2. `go test ./...` passes; new/changed behavior is covered (≥ 80% line).
+2. `go test ./...` passes; new/changed behavior is covered (≥ 85% statements, per package).
 3. go test -race (data-race detector), go vet, govulncheck are green where applicable.
 4. All four policy checkers pass: `consistency_lint.py`, `import_graph_lint.py`,
    `coverage_gate.py`, `spec_api_lint.py`.

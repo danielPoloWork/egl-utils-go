@@ -19,6 +19,12 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-28 — 13.2: errx, and the 276 nanoseconds v1 spent looking for a stack it already had](2026/07/2026-07-28-m13-errx-opt-in-stacks.md) —
+  roadmap 13.2. 13.1's PR was blocked by a **red required check**, not a missing click: the `pkg/`
+  move left CI's only two **hand-written** package paths behind, and the nightly one would have
+  failed unwatched. Then stacks became opt-in — and the benchmark found that v1's `Wrap` paid
+  **276 ns even when it captured nothing**, an `errors.As` walk per wrap to find a stack it already
+  had. *Symbolization is 6.5× the capture, which is why `[]Frame` resolves lazily.*
 - [2026-07-27 — M13 opens: `/v2`, `pkg/`, and a layout decided by building both](2026/07/2026-07-27-m13-v2-pkg-layout.md) —
   roadmap 13.1. The root had reached **40 entries** and the maintainer could not read it. The Maven
   tree was **built, verified green, and reverted** once the working version gave the number three

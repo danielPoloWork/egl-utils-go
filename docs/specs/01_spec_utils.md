@@ -74,6 +74,18 @@
 >   looked at column-zero declarations skipped it. From this entry on, §5 and `go doc` disagreeing
 >   is a red build in both directions — an exported identifier missing from §5, or §5 naming one
 >   the module no longer exports. ROADMAP 12.3.
+> - *2026-07-28* — **the `errors` package becomes `errx`, and stack capture becomes opt-in.
+>   SUPERSEDED, not amended**, by [ADR-0046](../adr/0046-errx-opt-in-stacks.md), which supersedes
+>   [ADR-0029](../adr/0029-errors-wrap-design.md). Three changes, all breaking, all inside the
+>   `/v2` boundary ([ADR-0030](../adr/0030-spec-v2-reconciliation.md) §2, item 25): the package no
+>   longer shadows `errors` from the standard library; `Wrap`/`Wrapf` no longer capture a call
+>   stack, which is now requested explicitly with `WithStack`; and a trace reads as `[]Frame`
+>   through `Frames`, so no consumer handles program counters or imports `runtime`. §2's feature
+>   line and §4's `core` layer are updated for the rename. **§5 is rewritten in place rather than
+>   struck**, unlike 11.2's compatibility clause: §5 is a mechanical mirror of `go doc` that
+>   `tools/spec_api_lint.py` compares identifier by identifier, so a struck-through signature would
+>   either fail the gate or be counted twice. The *decision* lives in the ADR; §5 records only what
+>   the module exports today. ROADMAP 13.2.
 
 ## 1. Objective & Business Context
 
@@ -111,7 +123,7 @@ allocation-conscious hot paths via pointer discipline and sync.Pool object reuse
 - health.Handler — preconfigured health-check endpoint reporting the state of active connections (DB, Redis)
 - metrics.Prometheus — middleware exposing standard latency and request-count metrics in Prometheus format
 - syncpool.BufferPool — bytes.Buffer pool via sync.Pool to cut allocations for strings and temporary buffers
-- errors.Wrap — attach context to errors while preserving the original call stack for tracing
+- errx.Wrap — attach context to errors; opt-in call-stack capture via WithStack preserves the original failure site for tracing
 
 
 ## 3. Non-Functional Requirements
@@ -157,7 +169,7 @@ free-for-all" (ADR-0035). Every other package remains adoptable in isolation; ad
   storage:       cache | db
   validation:    validator | hash
   lifecycle:     lifecycle (GracefulShutdown)
-  core:          syncpool | errors
+  core:          syncpool | errx
 
 Concurrency components own their goroutines and stop deterministically (context /
 close(done)); construction uses functional options for forward compatibility. HTTP
@@ -201,7 +213,7 @@ module root as `import "github.com/danielPoloWork/egl-utils-go/v2"` for `utils.V
 - health: Handler(checks ...Check) http.Handler — Check{Name string, Probe func(ctx) error}
 - metrics: Prometheus(reg prometheus.Registerer) func(http.Handler) http.Handler; Handler() http.Handler
 - syncpool: NewBufferPool() *BufferPool; (*BufferPool).Get() *bytes.Buffer; (*BufferPool).Put(*bytes.Buffer)
-- errors: Wrap(err error, msg string) error; Wrapf(err, format, args...) error — errors.Is/As/Unwrap compatible; StackTracer interface{ StackTrace() []uintptr }
+- errx: Wrap(err error, msg string) error; Wrapf(err, format, args...) error — message only, no capture; WithStack(err error) error — opt-in capture, idempotent, nil-transparent; Frames(err error) []Frame — lazily resolved, nil when nothing was captured; Frame{Function, File string; Line int}; StackTracer interface{ StackTrace() []Frame } — the extension point Frames searches; errors.Is/As/Unwrap compatible (ADR-0046, supersedes ADR-0029)
 - Error model: exported sentinel errors per package (ErrQueueFull, ErrOpen, ErrNotFound, ...); context cancellation surfaces ctx.Err(); all wrapping is errors.Is/As transparent
 - Versioning surface: SemVer over **every exported identifier of the module**, whether or not it is enumerated above; MAJOR = any breaking change to those signatures or their documented behavioral contracts. The enumeration is a reader's map, not the boundary of the promise — the boundary is what `go doc` reports. `contrib/*` submodules are outside it, versioning independently (ADR-0040).
 
