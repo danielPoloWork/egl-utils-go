@@ -192,8 +192,15 @@ spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, m
     Concurrency components own their goroutines and stop deterministically (context /
     close(done)); construction uses functional options for forward compatibility. HTTP
     concerns follow the standard func(http.Handler) http.Handler decorator chain.
-    Packages live at the repository root, one feature package per directory, with the
-    module root as the package namespace.
+    Packages live under pkg/, one feature package per directory; go.mod and the module's
+    metadata (doc.go, version.go) stay at the repository root.
+    AMENDED AGAIN 2026-07-27 (ADR-0045) — the layout moved twice in one day and the record
+    should show both moves rather than only the last. ADR-0045 supersedes ADR-0003: the
+    twenty-one-package root had reached forty entries, so the packages moved under pkg/ and
+    the module opened /v2 (module path github.com/danielPoloWork/egl-utils-go/v2). The
+    series' Maven tree was built and measured first, then reverted — it costs a consumer 34
+    characters per import against pkg/'s 7, for the same tidy root. A regeneration must
+    produce neither the tree NOR a bare root: it is pkg/.
     AMENDED 2026-07-27 (ADR-0003, ADR-0041) — the Milestone 1 ADR called for below was
     decided as ADR-0003, which SUPERSEDES ADR-0002's cross-language tree for this
     repository. The interview recorded "packages live under the normative cross-language

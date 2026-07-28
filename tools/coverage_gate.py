@@ -31,7 +31,8 @@ import sys
 # applied per package.
 THRESHOLD = 85.0
 
-MODULE = "github.com/danielPoloWork/egl-utils-go"
+MODULE = "github.com/danielPoloWork/egl-utils-go/v2"
+SRC_ROOT = "pkg"
 
 # `ok  <pkg>  0.123s  coverage: 97.7% of statements`
 COVERAGE_RE = re.compile(r"^(?:ok|---\s*FAIL)\s+(\S+)\s+.*?coverage:\s+([0-9.]+)%")
@@ -88,7 +89,12 @@ def main() -> int:
         return 1
 
     def short(pkg: str) -> str:
-        return pkg[len(MODULE) :].lstrip("/") or "(root)"
+        rest = pkg[len(MODULE) :].lstrip("/")
+        if rest == SRC_ROOT:
+            return "(root)"
+        if rest.startswith(SRC_ROOT + "/"):
+            rest = rest[len(SRC_ROOT) + 1 :]
+        return rest or "(root)"
 
     measured.sort(key=lambda pair: pair[1])
     failures = [(pkg, pct) for pkg, pct in measured if pct < THRESHOLD]

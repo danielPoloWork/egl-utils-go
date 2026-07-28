@@ -5,10 +5,14 @@
 // error) only.
 //
 // The root package carries module-wide metadata such as Version. Feature
-// packages live in their own directories at the module root and are imported
+// packages live in their own directories under pkg/ and are imported
 // individually, e.g.
 //
-//	import "github.com/danielPoloWork/egl-utils-go/workerpool"
+//	import "github.com/danielPoloWork/egl-utils-go/v2/pkg/workerpool"
 //
-// The layout is decided in ADR-0003 (docs/adr/0003-adopt-idiomatic-go-root-layout.md).
+// This package itself carries only module-wide metadata — Version, and this
+// documentation — so importing the module path alone pulls in nothing else.
+//
+// The layout is decided in ADR-0045 (docs/adr/0045-pkg-layout-and-v2.md), which
+// supersedes ADR-0003.
 package utils

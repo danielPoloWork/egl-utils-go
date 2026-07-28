@@ -51,7 +51,8 @@ import re
 import subprocess
 import sys
 
-MODULE = "github.com/danielPoloWork/egl-utils-go"
+MODULE = "github.com/danielPoloWork/egl-utils-go/v2"
+SRC_ROOT = "pkg"
 SPEC = os.path.join("docs", "specs", "01_spec_utils.md")
 SECTION_START = "## 5. Public Interface"
 SECTION_END = "## 6. Verification"

@@ -10,9 +10,23 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ## [Unreleased]
 
+> **The next release is `v2.0.0`** — a major. Feature packages moved under `pkg/` and the module
+> path gained its `/v2` suffix ([ADR-0045](docs/adr/0045-pkg-layout-and-v2.md)), so **every consumer
+> import changes**. The migration is mechanical:
+> `…/egl-utils-go/<pkg>` → `…/egl-utils-go/v2/pkg/<pkg>`. Milestone 13 also empties the
+> [ADR-0030](docs/adr/0030-spec-v2-reconciliation.md) §2 ledger in the same major; entries below
+> accumulate until the release rolls them.
+
 ### Added
 
 ### Changed
+
+- **BREAKING** — feature packages moved from the module root to `pkg/`, and the module path is now
+  `github.com/danielPoloWork/egl-utils-go/v2`
+  ([ADR-0045](docs/adr/0045-pkg-layout-and-v2.md), supersedes ADR-0003). Module metadata
+  (`doc.go`, `version.go`) stays beside `go.mod`, so `…/v2` remains importable for `utils.Version`.
+  No exported identifier changed — only where it lives. `contrib/*` is unaffected and still targets
+  the core's v1 line until `v2.0.0` is tagged (ADR-0040 requires the *released* core).
 
 ### Deprecated
 

@@ -31,7 +31,8 @@ go test ./...
 
 - **Toolchain:** go build (go modules), go test (+ testify; rapid for property tests), gofumpt (gofmt superset), golangci-lint (govet, staticcheck, errcheck, revive, gosec).
 - **Supported platforms:** Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.25).
-- Consumers import the public surface via: `import "github.com/danielPoloWork/egl-utils-go/workerpool"`.
+- Consumers import the public surface via: `import "github.com/danielPoloWork/egl-utils-go/v2/pkg/workerpool"`,
+  and the module root as `import "github.com/danielPoloWork/egl-utils-go/v2"` for `utils.Version`.
 - **[`contrib/`](contrib) holds separate modules**, each with its own `go.mod` — driver-backed
   `health.Check` probes for Redis and PostgreSQL, kept out of this module so a consumer inherits
   no driver dependencies. `./...` does not descend into a nested module, so they are built and
@@ -70,6 +71,7 @@ setup.
 | 10 | Spec v2 reconciliation (v1.x additive) | ✅ done |
 | 11 | Governance: namespace contract & spec reconciliation | ✅ done |
 | 12 | Public-interface reconciliation | ✅ done |
+| 13 | `/v2` — `pkg/` layout and the ledger emptied | 🚧 in progress |
 
 
 ## License

@@ -18,7 +18,7 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 |-----|-------|--------|
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
 | [0002](0002-adopt-cross-language-source-layout.md) | Adopt the cross-language source layout | Superseded by ADR-0003 |
-| [0003](0003-adopt-idiomatic-go-root-layout.md) | Adopt the idiomatic Go root layout | Accepted |
+| [0003](0003-adopt-idiomatic-go-root-layout.md) | Adopt the idiomatic Go root layout | Superseded by ADR-0045 |
 | [0004](0004-runtime-dependency-policy.md) | Runtime dependency policy | Accepted |
 | [0005](0005-workerpool-design.md) | workerpool design — bounded pool, blocking-first admission, loud panics | Accepted |
 | [0006](0006-pubsub-design.md) | pubsub design — at-most-once buffered delivery, no broker goroutines | Accepted |
@@ -60,3 +60,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0042](0042-post-1.0-compatibility-contract.md) | post-1.0 compatibility contract — v1.x is frozen for every exported identifier; the MAJOR-intent note is retired and the /v2 ledger is the only destination for a breaking change | Accepted |
 | [0043](0043-spec-api-lint.md) | spec §5 gated against `go doc` — fails both on shipped-but-unlisted and listed-but-gone; the fourth policy checker | Accepted |
 | [0044](0044-canonical-header-key-for-map-access.md) | canonical header key for map access — 2 allocs/request removed without touching HeaderName's exported value, so a PATCH rather than the MAJOR 10.10 assumed | Accepted |
+| [0045](0045-pkg-layout-and-v2.md) | feature packages under `pkg/` and the module's second major — the Maven tree built, measured at 86-char imports, and reverted; `/v2` empties the ADR-0030 ledger | Accepted |

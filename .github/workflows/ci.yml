@@ -209,10 +209,10 @@ jobs:
         with: { go-version: '1.26', cache: true }
 
       - name: Fuzz the config loader
-        run: go test ./config/ -run '^$' -fuzz FuzzConfigLoader -fuzztime 5m
+        run: go test ./pkg/config/ -run '^$' -fuzz FuzzConfigLoader -fuzztime 5m
 
       - name: Fuzz the validator tag grammar
-        run: go test ./validator/ -run '^$' -fuzz FuzzValidatorTags -fuzztime 5m
+        run: go test ./pkg/validator/ -run '^$' -fuzz FuzzValidatorTags -fuzztime 5m
 
       # A crash makes the fuzzer write its reproducer to testdata/fuzz/<Target>/.
       # Without this the file dies with the runner and the failure is unreproducible,

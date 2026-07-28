@@ -19,6 +19,14 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-27 — M13 opens: `/v2`, `pkg/`, and a layout decided by building both](2026/07/2026-07-27-m13-v2-pkg-layout.md) —
+  roadmap 13.1. The root had reached **40 entries** and the maintainer could not read it. The Maven
+  tree was **built, verified green, and reverted** once the working version gave the number three
+  rounds of prose had not: **86-character imports against `pkg/`'s 59**, for an identical root.
+  *The clutter was never the packages being at the root — it was there being twenty-one of them.*
+  [ADR-0045](../adr/0045-pkg-layout-and-v2.md): `pkg/` + `/v2`, root 40 → 19. Milestone 13 also
+  **empties the ADR-0030 ledger in the same major** — a boundary opened and not used has to be
+  opened again.
 - [2026-07-27 — v1.1.1 release cut: a patch that was supposed to need a major](2026/07/2026-07-27-v1.1.1-release-cut.md) —
   master green again (0 failing jobs, both `-race` included). Asked whether v1.2.0 was due: **no** —
   ADR-0030's additive bucket was fully consumed by M10, so MINOR has nothing to carry. **v1.1.1

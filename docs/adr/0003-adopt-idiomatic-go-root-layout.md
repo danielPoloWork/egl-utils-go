@@ -1,6 +1,6 @@
 # ADR-0003: Adopt the idiomatic Go root layout
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0045
 - **Date:** 2026-07-12
 - **Deciders:** Maintainer (Daniel Polo), with the architect agent
 - **Related:** ADR-0002 (superseded), AGENTS.md §5, ROADMAP 1.1/1.6, spec §4/§5
