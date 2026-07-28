@@ -21,6 +21,16 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- **BREAKING** — the `errors` package is now **`errx`** (`…/v2/pkg/errx`), and **stack capture is
+  opt-in** ([ADR-0046](docs/adr/0046-errx-opt-in-stacks.md), supersedes ADR-0029). `Wrap`/`Wrapf`
+  attach a message and no longer capture a call stack; request one explicitly with the new
+  `WithStack(err)`, which is nil-transparent and idempotent. A trace is read with the new
+  `Frames(err) []Frame` — `Frame{Function, File, Line}`, so no consumer touches program counters or
+  imports `runtime` — and `StackTracer.StackTrace()` returns `[]Frame` instead of `[]uintptr`.
+  Frames resolve lazily on first read. Migration: `errors` → `errx`; add `WithStack` where a trace
+  is wanted; replace `runtime.CallersFrames(st.StackTrace())` with a `range` over `Frames(err)`.
+  Wrapping an error still keeps the trace pointed at the original failure site, and the chain stays
+  `errors.Is`/`As`/`Unwrap`-transparent.
 - **BREAKING** — feature packages moved from the module root to `pkg/`, and the module path is now
   `github.com/danielPoloWork/egl-utils-go/v2`
   ([ADR-0045](docs/adr/0045-pkg-layout-and-v2.md), supersedes ADR-0003). Module metadata

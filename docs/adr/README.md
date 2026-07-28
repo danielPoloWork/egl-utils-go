@@ -44,7 +44,7 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0026](0026-health-handler-design.md) | health.Handler design — concurrent probes, 200/503, status-only body (no error leak) | Accepted |
 | [0027](0027-metrics-prometheus-design.md) | metrics.Prometheus design — bounded-cardinality labels, client_golang pin, uncalled-vuln trade-off | Accepted |
 | [0028](0028-syncpool-bufferpool-design.md) | syncpool.BufferPool design — sync.Pool of bytes.Buffer, reset on return, discard oversized | Accepted |
-| [0029](0029-errors-wrap-design.md) | errors.Wrap design — %w-transparent wrapping, one-time origin stack, errors package name | Accepted |
+| [0029](0029-errors-wrap-design.md) | errors.Wrap design — %w-transparent wrapping, one-time origin stack, errors package name | Superseded by ADR-0046 |
 | [0030](0030-spec-v2-reconciliation.md) | Spec v2.0 reconciliation — hybrid adoption: additive deltas in v1.x, breaking deferred to /v2 | Accepted |
 | [0031](0031-ratelimit-middleware-design.md) | ratelimit HTTP middleware — 429 shed via Allow (never Wait), constant Retry-After, ErrLimited sentinel | Accepted |
 | [0032](0032-hash-password-cost-design.md) | configurable bcrypt cost — floor of 10 enforced locally (upstream accepts weak costs silently), error not panic, rehash-on-login | Accepted |
@@ -61,3 +61,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0043](0043-spec-api-lint.md) | spec §5 gated against `go doc` — fails both on shipped-but-unlisted and listed-but-gone; the fourth policy checker | Accepted |
 | [0044](0044-canonical-header-key-for-map-access.md) | canonical header key for map access — 2 allocs/request removed without touching HeaderName's exported value, so a PATCH rather than the MAJOR 10.10 assumed | Accepted |
 | [0045](0045-pkg-layout-and-v2.md) | feature packages under `pkg/` and the module's second major — the Maven tree built, measured at 86-char imports, and reverted; `/v2` empties the ADR-0030 ledger | Accepted |
+| [0046](0046-errx-opt-in-stacks.md) | errx — off the stdlib name, stack capture opt-in via `WithStack`, traces as `[]Frame` resolved lazily; measuring showed v1's `Wrap` paid 276 ns to *find* a stack it already had | Accepted |
