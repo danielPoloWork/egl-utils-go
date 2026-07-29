@@ -19,6 +19,14 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-29 — 13.6: nine modules for two metrics, and the 37 families nobody chose](2026/07/2026-07-29-m13-metrics-no-sdk.md) —
+  roadmap 13.6. The Prometheus SDK leaves the module: `metrics` writes text exposition format directly
+  and `Prometheus(reg)` becomes `metrics.New()` with `Middleware()`/`Handler()` methods. Nine of
+  eighteen modules left the graph, which also retired ADR-0027's uncalled-advisory trade-off by
+  deleting its subject. `promhttp` turned out to be serving **37 families nobody had chosen** — the
+  measurement that made this a maintainer decision rather than a refactor. Conformance is pinned by a
+  golden captured from the reference encoder *before* it was removed, so the check outlives the
+  library. Recording 1 alloc → 0, scrape 436 allocs → 3. ADR-0050; ledger item 23 discharged.
 - [2026-07-29 — 13.5: the pubsub reshape, or how to add a context and an error without letting Publish block](2026/07/2026-07-29-m13-pubsub-reshape.md) —
   roadmap 13.5. Context-scoped subscriptions, `Publish(ctx, topic, msg) error`, `ErrSlowSubscriber`, and
   a three-valued `SlowSubscriberPolicy`. ADR-0006 had made "Publish never blocks" *unarguable* by giving

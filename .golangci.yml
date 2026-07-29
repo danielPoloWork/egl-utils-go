@@ -15,22 +15,31 @@ linters:
     # or golang.org/x module is confined to the single package that justified it —
     # and the layered internal import graph.
     #
-    # Rules apply to production files only (`!$test`): tests legitimately import
-    # sibling packages and the test-only ring, and the module-level allowlist is
-    # asserted separately by tools/import_graph_lint.py.
+    # Most rules apply to production files only (`!$test`): tests legitimately
+    # import sibling packages and the test-only ring, and the module-level
+    # allowlist is asserted separately by tools/import_graph_lint.py. The
+    # exceptions are the outright bans — `no-driver-sdks` and `no-prometheus-sdk` —
+    # which carry no `!$test` because those modules have no sanctioned use here at
+    # all, in production or in a test. Verified: an `$all` rule with no `!$test`
+    # does flag a test-file import.
     depguard:
       rules:
-        # --- ADR-0004 ring 3: the two vetted runtime dependencies ------------
+        # --- ADR-0004 ring 3: the one vetted runtime dependency ---------------
         yaml-belongs-to-config:
           files: ['$all', '!$test', '!**/config/*.go']
           deny:
             - pkg: gopkg.in/yaml.v3
               desc: "ADR-0004/ADR-0018: the YAML parser is budgeted for config.Load only. Decode elsewhere by passing the decoded value, not by importing a parser."
-        prometheus-belongs-to-metrics:
-          files: ['$all', '!$test', '!**/metrics/*.go']
+        # ADR-0050 emptied ring 3's second slot: the Prometheus SDK is no longer a
+        # dependency of this module at all, so this rule has no exception - not
+        # metrics, which now writes the exposition format itself, and not tests,
+        # since conformance is pinned by a committed golden rather than by parsing
+        # our output with the library we removed.
+        no-prometheus-sdk:
+          files: ['$all']
           deny:
             - pkg: github.com/prometheus
-              desc: "ADR-0004/ADR-0027: the Prometheus SDK is budgeted for the metrics package only. Other packages expose plain counters/handlers and let metrics observe them."
+              desc: "ADR-0050: this module does not depend on the Prometheus SDK. metrics writes text exposition format directly; re-introducing client_golang needs a superseding ADR and a ring-3 budget entry."
 
         # --- ADR-0004 ring 2: golang.org/x, confined to its justifying package --
         crypto-belongs-to-hash:

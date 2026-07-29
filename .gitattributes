@@ -1,0 +1,12 @@
+# Golden files are byte-exact fixtures, so their line endings are part of the
+# assertion and must survive checkout unchanged.
+#
+# Without this, the eol attribute is unspecified and translation depends on each
+# checkout's `core.autocrlf`: a developer set to `input` sees LF and a Windows CI
+# runner set to `true` sees CRLF, so `pkg/metrics`' exposition-format conformance
+# test (ADR-0050) passed locally and failed only on the windows-2022 cell.
+#
+# `text eol=lf` rather than `-text`: the file stays text as far as Git is
+# concerned, so it still diffs readably when the fixture legitimately changes,
+# but it is always written out with LF.
+*.golden text eol=lf
