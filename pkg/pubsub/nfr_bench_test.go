@@ -1,6 +1,7 @@
 package pubsub_test
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -18,6 +19,13 @@ import (
 // ten real drainer goroutines run for the whole measurement, and both delivered
 // messages and drops are counted, so the reported throughput is *delivery*
 // throughput and any drop is visible rather than silently inflating it.
+//
+// Every subscription here is made with context.Background(), deliberately: the
+// drainers end when Close shuts their channels, so the broker's lifetime — not a
+// per-subscription context — is what bounds the measurement (ADR-0049).
+// Publish's error is discarded rather than counted because the drop handler
+// already counts the individual losses, and the accounting assertion below is
+// the stronger check; ErrSlowSubscriber would only restate it per publish.
 
 const (
 	nfrSubscribers = 10
@@ -41,9 +49,11 @@ func BenchmarkNFR03FanOut(b *testing.B) {
 		pubsub.WithDropHandler[[]byte](func(string, []byte) { drops.Add(1) }),
 	)
 
+	ctx := context.Background()
+
 	var wg sync.WaitGroup
 	for range nfrSubscribers {
-		ch, _ := br.Subscribe(nfrTopic, nil)
+		ch := br.Subscribe(ctx, nfrTopic, nil)
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -59,7 +69,7 @@ func BenchmarkNFR03FanOut(b *testing.B) {
 
 	b.ResetTimer()
 	for range b.N {
-		br.Publish(nfrTopic, payload)
+		_ = br.Publish(ctx, nfrTopic, payload)
 	}
 	br.Close()
 	wg.Wait()
@@ -87,9 +97,11 @@ func BenchmarkNFR03PublishOnly(b *testing.B) {
 		pubsub.WithDropHandler[[]byte](func(string, []byte) { drops.Add(1) }),
 	)
 
+	ctx := context.Background()
+
 	var wg sync.WaitGroup
 	for range nfrSubscribers {
-		ch, _ := br.Subscribe(nfrTopic, nil)
+		ch := br.Subscribe(ctx, nfrTopic, nil)
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -102,7 +114,7 @@ func BenchmarkNFR03PublishOnly(b *testing.B) {
 
 	b.ResetTimer()
 	for range b.N {
-		br.Publish(nfrTopic, payload)
+		_ = br.Publish(ctx, nfrTopic, payload)
 	}
 	b.StopTimer()
 
@@ -120,10 +132,12 @@ func BenchmarkNFR03FanOutFiltered(b *testing.B) {
 		pubsub.WithDropHandler[[]byte](func(string, []byte) { drops.Add(1) }),
 	)
 
+	ctx := context.Background()
+
 	var wg sync.WaitGroup
 	acceptAll := func([]byte) bool { return true }
 	for range nfrSubscribers {
-		ch, _ := br.Subscribe(nfrTopic, acceptAll)
+		ch := br.Subscribe(ctx, nfrTopic, acceptAll)
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -136,7 +150,7 @@ func BenchmarkNFR03FanOutFiltered(b *testing.B) {
 
 	b.ResetTimer()
 	for range b.N {
-		br.Publish(nfrTopic, payload)
+		_ = br.Publish(ctx, nfrTopic, payload)
 	}
 	b.StopTimer()
 

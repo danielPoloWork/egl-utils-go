@@ -113,6 +113,28 @@
 >   the pool is the only shutdown in the module that waits for work the caller wrote. Note the
 >   accepted cost — **`*Pool` does not satisfy `io.Closer`**. ROADMAP 13.4.
 
+> - *2026-07-29* — **the pubsub API reshaped: context-scoped subscriptions, `Publish(ctx, …) error`,
+>   `ErrSlowSubscriber`, and an explicit slow-subscriber policy. SUPERSEDED, not amended**, by
+>   [ADR-0049](../adr/0049-pubsub-reshape.md), which supersedes the two signatures and the fixed
+>   drop-newest policy of [ADR-0006](../adr/0006-pubsub-design.md) — every *invariant* that ADR
+>   decided stands — and the option name of [ADR-0039](../adr/0039-pubsub-drop-oldest.md), whose
+>   reasoning it absorbs rather than replaces. `/v2` boundary
+>   ([ADR-0030](../adr/0030-spec-v2-reconciliation.md) §2, item 2). This is the milestone's largest
+>   entry and the only one reopening an *invariant* rather than a name: **"Publish never blocks" was
+>   previously argued from the absence of a context and an error return, and is now an explicit
+>   promise instead.** The new parameters are given narrow meanings so they cannot erode it — `ctx`
+>   is consulted **once, before anything is delivered** (so a cancelled publish delivers to nobody,
+>   all-or-nothing rather than a partial fan-out) and is never waited on; the `error` reports what
+>   already happened and never that the publisher waited. `Subscribe` returns only a channel, since
+>   cancelling the context *is* the unsubscribe; `context.AfterFunc` rather than a goroutine per
+>   subscription is what keeps ADR-0006's "the broker owns no goroutines" literally true.
+>   `WithDropOldest[T]()` becomes one value of `SlowSubscriberPolicy`, which the gap analysis
+>   requires to carry **`Disconnect`** as well — an enum because two booleans would make an illegal
+>   combination expressible. **`topic` is kept** against the ledger's literal `Subscribe(ctx, filter)`,
+>   on the 13.4 tie-breaker: the gap column flags the API *shape* and never mentions topics, and
+>   removing topic routing would be a feature deletion wearing a signature change's clothes.
+>   ROADMAP 13.5.
+
 ## 1. Objective & Business Context
 
 Provide a production-ready Go utilities module — advanced concurrency primitives,
@@ -216,7 +238,7 @@ module root as `import "github.com/danielPoloWork/egl-utils-go/v2"` for `utils.V
 
 - utils (root): const Version — the released version, kept in lockstep with the tag and the changelog
 - workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Close(ctx) error; WithNonBlockingSubmit() Option; WithPanicHandler(func(recovered any)) Option; Task func(ctx); ErrQueueFull; ErrClosed
-- pubsub: NewBroker[T any](opts ...Option[T]) *Broker[T] — note the option type is **generic**; (*Broker[T]).Publish(topic string, msg T); (*Broker[T]).Subscribe(topic string, filter func(T) bool) (<-chan T, func()); (*Broker[T]).Close() — additive shutdown surface (ADR-0006); WithSubscriberBuffer[T](n int) Option[T]; WithDropHandler[T](func(topic string, msg T)) Option[T]; WithDropOldest[T]() Option[T] (ADR-0039)
+- pubsub: NewBroker[T any](opts ...Option[T]) *Broker[T] — note the option type is **generic**; (*Broker[T]).Publish(ctx, topic string, msg T) error — never blocks; the error reports what was already lost (ADR-0049); (*Broker[T]).Subscribe(ctx, topic string, filter func(T) bool) <-chan T — the context is the subscription's lifetime, so cancel is the unsubscribe; (*Broker[T]).Close(); WithSubscriberBuffer[T](n int) Option[T]; WithDropHandler[T](func(topic string, msg T)) Option[T]; WithSlowSubscriberPolicy[T](p SlowSubscriberPolicy) Option[T]; SlowSubscriberPolicy int with DropNewest/DropOldest/Disconnect (ADR-0049, absorbing ADR-0039); ErrSlowSubscriber; ErrClosed
 - fanin: Merge[T any](ctx, ins ...<-chan T) <-chan T
 - fanout: Split[T any](ctx, in <-chan T, outs ...chan<- T)
 - semaphore: NewWeighted(capacity int64) *Weighted; (*Weighted).Acquire(ctx, weight int64) error; (*Weighted).Release(weight int64)

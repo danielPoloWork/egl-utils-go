@@ -21,7 +21,7 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0003](0003-adopt-idiomatic-go-root-layout.md) | Adopt the idiomatic Go root layout | Superseded by ADR-0045 |
 | [0004](0004-runtime-dependency-policy.md) | Runtime dependency policy | Accepted |
 | [0005](0005-workerpool-design.md) | workerpool design — bounded pool, blocking-first admission, loud panics | Accepted |
-| [0006](0006-pubsub-design.md) | pubsub design — at-most-once buffered delivery, no broker goroutines | Accepted |
+| [0006](0006-pubsub-design.md) | pubsub design — at-most-once buffered delivery, no broker goroutines | Accepted (`Publish`/`Subscribe` signatures + the fixed drop-newest policy superseded by ADR-0049; every invariant stands) |
 | [0007](0007-fanin-design.md) | fanin design — forwarder-per-input, cancel-or-drain contract | Accepted |
 | [0008](0008-fanout-design.md) | fanout design — forwarder-per-output, exactly-once distribution | Accepted |
 | [0009](0009-semaphore-design.md) | semaphore design — thin adapter over x/sync, first runtime dependency | Accepted |
@@ -54,7 +54,7 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0036](0036-coverage-gate.md) | statement-coverage floor — 85% enforced per package (a module-wide average could not fail) | Accepted |
 | [0037](0037-nfr-benchmark-methodology.md) | NFR benchmark methodology — gate the hardware-independent NFRs, report the rest; NFR-01's 0-alloc target unachievable | Accepted |
 | [0038](0038-cache-sharding.md) | cache sharding — 32 shards hashed with maphash.Comparable; 7.5x on the mixed path, ~5ns tax uncontended | Accepted |
-| [0039](0039-pubsub-drop-oldest.md) | pubsub.WithDropOldest — opt-in slow-subscriber policy, best-effort by construction (Publish must not block) | Accepted |
+| [0039](0039-pubsub-drop-oldest.md) | pubsub.WithDropOldest — opt-in slow-subscriber policy, best-effort by construction (Publish must not block) | Accepted (the option's name + shape superseded by ADR-0049's `SlowSubscriberPolicy`; its best-effort reasoning is load-bearing there) |
 | [0040](0040-contrib-submodules.md) | contrib/* nested submodules — require the released core, no replace/workspace; the module boundary is the enforcement | Accepted |
 | [0041](0041-series-logical-namespace.md) | series logical namespace `it.d4np.utils.<component>` — realized per language, Go keeps the module root; the module-path move is free only at a /v2 boundary | Accepted |
 | [0042](0042-post-1.0-compatibility-contract.md) | post-1.0 compatibility contract — v1.x is frozen for every exported identifier; the MAJOR-intent note is retired and the /v2 ledger is the only destination for a breaking change | Accepted |
@@ -64,3 +64,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0046](0046-errx-opt-in-stacks.md) | errx — off the stdlib name, stack capture opt-in via `WithStack`, traces as `[]Frame` resolved lazily; measuring showed v1's `Wrap` paid 276 ns to *find* a stack it already had | Accepted |
 | [0047](0047-cache-comma-ok.md) | `cache.Get` → `(V, bool)`, `NewInMemory` → `New`, `ErrNotFound` removed — the error channel carried one bit, and Go spells that bit comma-ok | Accepted |
 | [0048](0048-workerpool-close.md) | `workerpool.Stop` → `Close`, `ErrPoolClosed` → `ErrClosed` — one shutdown verb for the module, but `ctx` stays: the pool is the only shutdown that waits on work the caller wrote | Accepted |
+| [0049](0049-pubsub-reshape.md) | the pubsub reshape — context-scoped subscriptions, a `Publish` that reports without ever blocking, and a three-valued slow-subscriber policy; `topic` kept against the ledger's shorthand | Accepted |

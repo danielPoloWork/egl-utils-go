@@ -34,7 +34,7 @@ _Patterns named in the spec at intake are seeded below as **Planned**; each beco
 | # | Pattern | Status | Problem it addresses | Code location | ADR / PR |
 |---|---------|--------|----------------------|---------------|----------|
 | 1 | Thread Pool | Implemented | bounded concurrency with backpressure (a.k.a. worker pool — workerpool.Pool) | [workerpool/](../../pkg/workerpool/) | [ADR-0005](../adr/0005-workerpool-design.md) |
-| 3 | Publish-Subscribe | Implemented | decoupled in-memory eventing over channels (pubsub.Broker) | [pubsub/](../../pkg/pubsub/) | [ADR-0006](../adr/0006-pubsub-design.md) |
+| 3 | Publish-Subscribe | Implemented | decoupled in-memory eventing over channels (pubsub.Broker); subscriptions are context-scoped and the slow-subscriber policy is explicit | [pubsub/](../../pkg/pubsub/) | [ADR-0006](../adr/0006-pubsub-design.md), [ADR-0039](../adr/0039-pubsub-drop-oldest.md), [ADR-0049](../adr/0049-pubsub-reshape.md) |
 | 4 | Fan-In / Fan-Out | Implemented | canonical channel merge/split building blocks — both halves landed | [fanin/](../../pkg/fanin/), [fanout/](../../pkg/fanout/) | [ADR-0007](../adr/0007-fanin-design.md), [ADR-0008](../adr/0008-fanout-design.md) |
 | 5 | Guarded Suspension | Implemented | block until enough free capacity, then proceed — weighted admission control (semaphore.Weighted, over x/sync) | [semaphore/](../../pkg/semaphore/) | [ADR-0009](../adr/0009-semaphore-design.md) |
 | 6 | Circuit Breaker | Implemented | fail-fast protection for outbound calls — closed/open/half-open with bounded half-open probes (circuitbreaker.Breaker) | [circuitbreaker/](../../pkg/circuitbreaker/) | [ADR-0010](../adr/0010-circuitbreaker-design.md) |

@@ -1,6 +1,13 @@
 # ADR-0006: pubsub design — at-most-once buffered delivery, no broker goroutines
 
-- **Status:** Accepted
+- **Status:** Accepted — the **`Publish`/`Subscribe` signatures and the fixed drop-newest policy**
+  are superseded by [ADR-0049](0049-pubsub-reshape.md): `Publish(ctx, topic, msg) error`,
+  `Subscribe(ctx, topic, filter) <-chan T` with the context as the subscription's lifetime, and an
+  explicit `SlowSubscriberPolicy`. **Every invariant decided here stands** — at-most-once delivery,
+  a `Publish` that never blocks, a broker owning no goroutines, the `RWMutex` lifecycle idiom, the
+  per-topic registry, synchronous filters and the ordering guarantee. Note that the Context below
+  argues non-blocking delivery *from* the absence of a context and an error return; ADR-0049 keeps
+  the promise and makes it explicit instead, which is why it reopens this ADR at all.
 - **Date:** 2026-07-12
 - **Deciders:** Maintainer (Daniel Polo), architect agent
 - **Related:** spec §2 feature 2, §5 (pubsub API), §6; ROADMAP 2.2/2.6; ADR-0005 (shared
