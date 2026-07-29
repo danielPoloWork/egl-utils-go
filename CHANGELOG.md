@@ -21,6 +21,28 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- **BREAKING** — the **pubsub API is reshaped**: subscriptions are context-scoped, `Publish` takes a
+  context and returns an error, and the slow-subscriber policy is explicit
+  ([ADR-0049](docs/adr/0049-pubsub-reshape.md), supersedes the two signatures and the fixed
+  drop-newest policy of ADR-0006 and the option name of ADR-0039). Migration:
+  `ch, unsub := br.Subscribe(topic, f)` → `ch := br.Subscribe(ctx, topic, f)`, replacing the
+  `unsub()` call with cancelling `ctx`; `br.Publish(topic, msg)` → `br.Publish(ctx, topic, msg)`;
+  `pubsub.WithDropOldest[T]()` → `pubsub.WithSlowSubscriberPolicy[T](pubsub.DropOldest)`.
+  **`Publish` still never blocks** — that promise was previously a consequence of having neither a
+  context nor an error to return, and is now explicit: `ctx` is consulted **once, before anything is
+  delivered** (a cancelled publish delivers to nobody, all-or-nothing rather than a partial fan-out)
+  and is never waited on, while the error reports only what already happened — `ErrSlowSubscriber`
+  when at least one subscription lost a message, `ErrClosed` on a closed broker, and `nil` otherwise.
+  A topic with no subscribers is not an error. **Cancelling a subscription's context is the
+  unsubscribe**, so the returned `func()` is gone; `context.AfterFunc` keeps the broker's
+  zero-goroutine guarantee intact, and subscribing with an already-cancelled context or to a closed
+  broker returns an already-closed channel. The new `WithSlowSubscriberPolicy` chooses between
+  `DropNewest` (the zero value, so the default is unchanged), `DropOldest` and the new
+  **`Disconnect`**, which sheds a subscription that has fallen behind rather than picking a message
+  to lose — its buffered messages stay receivable. The accounting invariant holds under all three:
+  while a subscription is registered, every message published to it is either delivered or reported
+  to the drop handler, exactly once. **A caller who ignores the new error gets exactly v1's
+  behaviour**, so the migration can be done in two passes.
 - **BREAKING** — `workerpool.Stop` is now **`Close`** and `ErrPoolClosed` is now **`ErrClosed`**
   ([ADR-0048](docs/adr/0048-workerpool-close.md), supersedes those two names in ADR-0005 and nothing
   else). Two of the module's three goroutine-owning types already said `Close`; the pool was the

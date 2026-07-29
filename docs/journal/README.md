@@ -19,6 +19,13 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-29 — 13.5: the pubsub reshape, or how to add a context and an error without letting Publish block](2026/07/2026-07-29-m13-pubsub-reshape.md) —
+  roadmap 13.5. Context-scoped subscriptions, `Publish(ctx, topic, msg) error`, `ErrSlowSubscriber`, and
+  a three-valued `SlowSubscriberPolicy`. ADR-0006 had made "Publish never blocks" *unarguable* by giving
+  it nothing to return; the promise now has to be kept explicitly, so `ctx` is consulted once before any
+  delivery and the error only ever reports what already happened. Cancel is the unsubscribe, and
+  `context.AfterFunc` is what keeps the broker's zero-goroutine guarantee. `Disconnect` came from the gap
+  analysis, `topic` stayed on 13.4's tie-breaker. ADR-0049; ledger item 2 discharged.
 - [2026-07-29 — 13.4: one shutdown verb, and the parameter that should not follow it](2026/07/2026-07-29-m13-workerpool-close.md) —
   roadmap 13.4. `workerpool.Stop` → `Close`, `ErrPoolClosed` → `ErrClosed`. The vocabulary sweep found
   exactly one outlier of three shutdowns. `Close` keeps its `ctx` against the ledger's literal
