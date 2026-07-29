@@ -37,7 +37,7 @@ func TestNewPanicsOnInvalidArguments(t *testing.T) {
 func TestSubmitNilTaskPanics(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	p := workerpool.New(1, 0)
-	defer func() { _ = p.Stop(context.Background()) }()
+	defer func() { _ = p.Close(context.Background()) }()
 	defer func() {
 		if recover() == nil {
 			t.Fatal("Submit(nil) did not panic")
@@ -55,7 +55,7 @@ func TestNilPanicHandlerPanics(t *testing.T) {
 	workerpool.WithPanicHandler(nil)
 }
 
-func TestSubmitRunsAllTasksAndStopDrains(t *testing.T) {
+func TestSubmitRunsAllTasksAndCloseDrains(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	p := workerpool.New(4, 8)
 	var ran atomic.Int64
@@ -71,11 +71,11 @@ func TestSubmitRunsAllTasksAndStopDrains(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := p.Stop(ctx); err != nil {
-		t.Fatalf("Stop: %v", err)
+	if err := p.Close(ctx); err != nil {
+		t.Fatalf("Close: %v", err)
 	}
 	if got := ran.Load(); got != tasks {
-		t.Fatalf("ran %d of %d tasks — Stop must drain the queue", got, tasks)
+		t.Fatalf("ran %d of %d tasks — Close must drain the queue", got, tasks)
 	}
 }
 
@@ -101,8 +101,8 @@ func TestBlockingSubmitHonorsContextWhenFull(t *testing.T) {
 	}
 
 	close(gate)
-	if err := p.Stop(context.Background()); err != nil {
-		t.Fatalf("Stop: %v", err)
+	if err := p.Close(context.Background()); err != nil {
+		t.Fatalf("Close: %v", err)
 	}
 }
 
@@ -127,8 +127,8 @@ func TestSubmitWithCanceledContext(t *testing.T) {
 	}
 
 	close(gate)
-	if err := p.Stop(context.Background()); err != nil {
-		t.Fatalf("Stop: %v", err)
+	if err := p.Close(context.Background()); err != nil {
+		t.Fatalf("Close: %v", err)
 	}
 }
 
@@ -161,27 +161,27 @@ func TestNonBlockingSubmitFailsFastWhenFull(t *testing.T) {
 	}
 
 	close(gate)
-	if err := p.Stop(context.Background()); err != nil {
-		t.Fatalf("Stop: %v", err)
+	if err := p.Close(context.Background()); err != nil {
+		t.Fatalf("Close: %v", err)
 	}
 	if got := ran.Load(); got != 2 {
 		t.Fatalf("ran %d tasks, want 2 (A and B)", got)
 	}
 }
 
-func TestSubmitAfterStopReturnsErrPoolClosed(t *testing.T) {
+func TestSubmitAfterCloseReturnsErrClosed(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	p := workerpool.New(1, 1)
-	if err := p.Stop(context.Background()); err != nil {
-		t.Fatalf("Stop: %v", err)
+	if err := p.Close(context.Background()); err != nil {
+		t.Fatalf("Close: %v", err)
 	}
 	err := p.Submit(context.Background(), func(context.Context) {})
-	if !errors.Is(err, workerpool.ErrPoolClosed) {
-		t.Fatalf("Submit after Stop returned %v, want ErrPoolClosed", err)
+	if !errors.Is(err, workerpool.ErrClosed) {
+		t.Fatalf("Submit after Close returned %v, want ErrClosed", err)
 	}
 }
 
-func TestStopIsIdempotentAndConcurrent(t *testing.T) {
+func TestCloseIsIdempotentAndConcurrent(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	p := workerpool.New(2, 4)
 	var ran atomic.Int64
@@ -196,13 +196,13 @@ func TestStopIsIdempotentAndConcurrent(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			errs[i] = p.Stop(context.Background())
+			errs[i] = p.Close(context.Background())
 		}()
 	}
 	wg.Wait()
 	for i, err := range errs {
 		if err != nil {
-			t.Fatalf("concurrent Stop %d: %v", i, err)
+			t.Fatalf("concurrent Close %d: %v", i, err)
 		}
 	}
 	if got := ran.Load(); got != 8 {
@@ -210,7 +210,7 @@ func TestStopIsIdempotentAndConcurrent(t *testing.T) {
 	}
 }
 
-func TestStopDeadlineCancelsExecutionContext(t *testing.T) {
+func TestCloseDeadlineCancelsExecutionContext(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	p := workerpool.New(1, 0)
 	entered := make(chan struct{})
@@ -226,8 +226,8 @@ func TestStopDeadlineCancelsExecutionContext(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
-	if err := p.Stop(ctx); !errors.Is(err, context.DeadlineExceeded) {
-		t.Fatalf("Stop returned %v, want DeadlineExceeded", err)
+	if err := p.Close(ctx); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("Close returned %v, want DeadlineExceeded", err)
 	}
 	select {
 	case <-exited:
@@ -261,8 +261,8 @@ func TestPanicHandlerKeepsWorkerAlive(t *testing.T) {
 	if err := p.Submit(context.Background(), func(context.Context) { ran.Add(1) }); err != nil {
 		t.Fatalf("Submit after panic: %v", err)
 	}
-	if err := p.Stop(context.Background()); err != nil {
-		t.Fatalf("Stop: %v", err)
+	if err := p.Close(context.Background()); err != nil {
+		t.Fatalf("Close: %v", err)
 	}
 	if got := ran.Load(); got != 1 {
 		t.Fatalf("worker did not survive the recovered panic (ran=%d)", got)
@@ -271,7 +271,7 @@ func TestPanicHandlerKeepsWorkerAlive(t *testing.T) {
 
 func BenchmarkSubmit(b *testing.B) {
 	p := workerpool.New(runtime.GOMAXPROCS(0), 1024)
-	defer func() { _ = p.Stop(context.Background()) }()
+	defer func() { _ = p.Close(context.Background()) }()
 	ctx := context.Background()
 	task := workerpool.Task(func(context.Context) {})
 	b.ReportAllocs()

@@ -133,7 +133,7 @@ func observedTick(samples []time.Duration) time.Duration {
 // The task body is genuinely empty, as the NFR specifies. Counting completions
 // would need an atomic in every task, and at ~100 ns/op that counter is a
 // material share of the number being reported — so completion is guaranteed
-// structurally instead: Stop drains the queue and waits for every worker
+// structurally instead: Close drains the queue and waits for every worker
 // (ADR-0005), and BenchmarkNFR02ThroughputCounted below pays the atomic to
 // prove the drain actually happens.
 //
@@ -151,7 +151,7 @@ func BenchmarkNFR02Throughput(b *testing.B) {
 			b.Fatalf("submit: %v", err)
 		}
 	}
-	if err := p.Stop(ctx); err != nil { // drains the queue and waits for workers
+	if err := p.Close(ctx); err != nil { // drains the queue and waits for workers
 		b.Fatalf("stop: %v", err)
 	}
 	elapsed := b.Elapsed()
@@ -175,7 +175,7 @@ func BenchmarkNFR02ThroughputCounted(b *testing.B) {
 			b.Fatalf("submit: %v", err)
 		}
 	}
-	if err := p.Stop(ctx); err != nil {
+	if err := p.Close(ctx); err != nil {
 		b.Fatalf("stop: %v", err)
 	}
 	elapsed := b.Elapsed()
@@ -222,7 +222,7 @@ func BenchmarkNFR02SubmitP99(b *testing.B) {
 		i += n
 	}
 	b.StopTimer()
-	if err := p.Stop(context.Background()); err != nil {
+	if err := p.Close(context.Background()); err != nil {
 		b.Fatalf("stop: %v", err)
 	}
 

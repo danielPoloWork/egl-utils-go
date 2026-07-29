@@ -1,6 +1,10 @@
 # ADR-0005: workerpool design — bounded pool, blocking-first admission, loud panics
 
-- **Status:** Accepted
+- **Status:** Accepted — two *names* superseded by ADR-0048 (`Stop` → `Close`, `ErrPoolClosed` →
+  `ErrClosed`). Every semantic decided here stands unchanged, including the `RWMutex` discipline that
+  makes closing the queue race-free, idempotence, the drain guarantee, and the context-bounded hard
+  stop — ADR-0048 renamed the method and the sentinel and touched nothing else. `Stop` below reads as
+  `Close` throughout.
 - **Date:** 2026-07-12
 - **Deciders:** Maintainer (Daniel Polo), architect agent
 - **Related:** spec §2 feature 1, §5 (workerpool API), §6 (verification); ROADMAP 2.1/2.6;

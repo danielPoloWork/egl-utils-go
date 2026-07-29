@@ -36,8 +36,10 @@ that `Close` mid-interval leaves no goroutine behind.
 
 **Close does not brick the cache.** After `Close`, `Get`/`Set`/`Delete` keep working — `Get` still
 refuses expired entries — but nothing reclaims expired memory in the background; the godoc says a
-closed cache should be left to the GC. Rationale: unlike `workerpool.Stop` (where accepting work
-after stop would silently drop it), a closed cache misbehaves in no observable way, so a loud panic
+closed cache should be left to the GC. Rationale: unlike `workerpool.Close` (spelled `Stop` when this
+was written; renamed by [ADR-0048](0048-workerpool-close.md) — the contrast is unaffected, since
+accepting work after the pool closes would silently drop it), a closed cache misbehaves in no
+observable way, so a loud panic
 would criminalize a harmless shutdown ordering; the graceful contract matches `pubsub.Close`
 (ADR-0006, additive shutdown).
 
