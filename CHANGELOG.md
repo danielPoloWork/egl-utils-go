@@ -21,6 +21,22 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- **BREAKING** — **`lifecycle.WaitForSignals` takes a shutdown timeout as its first argument**
+  ([ADR-0051](docs/adr/0051-lifecycle-shutdown-timeout.md), supersedes ADR-0025's "no hidden timeout"
+  decision and its rejected default-timeout alternative, and nothing else). Migration:
+  `lifecycle.WaitForSignals(os.Interrupt, syscall.SIGTERM)` →
+  `lifecycle.WaitForSignals(10*time.Second, os.Interrupt, syscall.SIGTERM)`, **or `0` for exactly the
+  previous behaviour**. The timeout bounds the whole shutdown sequence — it becomes the deadline on
+  the context every hook receives — and is **measured from the moment the signal arrives**, not from
+  the call, so a long-running process still gets its full budget. **`0` imposes no deadline**, leaving
+  the bound to the platform's kill escalation; that is not a compatibility shim but the recommended
+  posture wherever systemd or Kubernetes already enforces a grace period, since a second number in
+  the application would be free to drift from the first and the shorter would silently win. A
+  negative timeout panics at the call. **The bound is cooperative and never abandons the sequence:** a
+  hook that honours its context winds up early, one that ignores it still runs to completion, and an
+  expired deadline does not skip the remaining hooks — ADR-0025's run-every-hook-and-join-errors
+  decision is untouched, along with LIFO ordering, exactly-once convergent `Shutdown`, the loud
+  panics and the zero-owned-goroutines property.
 - **BREAKING** — **`metrics` no longer depends on the Prometheus SDK**; it writes the text exposition
   format directly, and `prometheus.Registerer` is gone from the public API
   ([ADR-0050](docs/adr/0050-metrics-without-the-sdk.md), supersedes ADR-0027's surface,

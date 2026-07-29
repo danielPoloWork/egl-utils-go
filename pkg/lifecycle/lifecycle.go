@@ -11,7 +11,7 @@
 //		return server.Shutdown(ctx)          // registered last, closed first
 //	})
 //	go func() { _ = server.ListenAndServe() }()
-//	lifecycle.WaitForSignals(os.Interrupt, syscall.SIGTERM)
+//	lifecycle.WaitForSignals(10*time.Second, os.Interrupt, syscall.SIGTERM)
 //
 // Shutdown runs every hook exactly once — a failing hook does not stop the
 // ones after it (each error is collected and the combined error returned) —
@@ -19,6 +19,12 @@
 // and return its result. The package owns no goroutines: WaitForSignals is a
 // blocking select over the signal channel and the Trigger channel, not a
 // watcher goroutine.
+//
+// WaitForSignals' first argument bounds the whole shutdown sequence: it becomes
+// the deadline on the context every hook receives, measured from the moment the
+// signal arrives. Pass 0 to impose no deadline and leave the bound to the
+// platform's kill escalation, which is the right choice when a grace period is
+// already configured there (ADR-0051, superseding ADR-0025 on this point).
 //
 // Code that must start the shutdown itself — a fatal background error, an
 // admin endpoint, a supervisor command — calls Trigger, which unblocks a
@@ -33,6 +39,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 )
 
 // coordinator is the shutdown state machine behind the package-level API. It
@@ -96,18 +103,30 @@ var (
 )
 
 // WaitForSignals blocks until one of the given signals is delivered or Trigger
-// is called, then runs Shutdown with a background context and returns. Any
-// shutdown error is logged at Error level on slog.Default before returning.
-// Called with no signals it waits for os.Interrupt and syscall.SIGTERM — the
-// common termination pair (on Windows only Interrupt/Ctrl+C is ever delivered;
-// SIGTERM is accepted but never fires). A Trigger that arrived before this call
-// returns immediately.
+// is called, then runs Shutdown and returns. Any shutdown error is logged at
+// Error level on slog.Default before returning. Called with no signals it waits
+// for os.Interrupt and syscall.SIGTERM — the common termination pair (on Windows
+// only Interrupt/Ctrl+C is ever delivered; SIGTERM is accepted but never fires).
+// A Trigger that arrived before this call returns immediately.
 //
-// No timeout is imposed on the hooks: the platform's own kill escalation
-// (systemd/Kubernetes SIGKILL after their grace period) is the ultimate bound.
-// A consumer that wants its own bound calls Shutdown directly with a deadline
-// context (e.g. via signal.NotifyContext) instead of WaitForSignals.
-func WaitForSignals(sigs ...os.Signal) {
+// timeout bounds the whole shutdown sequence, not each hook: it becomes the
+// deadline on the context every hook receives, so hooks that honour their
+// context wind up early rather than being abandoned, and the remaining hooks
+// still run (a hook decides for itself what an expired context means —
+// ADR-0025). Per-hook budgets are deliberately not offered.
+//
+//	lifecycle.WaitForSignals(10*time.Second, os.Interrupt, syscall.SIGTERM)
+//
+// A timeout of 0 imposes no deadline: hooks receive a background context and the
+// platform's own kill escalation (systemd's TimeoutStopSec, Kubernetes' grace
+// period, then SIGKILL) is the only bound. That is the right choice when the
+// operator has already configured a grace period one level up, and duplicating
+// it here would give two numbers free to drift apart. A negative timeout panics
+// (ADR-0005: a wiring error, caught at the call).
+func WaitForSignals(timeout time.Duration, sigs ...os.Signal) {
+	if timeout < 0 {
+		panic("lifecycle: negative shutdown timeout")
+	}
 	if len(sigs) == 0 {
 		sigs = []os.Signal{os.Interrupt, syscall.SIGTERM}
 	}
@@ -118,7 +137,17 @@ func WaitForSignals(sigs ...os.Signal) {
 	case <-ch:
 	case <-std.triggered:
 	}
-	if err := Shutdown(context.Background()); err != nil {
+
+	ctx := context.Background()
+	if timeout > 0 {
+		// Derived only after a signal arrives: a deadline started at call time
+		// would spend the process's entire uptime before shutdown even begins.
+		timed, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+		ctx = timed
+	}
+
+	if err := Shutdown(ctx); err != nil {
 		slog.Default().LogAttrs(context.Background(), slog.LevelError,
 			"lifecycle: shutdown error", slog.Any("error", err))
 	}

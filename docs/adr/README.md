@@ -40,7 +40,7 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0022](0022-db-transaction-design.md) | db.Transaction design — rollback on error and panic, re-panic, joined rollback errors | Accepted |
 | [0023](0023-validator-struct-design.md) | validator.Struct design — reflection tag grammar, literal rules, panic on tag misuse | Accepted |
 | [0024](0024-hash-password-design.md) | hash password design — bcrypt at default cost, per-hash salt, constant-time verify | Accepted |
-| [0025](0025-lifecycle-shutdown-design.md) | lifecycle.GracefulShutdown design — LIFO hooks, exactly-once convergent Shutdown, no hidden timeout | Accepted |
+| [0025](0025-lifecycle-shutdown-design.md) | lifecycle.GracefulShutdown design — LIFO hooks, exactly-once convergent Shutdown, no hidden timeout | Accepted (the no-hidden-timeout decision superseded by ADR-0051: `WaitForSignals` takes a timeout, and 0 still means none — its reasoning is what shaped the replacement) |
 | [0026](0026-health-handler-design.md) | health.Handler design — concurrent probes, 200/503, status-only body (no error leak) | Accepted |
 | [0027](0027-metrics-prometheus-design.md) | metrics.Prometheus design — bounded-cardinality labels, client_golang pin, uncalled-vuln trade-off | Accepted (surface, implementation + pin superseded by ADR-0050; the cardinality decisions stand and are re-enforced there) |
 | [0028](0028-syncpool-bufferpool-design.md) | syncpool.BufferPool design — sync.Pool of bytes.Buffer, reset on return, discard oversized | Accepted |
@@ -66,3 +66,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0048](0048-workerpool-close.md) | `workerpool.Stop` → `Close`, `ErrPoolClosed` → `ErrClosed` — one shutdown verb for the module, but `ctx` stays: the pool is the only shutdown that waits on work the caller wrote | Accepted |
 | [0049](0049-pubsub-reshape.md) | the pubsub reshape — context-scoped subscriptions, a `Publish` that reports without ever blocking, and a three-valued slow-subscriber policy; `topic` kept against the ledger's shorthand | Accepted |
 | [0050](0050-metrics-without-the-sdk.md) | metrics without the SDK — the exposition format written directly, `New() *Recorder` replacing `prometheus.Registerer`, and ring 3 down to one entry; nine modules left the graph | Accepted |
+| [0051](0051-lifecycle-shutdown-timeout.md) | a shutdown deadline in `WaitForSignals` — explicit rather than invented, measured from the signal, and `0` still means none; ADR-0025's reasoning preserved, its conclusion overturned | Accepted |

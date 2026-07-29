@@ -181,7 +181,7 @@ func TestWaitForSignalsRunsShutdownOnSignal(t *testing.T) {
 	ran := false
 	Register(func(context.Context) error { ran = true; return nil })
 
-	WaitForSignals(os.Interrupt, syscall.SIGTERM)
+	WaitForSignals(0, os.Interrupt, syscall.SIGTERM)
 
 	require.True(t, ran, "the signal triggers Shutdown")
 	require.Equal(t, []os.Signal{os.Interrupt, syscall.SIGTERM}, *gotSigs,
@@ -193,7 +193,7 @@ func TestWaitForSignalsDefaultsToInterruptAndTerm(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	swapStd(t)
 	gotSigs, _ := swapSignals(t, os.Interrupt)
-	WaitForSignals()
+	WaitForSignals(0)
 	require.Equal(t, []os.Signal{os.Interrupt, syscall.SIGTERM}, *gotSigs,
 		"no arguments defaults to the common termination pair")
 }
@@ -208,7 +208,7 @@ func TestTriggerUnblocksPendingWaitForSignals(t *testing.T) {
 	returned := make(chan struct{})
 	go func() {
 		defer close(returned)
-		WaitForSignals() // no signal will ever be delivered
+		WaitForSignals(0) // no signal will ever be delivered
 	}()
 
 	Trigger()
@@ -228,7 +228,7 @@ func TestTriggerBeforeWaitForSignalsIsNotALostWakeup(t *testing.T) {
 	Register(func(context.Context) error { ran = true; return nil })
 
 	Trigger()
-	WaitForSignals() // returns immediately: the request latched in the channel
+	WaitForSignals(0) // returns immediately: the request latched in the channel
 
 	require.True(t, ran, "a Trigger that arrived first is latched, not dropped")
 }
@@ -248,7 +248,7 @@ func TestTriggerIsIdempotentAndConcurrencySafe(t *testing.T) {
 
 	var runs atomic.Int32
 	Register(func(context.Context) error { runs.Add(1); return nil })
-	WaitForSignals()
+	WaitForSignals(0)
 	Trigger() // still a no-op after the shutdown has run
 	require.Equal(t, int32(1), runs.Load(), "however many triggers, one shutdown")
 }
@@ -297,9 +297,138 @@ func TestWaitForSignalsLogsShutdownError(t *testing.T) {
 	t.Cleanup(func() { slog.SetDefault(orig) })
 
 	Register(func(context.Context) error { return errors.New("db close failed") })
-	WaitForSignals()
+	WaitForSignals(0)
 
 	require.Len(t, *records, 1, "a failing shutdown is logged before WaitForSignals returns")
 	require.Equal(t, "lifecycle: shutdown error", (*records)[0].Message)
 	require.Equal(t, slog.LevelError, (*records)[0].Level)
+}
+
+// --- the shutdown deadline (13.7, ADR-0051) --------------------------------
+
+// TestWaitForSignalsGivesHooksTheDeadline is the substance of the signature
+// change: the timeout is not merely accepted, it reaches the hooks as their
+// context's deadline.
+func TestWaitForSignalsGivesHooksTheDeadline(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	swapStd(t)
+	swapSignals(t, os.Interrupt)
+
+	var (
+		hadDeadline bool
+		remaining   time.Duration
+	)
+	Register(func(ctx context.Context) error {
+		deadline, ok := ctx.Deadline()
+		hadDeadline = ok
+		remaining = time.Until(deadline)
+		return nil
+	})
+
+	WaitForSignals(30 * time.Second)
+
+	require.True(t, hadDeadline, "a positive timeout must reach the hook as a deadline")
+	require.Positive(t, remaining, "the deadline must still be in the future when the hook runs")
+	require.LessOrEqual(t, remaining, 30*time.Second)
+	// A generous floor: this asserts the deadline came from the timeout rather
+	// than from something much shorter, without depending on clock resolution
+	// (ADR-0037 — this box cannot measure sub-millisecond intervals).
+	require.Greater(t, remaining, 20*time.Second)
+}
+
+// TestZeroTimeoutImposesNoDeadline pins the escape hatch ADR-0051 keeps from
+// ADR-0025: where the operator has already configured a grace period, the
+// library must not invent a second one.
+func TestZeroTimeoutImposesNoDeadline(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	swapStd(t)
+	swapSignals(t, os.Interrupt)
+
+	var sawDeadline bool
+	Register(func(ctx context.Context) error {
+		_, sawDeadline = ctx.Deadline()
+		return nil
+	})
+
+	WaitForSignals(0)
+
+	require.False(t, sawDeadline, "timeout 0 must leave hooks with an unbounded context")
+}
+
+// TestNegativeTimeoutPanics — a negative duration cannot mean anything, and a
+// silently-ignored one would look like "no deadline" while reading as a bound
+// (ADR-0005: loud at the call).
+func TestNegativeTimeoutPanics(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	require.PanicsWithValue(t, "lifecycle: negative shutdown timeout", func() {
+		WaitForSignals(-1)
+	})
+}
+
+// TestDeadlineBoundsASlowHookAndLaterHooksStillRun is the behaviour the timeout
+// exists for, and the half that is easy to get wrong: an expired deadline must
+// not abandon the rest of the sequence. A hook that ignores its context still
+// runs to completion — that is the hook's choice, per ADR-0025 — so the bound is
+// cooperative, and this pins both halves.
+func TestDeadlineBoundsASlowHookAndLaterHooksStillRun(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	swapStd(t)
+	swapSignals(t, os.Interrupt)
+
+	var laterHookRan bool
+	// Registered first, so LIFO runs it last.
+	Register(func(context.Context) error {
+		laterHookRan = true
+		return nil
+	})
+	Register(func(ctx context.Context) error {
+		<-ctx.Done() // honours the deadline instead of blocking forever
+		return ctx.Err()
+	})
+
+	start := time.Now()
+	WaitForSignals(50 * time.Millisecond)
+	elapsed := time.Since(start)
+
+	require.True(t, laterHookRan, "an expired deadline must not skip the remaining hooks")
+	require.Less(t, elapsed, 5*time.Second, "the slow hook must have been released by the deadline")
+}
+
+// TestDeadlineStartsWhenTheSignalArrives pins a detail with real consequences: a
+// deadline derived at call time would spend the process's entire uptime before
+// shutdown began, so a long-running service would get no grace period at all.
+// The wait is unblocked by Trigger after a delay, and the hook must still see
+// close to the full budget.
+func TestDeadlineStartsWhenTheSignalArrives(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	swapStd(t)
+	swapSilentSignals(t) // only Trigger can unblock the wait
+
+	const budget = 2 * time.Second
+	remaining := make(chan time.Duration, 1)
+	Register(func(ctx context.Context) error {
+		deadline, ok := ctx.Deadline()
+		require.True(t, ok)
+		remaining <- time.Until(deadline)
+		return nil
+	})
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		WaitForSignals(budget)
+	}()
+
+	// Sit in the wait for a good fraction of the budget before waking it.
+	time.Sleep(500 * time.Millisecond)
+	Trigger()
+
+	select {
+	case got := <-remaining:
+		require.Greater(t, got, budget-400*time.Millisecond,
+			"the budget must start at the signal, not at the call — waiting must not consume it")
+	case <-time.After(5 * time.Second):
+		t.Fatal("hook never ran")
+	}
+	<-done
 }

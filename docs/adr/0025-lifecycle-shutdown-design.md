@@ -1,6 +1,13 @@
 # ADR-0025: lifecycle.GracefulShutdown design — LIFO hooks, exactly-once convergent Shutdown, no hidden timeout
 
-- **Status:** Accepted
+- **Status:** Accepted — the **"no hidden timeout"** decision and the rejected default-timeout
+  alternative are superseded by [ADR-0051](0051-lifecycle-shutdown-timeout.md):
+  `WaitForSignals` takes a `timeout` as its first parameter. **The reasoning below is preserved
+  rather than replaced** — a library must not invent a deadline the operator did not set, which is
+  why the timeout is a required parameter and why `0` still means no deadline at all. Everything
+  else here stands: LIFO ordering, sequential hooks, run-every-hook with `errors.Join`,
+  exactly-once convergent `Shutdown`, the loud panics, zero owned goroutines, and the
+  singleton-with-seams testability pattern.
 - **Date:** 2026-07-15
 - **Deciders:** Maintainer (Daniel Polo), architect agent
 - **Related:** spec §1 (zero goroutine leaks), §2 feature 21, §3 (the intake's usage example), §5
@@ -72,6 +79,15 @@ process-wide goroutine ever starts under test (goleak stays exact).
 - **A default shutdown timeout in WaitForSignals** — protects against a hung hook, but invents a
   deadline the operator didn't set and the platform already enforces one level up. Rejected;
   documented escape hatch (deadline context + `Shutdown`).
+  > *Annotated 2026-07-29 (ADR-0051): **a timeout was subsequently added, and this entry names
+  > precisely why it took a major to do it.*** The objection here is to a **default** — a deadline
+  > "the operator didn't set". ADR-0051 does not add one: the timeout is a **required first
+  > parameter**, so there is nothing to inherit by accident, and **`0` still means no deadline**,
+  > which keeps the platform-escalation posture this entry defends available and documented as the
+  > right choice under systemd or Kubernetes. So the conclusion reversed while the reason held —
+  > and the reason is what shaped the replacement. Adding it in v1 would have required either a
+  > default (this objection) or a second function (rejected in ADR-0048's terms), which is exactly
+  > why it waited for a signature change.
 - **An exported `Coordinator` struct** — better isolation than a singleton, but not the frozen API.
   Additive later if multi-coordinator scenarios appear; the internal type already exists.
 - **Force-exit on a second signal** (the "impatient Ctrl+C" convention) — useful interactively, but

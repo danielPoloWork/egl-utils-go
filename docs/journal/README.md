@@ -19,6 +19,15 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-29 — 13.7: overturning a deviation by reading what it actually said](2026/07/2026-07-29-m13-lifecycle-timeout.md) —
+  roadmap 13.7. `WaitForSignals` takes a shutdown timeout. The only M13 item that overturns a
+  *deliberate* documented deviation — and it turned out ADR-0025's objections were narrower than its
+  heading: it refused a deadline that was hidden, invented, default and silent, all of which describe
+  one the **caller did not choose**. So the reasoning is preserved and only the conclusion reverses,
+  and it is that reasoning which decided `0` still means no deadline — the right posture where a
+  platform grace period already exists. First item where the gap-column tie-breaker pointed *at* the
+  change rather than away from it. The deadline starts at the signal, not the call: verified by moving
+  the derivation earlier and watching the test fail. ADR-0051; ledger item 21 discharged.
 - [2026-07-29 — 13.6: nine modules for two metrics, and the 37 families nobody chose](2026/07/2026-07-29-m13-metrics-no-sdk.md) —
   roadmap 13.6. The Prometheus SDK leaves the module: `metrics` writes text exposition format directly
   and `Prometheus(reg)` becomes `metrics.New()` with `Middleware()`/`Handler()` methods. Nine of
