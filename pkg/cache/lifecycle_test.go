@@ -22,7 +22,7 @@ const thousandCaches = 1000
 // point of these tests is the goroutine's lifecycle, not its work.
 func newTestCache(t *testing.T) *cache.Cache[string, int] {
 	t.Helper()
-	return cache.NewInMemory[string, int](time.Minute, cache.WithCleanupInterval(time.Hour))
+	return cache.New[string, int](time.Minute, cache.WithCleanupInterval(time.Hour))
 }
 
 // TestThousandCachesCreateAndClose is the headline lifecycle assertion: a
@@ -44,8 +44,8 @@ func TestThousandCachesCreateAndClose(t *testing.T) {
 
 	// Every cache is independently functional, not merely constructed.
 	for i, c := range caches {
-		got, err := c.Get(fmt.Sprintf("key-%d", i))
-		require.NoErrorf(t, err, "cache %d lost its entry", i)
+		got, ok := c.Get(fmt.Sprintf("key-%d", i))
+		require.Truef(t, ok, "cache %d lost its entry", i)
 		require.Equal(t, i, got)
 	}
 
@@ -100,11 +100,11 @@ func TestThousandCachesConcurrentCreateAndClose(t *testing.T) {
 		go func(w int) {
 			defer wg.Done()
 			for i := range thousandCaches / workers {
-				c := cache.NewInMemory[string, int](time.Minute, cache.WithCleanupInterval(time.Hour))
+				c := cache.New[string, int](time.Minute, cache.WithCleanupInterval(time.Hour))
 				key := fmt.Sprintf("w%d-k%d", w, i)
 				c.Set(key, i)
-				if _, err := c.Get(key); err != nil {
-					t.Errorf("worker %d: entry %s missing: %v", w, key, err)
+				if _, ok := c.Get(key); !ok {
+					t.Errorf("worker %d: entry %s missing", w, key)
 				}
 				c.Close()
 			}
@@ -142,8 +142,8 @@ func TestThousandCachesRepeatedCloseIsIdempotent(t *testing.T) {
 	for i, c := range caches {
 		key := fmt.Sprintf("after-close-%d", i)
 		c.Set(key, i)
-		got, err := c.Get(key)
-		require.NoErrorf(t, err, "cache %d unusable after Close", i)
+		got, ok := c.Get(key)
+		require.Truef(t, ok, "cache %d unusable after Close", i)
 		require.Equal(t, i, got)
 	}
 }
@@ -162,15 +162,15 @@ func TestShardedKeysAllRoundTrip(t *testing.T) {
 		c.Set(fmt.Sprintf("key-%d", i), i)
 	}
 	for i := range keys {
-		got, err := c.Get(fmt.Sprintf("key-%d", i))
-		require.NoErrorf(t, err, "key-%d did not survive sharding", i)
+		got, ok := c.Get(fmt.Sprintf("key-%d", i))
+		require.Truef(t, ok, "key-%d did not survive sharding", i)
 		require.Equal(t, i, got)
 	}
 	for i := range keys {
 		c.Delete(fmt.Sprintf("key-%d", i))
 	}
 	for i := range keys {
-		_, err := c.Get(fmt.Sprintf("key-%d", i))
-		require.ErrorIsf(t, err, cache.ErrNotFound, "key-%d survived Delete", i)
+		_, ok := c.Get(fmt.Sprintf("key-%d", i))
+		require.Falsef(t, ok, "key-%d survived Delete", i)
 	}
 }

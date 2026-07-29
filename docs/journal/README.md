@@ -19,6 +19,12 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-28 — 13.3: the error channel that carried one bit](2026/07/2026-07-28-m13-cache-comma-ok.md) —
+  roadmap 13.3. `cache.Get` → `(V, bool)`, `NewInMemory` → `New`, `ErrNotFound` deleted rather than
+  kept (a sentinel nothing returns makes `errors.Is` compile and never be true — a compile break
+  turned into silent falsehood). **ADR-0021 is only partially superseded, and the surviving half is
+  load-bearing:** expiry judged at call time is what makes the boolean sound.
+  *A grep found two call sites; the compiler found four.*
 - [2026-07-28 — 13.2: errx, and the 276 nanoseconds v1 spent looking for a stack it already had](2026/07/2026-07-28-m13-errx-opt-in-stacks.md) —
   roadmap 13.2. 13.1's PR was blocked by a **red required check**, not a missing click: the `pkg/`
   move left CI's only two **hand-written** package paths behind, and the nightly one would have

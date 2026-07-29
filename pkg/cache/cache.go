@@ -1,6 +1,13 @@
 // Package cache provides a generic in-memory key-value cache with per-cache
 // TTL expiry and a periodic cleanup goroutine.
 //
+// Get follows the comma-ok idiom: it reports presence with a bool rather than an
+// error, because a cache miss is an ordinary outcome and not a failure.
+//
+//	if v, ok := c.Get(key); ok {
+//		use(v)
+//	}
+//
 // Every entry expires ttl after it was Set. An expired entry is never returned
 // — Get reports it as a miss the instant its deadline passes, regardless of
 // when the sweeper last ran — so the cleanup goroutine is purely a memory
@@ -16,21 +23,16 @@
 package cache
 
 import (
-	"errors"
 	"hash/maphash"
 	"sync"
 	"time"
 )
 
-// ErrNotFound is returned by Get when the key is absent or its entry has
-// expired.
-var ErrNotFound = errors.New("cache: not found")
-
 type options struct {
 	cleanupInterval time.Duration
 }
 
-// Option configures NewInMemory.
+// Option configures New.
 type Option func(*options)
 
 // WithCleanupInterval sets how often the sweeper scans for expired entries
@@ -74,7 +76,7 @@ type shard[K comparable, V any] struct {
 	entries map[K]entry[V]
 }
 
-// Cache is a thread-safe in-memory TTL cache. Create it with NewInMemory; the
+// Cache is a thread-safe in-memory TTL cache. Create it with New; the
 // zero value is not usable.
 type Cache[K comparable, V any] struct {
 	shards [shardCount]shard[K, V]
@@ -100,14 +102,14 @@ func (c *Cache[K, V]) shardFor(key K) *shard[K, V] {
 	return &c.shards[maphash.Comparable(c.seed, key)&(shardCount-1)]
 }
 
-// NewInMemory returns a cache whose entries expire ttl after they are set, and
-// starts the single cleanup goroutine that reclaims expired entries every
-// cleanup interval (default ttl, override with WithCleanupInterval). Call
-// Close when the cache is no longer needed, or the sweeper goroutine lives for
-// the life of the process. NewInMemory panics if ttl is not positive — a
-// cache in which nothing may live has no meaning, and the loud failure points
-// at the wiring bug (ADR-0005 idiom).
-func NewInMemory[K comparable, V any](ttl time.Duration, opts ...Option) *Cache[K, V] {
+// New returns a cache whose entries expire ttl after they are set, and starts
+// the single cleanup goroutine that reclaims expired entries every cleanup
+// interval (default ttl, override with WithCleanupInterval). Call Close when the
+// cache is no longer needed, or the sweeper goroutine lives for the life of the
+// process. New panics if ttl is not positive — a cache in which nothing may live
+// has no meaning, and the loud failure points at the wiring bug (ADR-0005
+// idiom).
+func New[K comparable, V any](ttl time.Duration, opts ...Option) *Cache[K, V] {
 	if ttl <= 0 {
 		panic("cache: non-positive TTL")
 	}
@@ -138,10 +140,18 @@ func (c *Cache[K, V]) Set(key K, value V) {
 	s.mu.Unlock()
 }
 
-// Get returns the live value stored under key, or the zero V and ErrNotFound
-// when the key is absent or its entry has expired — expiry is judged against
-// the deadline at call time, never against the sweeper's schedule.
-func (c *Cache[K, V]) Get(key K) (V, error) {
+// Get returns the live value stored under key and true, or the zero V and false
+// when the key is absent or its entry has expired.
+//
+// A present-but-expired entry reads as absent: expiry is judged against the
+// deadline at call time, never against the sweeper's schedule, so the bool can
+// never report an entry the caller must not use (ADR-0021). Absence and expiry
+// are deliberately indistinguishable — they were already the same outcome when
+// this returned an error, and a cache that reveals which one occurred is
+// promising something about its eviction timing.
+//
+// Create the cache with New; Get on a zero Cache panics.
+func (c *Cache[K, V]) Get(key K) (V, bool) {
 	s := c.shardFor(key)
 	s.mu.RLock()
 	e, ok := s.entries[key]
@@ -151,9 +161,9 @@ func (c *Cache[K, V]) Get(key K) (V, error) {
 	// critical section for nothing.
 	if !ok || !c.now().Before(e.expiresAt) {
 		var zero V
-		return zero, ErrNotFound
+		return zero, false
 	}
-	return e.value, nil
+	return e.value, true
 }
 
 // Delete removes key from the cache; deleting an absent key is a no-op.

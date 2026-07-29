@@ -62,7 +62,8 @@ because upstream would silently accept every weak value in the table above.
   test (`TestBcryptWouldAcceptWeakCosts`) pins that upstream behaviour so the justification stays
   checkable and a future upstream change surfaces as a test failure rather than a stale comment.
 - **Panicking on an out-of-range cost**, per ADR-0005's loud-by-default and the precedent of
-  `NewLimiter`, `cache.NewInMemory`, and `Cors`, which all panic on invalid configuration. Rejected,
+  `NewLimiter`, `cache.New` (spelled `cache.NewInMemory` when this was written; renamed by
+  [ADR-0047](0047-cache-comma-ok.md)), and `Cors`, which all panic on invalid configuration. Rejected,
   and the distinction is structural rather than stylistic: those are **constructors with no error
   channel**, so a panic is their only loud option, and they run once at wiring time. `HashPasswordCost`
   already returns an error, is called per hash rather than per process, and sits on a request path

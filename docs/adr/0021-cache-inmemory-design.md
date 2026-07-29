@@ -1,6 +1,8 @@
 # ADR-0021: cache.InMemory design — lazy expiry on Get, one sweeper goroutine, deterministic Close
 
-- **Status:** Accepted
+- **Status:** Accepted — `Get`'s signature and the constructor name superseded by ADR-0047
+  (`Get` → `(V, bool)`, `NewInMemory` → `New`, `ErrNotFound` removed). Everything else here stands,
+  including the lazy-expiry-on-Get model, which ADR-0047 depends on rather than replaces.
 - **Date:** 2026-07-15
 - **Deciders:** Maintainer (Daniel Polo), architect agent
 - **Related:** spec §1 (zero goroutine leaks, allocation-conscious hot paths), §2 feature 17, §5

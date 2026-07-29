@@ -36,7 +36,7 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0018](0018-config-loader-design.md) | config.Loader design — generic Load, extension-driven format, gopkg.in/yaml.v3 selected | Accepted |
 | [0019](0019-logger-structured-design.md) | logger.Structured design — slog JSON handler, functional options, default keys kept | Accepted |
 | [0020](0020-logger-context-design.md) | logger.Context design — Field alias, accumulating context fields, slog.Default base | Accepted |
-| [0021](0021-cache-inmemory-design.md) | cache.InMemory design — lazy expiry on Get, one sweeper goroutine, deterministic Close | Accepted |
+| [0021](0021-cache-inmemory-design.md) | cache.InMemory design — lazy expiry on Get, one sweeper goroutine, deterministic Close | Accepted (`Get` signature + constructor name superseded by ADR-0047) |
 | [0022](0022-db-transaction-design.md) | db.Transaction design — rollback on error and panic, re-panic, joined rollback errors | Accepted |
 | [0023](0023-validator-struct-design.md) | validator.Struct design — reflection tag grammar, literal rules, panic on tag misuse | Accepted |
 | [0024](0024-hash-password-design.md) | hash password design — bcrypt at default cost, per-hash salt, constant-time verify | Accepted |
@@ -62,3 +62,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0044](0044-canonical-header-key-for-map-access.md) | canonical header key for map access — 2 allocs/request removed without touching HeaderName's exported value, so a PATCH rather than the MAJOR 10.10 assumed | Accepted |
 | [0045](0045-pkg-layout-and-v2.md) | feature packages under `pkg/` and the module's second major — the Maven tree built, measured at 86-char imports, and reverted; `/v2` empties the ADR-0030 ledger | Accepted |
 | [0046](0046-errx-opt-in-stacks.md) | errx — off the stdlib name, stack capture opt-in via `WithStack`, traces as `[]Frame` resolved lazily; measuring showed v1's `Wrap` paid 276 ns to *find* a stack it already had | Accepted |
+| [0047](0047-cache-comma-ok.md) | `cache.Get` → `(V, bool)`, `NewInMemory` → `New`, `ErrNotFound` removed — the error channel carried one bit, and Go spells that bit comma-ok | Accepted |

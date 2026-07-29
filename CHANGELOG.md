@@ -21,6 +21,16 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- **BREAKING** — `cache.Get` now returns **`(V, bool)`** instead of `(V, error)`, `NewInMemory` is
+  now **`New`**, and **`ErrNotFound` is removed**
+  ([ADR-0047](docs/adr/0047-cache-comma-ok.md), supersedes ADR-0021's `Get` signature and
+  constructor name). `ErrNotFound` was the only error `Get` could return, so the error channel
+  carried a single bit — which Go spells comma-ok. Migration:
+  `v, err := c.Get(k); if err == nil` → `v, ok := c.Get(k); if ok`;
+  `cache.NewInMemory[K, V](ttl)` → `cache.New[K, V](ttl)`. **No behavioural change** — the condition
+  deciding presence is unchanged, a present-but-expired entry still reads as absent, and absence and
+  expiry remain deliberately indistinguishable. The sentinel is removed rather than kept, because
+  `errors.Is(err, cache.ErrNotFound)` would otherwise still compile and simply never be true.
 - **BREAKING** — the `errors` package is now **`errx`** (`…/v2/pkg/errx`), and **stack capture is
   opt-in** ([ADR-0046](docs/adr/0046-errx-opt-in-stacks.md), supersedes ADR-0029). `Wrap`/`Wrapf`
   attach a message and no longer capture a call stack; request one explicitly with the new

@@ -19,7 +19,7 @@ func (f *fakeNow) advance(d time.Duration) { f.t = f.t.Add(d) }
 // itself (after its goleak defer, so Close runs first — defers are LIFO).
 func newFakeCache(t *testing.T, ttl time.Duration) (*Cache[string, int], *fakeNow) {
 	t.Helper()
-	c := NewInMemory[string, int](ttl, WithCleanupInterval(time.Hour))
+	c := New[string, int](ttl, WithCleanupInterval(time.Hour))
 	clk := &fakeNow{t: time.Unix(1_000_000, 0)}
 	c.now = clk.now
 	return c, clk
@@ -46,12 +46,12 @@ func TestExpiryBoundary(t *testing.T) {
 	c.Set("k", 1)
 
 	clk.advance(time.Minute - time.Nanosecond)
-	_, err := c.Get("k")
-	require.NoError(t, err, "one nanosecond before the deadline the entry is live")
+	_, ok := c.Get("k")
+	require.True(t, ok, "one nanosecond before the deadline the entry is live")
 
 	clk.advance(time.Nanosecond) // exactly at the deadline
-	_, err = c.Get("k")
-	require.ErrorIs(t, err, ErrNotFound, "at the deadline the entry is expired (deadline is exclusive)")
+	_, ok = c.Get("k")
+	require.False(t, ok, "at the deadline the entry is expired (deadline is exclusive)")
 }
 
 func TestRemoveExpiredSweepsOnlyExpired(t *testing.T) {
@@ -66,16 +66,16 @@ func TestRemoveExpiredSweepsOnlyExpired(t *testing.T) {
 	c.removeExpired()
 
 	require.Equal(t, 1, c.length(), "only the expired entry is reclaimed")
-	_, err := c.Get("young")
-	require.NoError(t, err)
-	_, err = c.Get("old")
-	require.ErrorIs(t, err, ErrNotFound)
+	_, ok := c.Get("young")
+	require.True(t, ok)
+	_, ok = c.Get("old")
+	require.False(t, ok)
 }
 
 func TestSweeperReclaimsInBackground(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	// Real clock, tight interval: the sweeper (not Get) must shrink the map.
-	c := NewInMemory[string, int](10*time.Millisecond, WithCleanupInterval(5*time.Millisecond))
+	c := New[string, int](10*time.Millisecond, WithCleanupInterval(5*time.Millisecond))
 	defer c.Close()
 	for i := range 32 {
 		c.Set(string(rune('a'+i)), i)
