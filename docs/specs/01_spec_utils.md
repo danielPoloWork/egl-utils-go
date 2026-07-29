@@ -99,6 +99,20 @@
 >   remain deliberately indistinguishable — they were already one outcome under the error API, and
 >   separating them would promise something about eviction timing. ROADMAP 13.3.
 
+> - *2026-07-29* — **`workerpool.Stop` becomes `Close` and `ErrPoolClosed` becomes `ErrClosed`.
+>   SUPERSEDED, not amended**, by [ADR-0048](../adr/0048-workerpool-close.md), which supersedes
+>   **only those two names** in [ADR-0005](../adr/0005-workerpool-design.md) — every semantic that ADR
+>   decided is preserved. `/v2` boundary ([ADR-0030](../adr/0030-spec-v2-reconciliation.md) §2,
+>   item 1). Two of the module's three goroutine-owning types already said `Close`; `workerpool` was
+>   the outlier, and a consumer wiring all three had to remember which one was not. **`Close` keeps
+>   its `ctx`**, against the literal reading of the v2 gap-analysis target `Close() error`: that
+>   table's own gap column flags the method and sentinel names and never the parameter, and dropping
+>   the context would make a `Close` that waits on caller-supplied tasks choose between an unbounded
+>   wait and a hidden timeout — which [ADR-0025](../adr/0025-lifecycle-shutdown-design.md) refused on
+>   purpose. The vocabulary is therefore uniform on the verb and deliberately not on the signature:
+>   the pool is the only shutdown in the module that waits for work the caller wrote. Note the
+>   accepted cost — **`*Pool` does not satisfy `io.Closer`**. ROADMAP 13.4.
+
 ## 1. Objective & Business Context
 
 Provide a production-ready Go utilities module — advanced concurrency primitives,
@@ -111,7 +125,7 @@ allocation-conscious hot paths via pointer discipline and sync.Pool object reuse
 
 ## 2. Functional Requirements
 
-- workerpool.Pool — configurable goroutine pool with a bounded task queue and explicit Submit/Stop lifecycle
+- workerpool.Pool — configurable goroutine pool with a bounded task queue and explicit Submit/Close lifecycle
 - pubsub.Broker — in-memory publish-subscribe broker over Go channels with filtered subscriptions
 - fanin.Merge — merge multiple input channels into a single output channel without goroutine leaks
 - fanout.Split — distribute messages from one source channel to multiple destination channels in parallel
@@ -201,7 +215,7 @@ Consumers import via `import "github.com/danielPoloWork/egl-utils-go/v2/pkg/work
 module root as `import "github.com/danielPoloWork/egl-utils-go/v2"` for `utils.Version`. The public surface:
 
 - utils (root): const Version — the released version, kept in lockstep with the tag and the changelog
-- workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Stop(ctx) error; WithNonBlockingSubmit() Option; WithPanicHandler(func(recovered any)) Option; Task func(ctx); ErrQueueFull; ErrPoolClosed
+- workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Close(ctx) error; WithNonBlockingSubmit() Option; WithPanicHandler(func(recovered any)) Option; Task func(ctx); ErrQueueFull; ErrClosed
 - pubsub: NewBroker[T any](opts ...Option[T]) *Broker[T] — note the option type is **generic**; (*Broker[T]).Publish(topic string, msg T); (*Broker[T]).Subscribe(topic string, filter func(T) bool) (<-chan T, func()); (*Broker[T]).Close() — additive shutdown surface (ADR-0006); WithSubscriberBuffer[T](n int) Option[T]; WithDropHandler[T](func(topic string, msg T)) Option[T]; WithDropOldest[T]() Option[T] (ADR-0039)
 - fanin: Merge[T any](ctx, ins ...<-chan T) <-chan T
 - fanout: Split[T any](ctx, in <-chan T, outs ...chan<- T)

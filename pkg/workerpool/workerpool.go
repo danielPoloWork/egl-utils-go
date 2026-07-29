@@ -5,9 +5,9 @@
 // growth.
 //
 // Lifecycle: New starts the workers immediately; Submit admits tasks until
-// Stop is called; Stop closes admission, drains every queued task, and joins
+// Close is called; Close closes admission, drains every queued task, and joins
 // the workers, honoring its context as a deadline. All types are safe for
-// concurrent use. Design decisions are recorded in ADR-0005.
+// concurrent use. Design decisions are recorded in ADR-0005 and ADR-0048.
 package workerpool
 
 import (
@@ -18,7 +18,7 @@ import (
 
 // Task is a unit of work executed by a worker goroutine. The context passed
 // to the task is the pool's execution context, not the Submit context: it is
-// canceled only when Stop's deadline expires (hard stop), signalling in-flight
+// canceled only when Close's deadline expires (hard stop), signalling in-flight
 // tasks to abandon work. A task that ignores its context can delay or prevent
 // full shutdown — that is the task's bug, not the pool's.
 type Task func(ctx context.Context)
@@ -29,8 +29,8 @@ var (
 	// WithNonBlockingSubmit and the task queue is at capacity.
 	ErrQueueFull = errors.New("workerpool: task queue is full")
 
-	// ErrPoolClosed is returned by Submit after Stop has been called.
-	ErrPoolClosed = errors.New("workerpool: pool is closed")
+	// ErrClosed is returned by Submit after Close has been called.
+	ErrClosed = errors.New("workerpool: pool is closed")
 )
 
 // Pool is a fixed-size worker pool with a bounded task queue. The zero value
@@ -43,7 +43,7 @@ type Pool struct {
 	execCtx  context.Context // passed to every task; canceled on hard stop
 	hardStop context.CancelFunc
 
-	// mu serialises Submit bodies against Stop's close(queue): Stop flips
+	// mu serialises Submit bodies against Close's close(queue): Close flips
 	// closed under the write lock, so once it holds the lock no Submit can be
 	// mid-send and closing the channel is provably race-free.
 	mu     sync.RWMutex
@@ -56,7 +56,7 @@ type Pool struct {
 // up to queueSize pending tasks (queueSize 0 gives direct hand-off). It
 // panics if workers <= 0 or queueSize < 0 — invalid sizes are programming
 // errors, not runtime conditions. Workers start immediately and idle until
-// tasks arrive; release them with Stop.
+// tasks arrive; release them with Close.
 func New(workers, queueSize int, opts ...Option) *Pool {
 	if workers <= 0 {
 		panic("workerpool: workers must be > 0")
@@ -82,12 +82,12 @@ func New(workers, queueSize int, opts ...Option) *Pool {
 
 // Submit hands task to the pool. Under the default blocking policy it waits
 // until queue space frees or ctx is done; under WithNonBlockingSubmit it
-// returns ErrQueueFull instead of waiting. After Stop it returns
-// ErrPoolClosed. Submit only ever blocks on queue admission, never on task
-// execution. A nil task panics.
+// returns ErrQueueFull instead of waiting. After Close it returns ErrClosed.
+// Submit only ever blocks on queue admission, never on task execution. A nil
+// task panics.
 //
-// A Submit already blocked on a full queue when Stop is invoked completes its
-// admission and the task is drained normally; a Submit arriving after Stop is
+// A Submit already blocked on a full queue when Close is invoked completes its
+// admission and the task is drained normally; a Submit arriving after Close is
 // rejected.
 func (p *Pool) Submit(ctx context.Context, task Task) error {
 	if task == nil {
@@ -96,7 +96,7 @@ func (p *Pool) Submit(ctx context.Context, task Task) error {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	if p.closed {
-		return ErrPoolClosed
+		return ErrClosed
 	}
 	if p.nonBlock {
 		select {
@@ -114,13 +114,17 @@ func (p *Pool) Submit(ctx context.Context, task Task) error {
 	}
 }
 
-// Stop closes the pool: no new tasks are admitted, already-queued tasks are
-// drained, and Stop waits for every worker to finish. If ctx expires first,
+// Close closes the pool: no new tasks are admitted, already-queued tasks are
+// drained, and Close waits for every worker to finish. If ctx expires first,
 // the pool's execution context is canceled so in-flight tasks observe the
-// hard stop, and Stop returns ctx.Err() without waiting further — workers
-// still exit once their current task returns. Stop is idempotent and safe for
+// hard stop, and Close returns ctx.Err() without waiting further — workers
+// still exit once their current task returns. Close is idempotent and safe for
 // concurrent use; every caller waits for the drain.
-func (p *Pool) Stop(ctx context.Context) error {
+//
+// Close takes a context deliberately, unlike cache.Close and pubsub.Close: it
+// is the only shutdown in the module that waits for caller-supplied work to
+// finish, so the caller — not the pool — bounds that wait (ADR-0025, ADR-0048).
+func (p *Pool) Close(ctx context.Context) error {
 	p.mu.Lock()
 	if !p.closed {
 		p.closed = true

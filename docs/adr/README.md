@@ -63,3 +63,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0045](0045-pkg-layout-and-v2.md) | feature packages under `pkg/` and the module's second major — the Maven tree built, measured at 86-char imports, and reverted; `/v2` empties the ADR-0030 ledger | Accepted |
 | [0046](0046-errx-opt-in-stacks.md) | errx — off the stdlib name, stack capture opt-in via `WithStack`, traces as `[]Frame` resolved lazily; measuring showed v1's `Wrap` paid 276 ns to *find* a stack it already had | Accepted |
 | [0047](0047-cache-comma-ok.md) | `cache.Get` → `(V, bool)`, `NewInMemory` → `New`, `ErrNotFound` removed — the error channel carried one bit, and Go spells that bit comma-ok | Accepted |
+| [0048](0048-workerpool-close.md) | `workerpool.Stop` → `Close`, `ErrPoolClosed` → `ErrClosed` — one shutdown verb for the module, but `ctx` stays: the pool is the only shutdown that waits on work the caller wrote | Accepted |

@@ -19,6 +19,13 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-29 — 13.4: one shutdown verb, and the parameter that should not follow it](2026/07/2026-07-29-m13-workerpool-close.md) —
+  roadmap 13.4. `workerpool.Stop` → `Close`, `ErrPoolClosed` → `ErrClosed`. The vocabulary sweep found
+  exactly one outlier of three shutdowns. `Close` keeps its `ctx` against the ledger's literal
+  `Close() error`, so v2 is uniform on the verb and deliberately not on the signature — the pool is the
+  only shutdown that waits on work the caller wrote. Cost stated out loud: `*Pool` is not an
+  `io.Closer`. No new test, because the rename created no new invariant; and a `\bStop\b` rename has
+  two blind spots of the same shape — `b.StopTimer()` and `TestStop…` names.
 - [2026-07-28 — 13.3: the error channel that carried one bit](2026/07/2026-07-28-m13-cache-comma-ok.md) —
   roadmap 13.3. `cache.Get` → `(V, bool)`, `NewInMemory` → `New`, `ErrNotFound` deleted rather than
   kept (a sentinel nothing returns makes `errors.Is` compile and never be true — a compile break

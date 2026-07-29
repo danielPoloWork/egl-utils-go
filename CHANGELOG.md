@@ -21,6 +21,15 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- **BREAKING** — `workerpool.Stop` is now **`Close`** and `ErrPoolClosed` is now **`ErrClosed`**
+  ([ADR-0048](docs/adr/0048-workerpool-close.md), supersedes those two names in ADR-0005 and nothing
+  else). Two of the module's three goroutine-owning types already said `Close`; the pool was the
+  outlier. Migration: `p.Stop(ctx)` → `p.Close(ctx)`; `workerpool.ErrPoolClosed` →
+  `workerpool.ErrClosed`. **`Close` keeps its context** — the pool is the only shutdown in the module
+  that waits for caller-supplied work, so the caller bounds that wait rather than the pool inventing a
+  hidden timeout (ADR-0025). The accepted cost: **`*Pool` does not satisfy `io.Closer`**. No
+  behavioural change — admission policy, idempotence, the drain guarantee and the panic policy are
+  byte-for-byte those of ADR-0005.
 - **BREAKING** — `cache.Get` now returns **`(V, bool)`** instead of `(V, error)`, `NewInMemory` is
   now **`New`**, and **`ErrNotFound` is removed**
   ([ADR-0047](docs/adr/0047-cache-comma-ok.md), supersedes ADR-0021's `Get` signature and
