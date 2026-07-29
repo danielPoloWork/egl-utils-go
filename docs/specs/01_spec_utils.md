@@ -135,6 +135,28 @@
 >   removing topic routing would be a feature deletion wearing a signature change's clothes.
 >   ROADMAP 13.5.
 
+> - *2026-07-29* — **the Prometheus SDK is gone from the module: `metrics` writes the exposition
+>   format directly, and §3's dependency budget loses a ring-3 entry. SUPERSEDED, not amended**, by
+>   [ADR-0050](../adr/0050-metrics-without-the-sdk.md), which supersedes the surface, the
+>   implementation and the dependency pin of [ADR-0027](../adr/0027-metrics-prometheus-design.md) —
+>   **that ADR's cardinality decisions stand and are re-enforced there** — and ring 3's membership in
+>   [ADR-0004](../adr/0004-runtime-dependency-policy.md), whose count of "exactly two runtime
+>   entries" is struck in place. `/v2` boundary
+>   ([ADR-0030](../adr/0030-spec-v2-reconciliation.md) §2, item 23). **This is the only Milestone 13
+>   item that changes the dependency graph, and the change is larger than one module: nine of
+>   eighteen left** (`client_golang`, `client_model` and the seven transitive requirements that
+>   existed only to serve them — `go.sum` 50 lines → 24). §5's metrics line becomes
+>   `New() *Recorder` with `Middleware()` and `Handler()` methods: the `prometheus.Registerer`
+>   parameter becomes ownership, which also closes a wart ADR-0027 had recorded rather than wanted —
+>   `Prometheus(myReg)` paired with a package-level `Handler()` served the *default* registry, so any
+>   custom registry silently exposed the wrong metrics. **The cost is stated rather than discovered:
+>   the endpoint no longer serves the 37 metric families `promhttp` supplied free** (29 `go_*`, 6
+>   `process_*`, 2 `promhttp_*` — measured, not assumed), so a consumer wanting runtime metrics
+>   imports a client library itself and mounts it at a second path, which puts those nine modules in
+>   the build that asked for them instead of in every consumer's. Conformance to the format is
+>   pinned by a golden file **captured from the reference encoder while it was still a dependency**,
+>   so the check outlives the library. ROADMAP 13.6.
+
 ## 1. Objective & Business Context
 
 Provide a production-ready Go utilities module — advanced concurrency primitives,
@@ -183,7 +205,7 @@ allocation-conscious hot paths via pointer discipline and sync.Pool object reuse
 - Zero goroutine leaks: every goroutine-spawning component stops via context or close(done); per-component leak assertions in tests (go.uber.org/goleak)
 - Race-free: go test -race green in CI on every PR — the canonical concurrency gate
 - Allocation-conscious hot paths: -benchmem benchmarks for pooled and middleware paths; syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun
-- Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + vetted few (prometheus/client_golang, a YAML parser); test-only deps: testify, goleak, rapid, prometheus/client_model (a direct require: the metrics test reads its `dto` types; it also arrives transitively through client_golang)
+- Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + one vetted third party (a YAML parser, `gopkg.in/yaml.v3`, for config.Load); test-only deps: testify, goleak, rapid. ADR-0050 removed both Prometheus modules with the /v2 major - `client_golang` from the runtime ring and `client_model` from the test-only ring - taking nine of the module's eighteen modules with them, since seven transitive requirements existed only to serve the metrics SDK
 - Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.25
 - Coverage: at least 85 percent line coverage enforced in CI **per package** (not as a module-wide average)
 - Compatibility: ~~SemVer, pre-1.0 milestone-driven; breaking changes to the public interface require a MAJOR-intent note in the PR~~ — **SUPERSEDED by [ADR-0042](../adr/0042-post-1.0-compatibility-contract.md)**: the module is post-1.0, and under the v1.0.0 commitment a breaking change is not mergeable into v1.x with a note — it is deferred to the `/v2` ledger (ADR-0030 §2). The struck text is the pre-1.0 regime, retained as the historical contract.
@@ -259,7 +281,7 @@ module root as `import "github.com/danielPoloWork/egl-utils-go/v2"` for `utils.V
 - hash: HashPassword(pw string) (string, error); HashPasswordCost(pw string, cost int) (string, error) (ADR-0032); CheckPassword(pw, hash string) error; Cost(hash string) (int, error); ErrMismatch; ErrPasswordTooLong; ErrInvalidCost
 - lifecycle: Register(fn func(ctx) error); WaitForSignals(sig ...os.Signal); Shutdown(ctx) error; Trigger() (ADR-0030)
 - health: Handler(checks ...Check) http.Handler — Check{Name string, Probe func(ctx) error}
-- metrics: Prometheus(reg prometheus.Registerer) func(http.Handler) http.Handler; Handler() http.Handler
+- metrics: New() *Recorder; (*Recorder).Middleware() func(http.Handler) http.Handler; (*Recorder).Handler() http.Handler — the exposition endpoint for that Recorder, Prometheus text format 0.0.4 written directly with no client library (ADR-0050)
 - syncpool: NewBufferPool() *BufferPool; (*BufferPool).Get() *bytes.Buffer; (*BufferPool).Put(*bytes.Buffer)
 - errx: Wrap(err error, msg string) error; Wrapf(err, format, args...) error — message only, no capture; WithStack(err error) error — opt-in capture, idempotent, nil-transparent; Frames(err error) []Frame — lazily resolved, nil when nothing was captured; Frame{Function, File string; Line int}; StackTracer interface{ StackTrace() []Frame } — the extension point Frames searches; errors.Is/As/Unwrap compatible (ADR-0046, supersedes ADR-0029)
 - Error model: exported sentinel errors per package (ErrQueueFull, ErrOpen, ErrLimited, ...); an ordinary absence is reported comma-ok rather than as a sentinel (ADR-0047); context cancellation surfaces ctx.Err(); all wrapping is errors.Is/As transparent

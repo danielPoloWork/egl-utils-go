@@ -19,7 +19,7 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
 | [0002](0002-adopt-cross-language-source-layout.md) | Adopt the cross-language source layout | Superseded by ADR-0003 |
 | [0003](0003-adopt-idiomatic-go-root-layout.md) | Adopt the idiomatic Go root layout | Superseded by ADR-0045 |
-| [0004](0004-runtime-dependency-policy.md) | Runtime dependency policy | Accepted |
+| [0004](0004-runtime-dependency-policy.md) | Runtime dependency policy | Accepted (ring 3's membership superseded by ADR-0050: two runtime entries -> one; the policy itself stands) |
 | [0005](0005-workerpool-design.md) | workerpool design — bounded pool, blocking-first admission, loud panics | Accepted (`Stop`/`ErrPoolClosed` *names* superseded by ADR-0048; every semantic it decided stands) |
 | [0006](0006-pubsub-design.md) | pubsub design — at-most-once buffered delivery, no broker goroutines | Accepted (`Publish`/`Subscribe` signatures + the fixed drop-newest policy superseded by ADR-0049; every invariant stands) |
 | [0007](0007-fanin-design.md) | fanin design — forwarder-per-input, cancel-or-drain contract | Accepted |
@@ -42,7 +42,7 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0024](0024-hash-password-design.md) | hash password design — bcrypt at default cost, per-hash salt, constant-time verify | Accepted |
 | [0025](0025-lifecycle-shutdown-design.md) | lifecycle.GracefulShutdown design — LIFO hooks, exactly-once convergent Shutdown, no hidden timeout | Accepted |
 | [0026](0026-health-handler-design.md) | health.Handler design — concurrent probes, 200/503, status-only body (no error leak) | Accepted |
-| [0027](0027-metrics-prometheus-design.md) | metrics.Prometheus design — bounded-cardinality labels, client_golang pin, uncalled-vuln trade-off | Accepted |
+| [0027](0027-metrics-prometheus-design.md) | metrics.Prometheus design — bounded-cardinality labels, client_golang pin, uncalled-vuln trade-off | Accepted (surface, implementation + pin superseded by ADR-0050; the cardinality decisions stand and are re-enforced there) |
 | [0028](0028-syncpool-bufferpool-design.md) | syncpool.BufferPool design — sync.Pool of bytes.Buffer, reset on return, discard oversized | Accepted |
 | [0029](0029-errors-wrap-design.md) | errors.Wrap design — %w-transparent wrapping, one-time origin stack, errors package name | Superseded by ADR-0046 |
 | [0030](0030-spec-v2-reconciliation.md) | Spec v2.0 reconciliation — hybrid adoption: additive deltas in v1.x, breaking deferred to /v2 | Accepted |
@@ -65,3 +65,4 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0047](0047-cache-comma-ok.md) | `cache.Get` → `(V, bool)`, `NewInMemory` → `New`, `ErrNotFound` removed — the error channel carried one bit, and Go spells that bit comma-ok | Accepted |
 | [0048](0048-workerpool-close.md) | `workerpool.Stop` → `Close`, `ErrPoolClosed` → `ErrClosed` — one shutdown verb for the module, but `ctx` stays: the pool is the only shutdown that waits on work the caller wrote | Accepted |
 | [0049](0049-pubsub-reshape.md) | the pubsub reshape — context-scoped subscriptions, a `Publish` that reports without ever blocking, and a three-valued slow-subscriber policy; `topic` kept against the ledger's shorthand | Accepted |
+| [0050](0050-metrics-without-the-sdk.md) | metrics without the SDK — the exposition format written directly, `New() *Recorder` replacing `prometheus.Registerer`, and ring 3 down to one entry; nine modules left the graph | Accepted |

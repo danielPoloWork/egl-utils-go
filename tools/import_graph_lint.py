@@ -62,19 +62,21 @@ def short_pkg(import_path: str) -> str:
 # ---------------------------------------------------------------------------
 RUNTIME_DEPS = {
     "gopkg.in/yaml.v3": ("config", "ADR-0018 - the YAML parser for config.Load"),
-    "github.com/prometheus/client_golang": ("metrics", "ADR-0027 - Prometheus exposition"),
     "golang.org/x/crypto": ("hash", "ADR-0024 - bcrypt password hashing"),
     "golang.org/x/sync": ("semaphore", "ADR-0009 - the weighted semaphore"),
 }
 
-# ADR-0004's test-only ring: never imported by production code. client_model is a
-# direct requirement because the metrics tests assert on decoded exposition
-# structures (dto) rather than matching text (ADR-0027).
+# ADR-0004's test-only ring: never imported by production code.
+#
+# ADR-0050 removed both Prometheus modules - client_golang from this ring's
+# runtime counterpart above, and client_model from here, since the metrics tests
+# no longer decode protobuf exposition structures. Nine modules left the graph
+# with them, so the deny rule in .golangci.yml now covers github.com/prometheus
+# with no exception at all rather than confining it to one package.
 TEST_ONLY_DEPS = {
     "github.com/stretchr/testify",
     "go.uber.org/goleak",
     "pgregory.net/rapid",
-    "github.com/prometheus/client_model",
 }
 
 # ---------------------------------------------------------------------------

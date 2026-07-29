@@ -21,6 +21,28 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- **BREAKING** — **`metrics` no longer depends on the Prometheus SDK**; it writes the text exposition
+  format directly, and `prometheus.Registerer` is gone from the public API
+  ([ADR-0050](docs/adr/0050-metrics-without-the-sdk.md), supersedes ADR-0027's surface,
+  implementation and dependency pin, and ring 3's membership in ADR-0004). Migration:
+  `h := metrics.Prometheus(prometheus.DefaultRegisterer)(appHandler)` → `rec := metrics.New()` then
+  `h := rec.Middleware()(appHandler)`; `metrics.Handler()` → `rec.Handler()`.
+  **The dependency graph halves — 18 modules to 9**, `go.sum` from 50 lines to 24: `client_golang`,
+  `client_model` and the seven transitive modules that existed only to serve them all leave, so
+  consumers of this module no longer inherit a metrics SDK, a protobuf runtime or `golang.org/x/sys`.
+  A `Recorder` owns its counters, so the middleware and the endpoint are provably the same state —
+  which fixes a v1 wart where `Prometheus(myReg)` paired with `Handler()` silently exposed the
+  *default* registry — and a double install is two independent recorders rather than a panic.
+  **What is given up, deliberately: the endpoint no longer serves the 37 metric families `promhttp`
+  supplied for free** (29 `go_*`, 6 `process_*`, 2 `promhttp_*`). A consumer wanting runtime or
+  process metrics imports a Prometheus client itself and mounts its handler at a second path, which
+  puts that dependency in the builds that actually want it. **Everything ADR-0027 decided about
+  cardinality is unchanged** — two families, `(method, code)` labels only, never the request path,
+  the method normalized to nine verbs plus `other`, and the standard latency buckets verbatim — and
+  the exposition output is verified byte-for-byte against the reference encoder by a golden file
+  captured while the SDK was still present. Recording is now allocation-free (223.0 → 63.4 ns/op,
+  1 alloc → 0) and a scrape allocates 3 objects instead of 436; see
+  [the report](docs/benchmarks/2026-07-29-metrics-without-the-sdk.md).
 - **BREAKING** — the **pubsub API is reshaped**: subscriptions are context-scoped, `Publish` takes a
   context and returns an error, and the slow-subscriber policy is explicit
   ([ADR-0049](docs/adr/0049-pubsub-reshape.md), supersedes the two signatures and the fixed

@@ -1,6 +1,16 @@
 # ADR-0027: metrics.Prometheus design — bounded-cardinality labels, client_golang pin, uncalled-vuln trade-off
 
-- **Status:** Accepted
+- **Status:** Accepted — the **public surface, the implementation and the `client_golang` pin** are
+  superseded by [ADR-0050](0050-metrics-without-the-sdk.md): the SDK is gone from the module, the
+  exposition text is written directly, and `Prometheus(reg)` / package-level `Handler()` become
+  `metrics.New()` with `Middleware()` and `Handler()` methods. **The cardinality decisions below
+  stand unchanged and are re-enforced there** — two families, `(method, code)` labels only, no path
+  label, the method normalized to nine verbs plus `other`, `DefBuckets` verbatim, and the
+  `Unwrap`-aware status recorder. Two notes on what the successor did to specific sections:
+  the "`Prometheus(reg)` registers on the caller's registry; `Handler()` serves the default one"
+  decision recorded a mismatch that ADR-0050 removes by construction, and the **accepted
+  uncalled-advisory trade-off below is retired** — it weighed keeping the Go floor against clearing
+  GO-2026-5024 in `x/sys`, and `x/sys` left the module graph with `procfs` when the SDK did.
 - **Date:** 2026-07-15
 - **Deciders:** Maintainer (Daniel Polo), architect agent, security-auditor role
 - **Related:** spec §2 feature 23, §5 (`Prometheus(reg prometheus.Registerer) func(http.Handler)
