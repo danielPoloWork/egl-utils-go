@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-07-26
 - **Deciders:** senior project architect (agent), maintainer (Daniel Polo)
-- **Related:** ADR-0021 (the cache's design: Get enforces expiry, the sweeper only reclaims), ADR-0037 (the NFR suite that produced the evidence), ADR-0030 (spec v2 reconciliation: 10.11 adopted), ADR-0005 (loud-by-default), spec v2.0 item 17 and NFR-06, roadmap 10.11
+- **Related:** ADR-0021 (the cache's design: Get enforces expiry, the sweeper only reclaims), ADR-0037 (the NFR suite that produced the evidence), ADR-0030 (spec v2 reconciliation: 10.11 adopted), ADR-0005 (loud-by-default), ADR-0047 (renamed the constructor and changed `Get`'s signature; this decision is untouched), spec v2.0 item 17 and NFR-06, roadmap 10.11
 
 ## Context
 
@@ -22,7 +22,9 @@ so every `Set` took the exclusive lock and serialised all eight readers. Reads a
 the whole problem. **The bench demanded sharding.**
 
 Two constraints shape the solution. The public API is frozen by the v1 commitment —
-`NewInMemory`/`Get`/`Set`/`Delete`/`Close` — so this must be invisible from outside. And the cache's
+`NewInMemory`/`Get`/`Set`/`Delete`/`Close` (the v1 surface as it stood; `NewInMemory` is `New` and
+`Get` returns `(V, bool)` since [ADR-0047](0047-cache-comma-ok.md), which changed the names and the
+signature but not one word of this decision) — so this must be invisible from outside. And the cache's
 goroutine contract is load-bearing: it owns *exactly one* goroutine, which the module's zero-leak
 guarantee and this milestone's thousand-cache test both depend on.
 
