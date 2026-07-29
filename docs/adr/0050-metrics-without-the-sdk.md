@@ -125,6 +125,15 @@ Keeping a Prometheus module as a test-only dependency to parse the output on eve
 considered and rejected: it would hold four or five modules in the graph to re-verify a frozen
 format, and the golden *is* the contract.
 
+**A byte-exact fixture has to be exempted from line-ending translation, and this is not optional.**
+With `eol` unspecified, what a checkout writes depends on each machine's `core.autocrlf`: LF for a
+developer set to `input`, CRLF for a Windows CI runner set to `true`. The first version of this
+change therefore passed locally and on Linux and macOS, and failed only the `windows-2022` cell — a
+byte comparison against a fixture Git had rewritten in transit. `.gitattributes` now pins
+`*.golden text eol=lf`, chosen over `-text` so the fixture still diffs readably when it legitimately
+changes. **Any future golden in this repository inherits that rule; any future *other* byte-exact
+fixture needs its own line added.**
+
 ### 5 · ADR-0027's cardinality guarantees survive, and are now bounded by our own arithmetic
 
 Unchanged: two families, `(method, code)` labels only, **the request path is never a label**, the

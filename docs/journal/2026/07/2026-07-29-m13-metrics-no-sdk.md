@@ -100,6 +100,30 @@ entirely, HELP and TYPE included.** A fresh Recorder therefore serves an empty b
 
 The golden passed on the first run, which I did not expect.
 
+**Then CI failed it on exactly one of thirteen jobs**, and the failure was worth more than the pass.
+`windows-2022` reported the byte comparison failing while Linux, macOS and the `-race` cell were all
+green. The cause is not in the writer: the golden had `eol` unspecified, so what a checkout writes
+depends on the machine's `core.autocrlf` — LF for mine, set to `input`, and **CRLF for a GitHub
+Windows runner, set to `true`.** Git was rewriting the fixture in transit and the test was correctly
+reporting that the bytes did not match.
+
+Reproduced locally before fixing anything, by checking the file out the way the runner does:
+
+```
+git -c core.autocrlf=true checkout-index -f --prefix=... pkg/metrics/testdata/exposition.golden
+→ CRLF count: 49
+```
+
+`.gitattributes` now pins `*.golden text eol=lf` — `eol=lf` rather than `-text`, so the fixture still
+diffs readably when it legitimately changes — and the same command afterwards yields LF at the
+identical 3 503 bytes.
+
+**The general lesson, which is about goldens rather than about metrics: a fixture asserted
+byte-for-byte is only as exact as its checkout.** The assertion and the version-control layer have to
+agree, and the default does not guarantee that. Worth noting that this repository had **no
+`.gitattributes` at all** until now, so every previous byte-sensitive fixture was relying on
+contributors' Git configuration happening to match.
+
 ## What the implementation cost, and what it bought
 
 Measured with both implementations compiled into **one binary** (ADR-0037's rule, confirmed by 13.2):
