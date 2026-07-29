@@ -157,6 +157,27 @@
 >   pinned by a golden file **captured from the reference encoder while it was still a dependency**,
 >   so the check outlives the library. ROADMAP 13.6.
 
+> - *2026-07-29* — **`WaitForSignals` takes a shutdown timeout. SUPERSEDED, not amended**, by
+>   [ADR-0051](../adr/0051-lifecycle-shutdown-timeout.md), which supersedes **two points** of
+>   [ADR-0025](../adr/0025-lifecycle-shutdown-design.md) — its "no hidden timeout" decision and its
+>   rejected default-timeout alternative — and **nothing else**. `/v2` boundary
+>   ([ADR-0030](../adr/0030-spec-v2-reconciliation.md) §2, item 21). **This is the one Milestone 13
+>   item that overturns a deviation the module took deliberately and documented as such**, so the
+>   ROADMAP required it be overturned explicitly rather than quietly. What makes that possible is
+>   that ADR-0025's objections were narrower than its heading: it refused a deadline that was
+>   *hidden*, *library-invented*, *default* and would *silently truncate* what the operator
+>   configured — every one of those adjectives describing a deadline **the caller did not choose**.
+>   A mandatory first parameter is none of them, so **the reasoning is preserved and only the
+>   conclusion reverses**. Its substantive claim survives too: **`0` imposes no deadline**, which is
+>   byte-for-byte v1's behaviour and remains the *recommended* posture under systemd or Kubernetes,
+>   where a second number in the application would duplicate a grace period already configured one
+>   level up and the shorter of the two would silently win. Note the gap column here reads
+>   "bounded-deadline **philosophy**", unlike 13.4's and 13.5's, which named only signatures — the
+>   same tie-breaker that protected `Close`'s `ctx` and `Subscribe`'s `topic` points, here, at making
+>   the change. The bound is **cooperative and does not abandon the sequence**: a hook honouring its
+>   context winds up early, one ignoring it still completes, and the remaining hooks run either way,
+>   because ADR-0025's run-every-hook decision is untouched. ROADMAP 13.7.
+
 ## 1. Objective & Business Context
 
 Provide a production-ready Go utilities module — advanced concurrency primitives,
@@ -279,7 +300,7 @@ module root as `import "github.com/danielPoloWork/egl-utils-go/v2"` for `utils.V
 - db: Transaction(ctx, db *sql.DB, fn func(*sql.Tx) error) error — commit on nil, rollback on error or panic
 - validator: Struct(v any) error — tag grammar: required, email, min, max, oneof; ValidationErrors []*FieldError with Error() and Unwrap() []error; FieldError{Field, Tag, Param string}
 - hash: HashPassword(pw string) (string, error); HashPasswordCost(pw string, cost int) (string, error) (ADR-0032); CheckPassword(pw, hash string) error; Cost(hash string) (int, error); ErrMismatch; ErrPasswordTooLong; ErrInvalidCost
-- lifecycle: Register(fn func(ctx) error); WaitForSignals(sig ...os.Signal); Shutdown(ctx) error; Trigger() (ADR-0030)
+- lifecycle: Register(fn func(ctx) error); WaitForSignals(timeout time.Duration, sigs ...os.Signal) — timeout bounds the whole shutdown sequence and becomes the hooks' context deadline, measured from the signal; 0 imposes none and leaves the bound to the platform (ADR-0051); Shutdown(ctx) error; Trigger() (ADR-0030)
 - health: Handler(checks ...Check) http.Handler — Check{Name string, Probe func(ctx) error}
 - metrics: New() *Recorder; (*Recorder).Middleware() func(http.Handler) http.Handler; (*Recorder).Handler() http.Handler — the exposition endpoint for that Recorder, Prometheus text format 0.0.4 written directly with no client library (ADR-0050)
 - syncpool: NewBufferPool() *BufferPool; (*BufferPool).Get() *bytes.Buffer; (*BufferPool).Put(*bytes.Buffer)
