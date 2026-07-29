@@ -20,7 +20,7 @@ Status transitions: `Proposed` → `Accepted` → (`Superseded by ADR-XXXX` | `D
 | [0002](0002-adopt-cross-language-source-layout.md) | Adopt the cross-language source layout | Superseded by ADR-0003 |
 | [0003](0003-adopt-idiomatic-go-root-layout.md) | Adopt the idiomatic Go root layout | Superseded by ADR-0045 |
 | [0004](0004-runtime-dependency-policy.md) | Runtime dependency policy | Accepted |
-| [0005](0005-workerpool-design.md) | workerpool design — bounded pool, blocking-first admission, loud panics | Accepted |
+| [0005](0005-workerpool-design.md) | workerpool design — bounded pool, blocking-first admission, loud panics | Accepted (`Stop`/`ErrPoolClosed` *names* superseded by ADR-0048; every semantic it decided stands) |
 | [0006](0006-pubsub-design.md) | pubsub design — at-most-once buffered delivery, no broker goroutines | Accepted (`Publish`/`Subscribe` signatures + the fixed drop-newest policy superseded by ADR-0049; every invariant stands) |
 | [0007](0007-fanin-design.md) | fanin design — forwarder-per-input, cancel-or-drain contract | Accepted |
 | [0008](0008-fanout-design.md) | fanout design — forwarder-per-output, exactly-once distribution | Accepted |
