@@ -19,6 +19,17 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-30 — 13.8: a constant is a contract, and the default is the decision](2026/07/2026-07-30-m13-hash-default-cost.md) —
+  roadmap 13.8. `hash.HashPassword` produces bcrypt cost 12. **Nothing in the surface moves — no
+  identifier, no signature, no compile error** — and that is exactly why it needed a major: the
+  constant *is* the contract, re-measured at **×4.03** per login before flipping it. The capability was
+  never the point (`HashPasswordCost` shipped in v1.1.0); the item is what a caller who expresses no
+  opinion gets, and the mechanism is the gap between default and floor — cost 10 stays legal but has to
+  be written down. The module also **stops inheriting `bcrypt.DefaultCost`**, so its most
+  security-relevant number is no longer movable by a dependency bump. No hash is invalidated and no
+  migration exists to run — pinned against a *captured* cost-10 hash. Second consecutive item
+  `spec_api_lint` could not have caught. ADR-0052; **ledger item 20 discharged — the ADR-0030 §2 ledger
+  is empty.**
 - [2026-07-29 — 13.7: overturning a deviation by reading what it actually said](2026/07/2026-07-29-m13-lifecycle-timeout.md) —
   roadmap 13.7. `WaitForSignals` takes a shutdown timeout. The only M13 item that overturns a
   *deliberate* documented deviation — and it turned out ADR-0025's objections were narrower than its

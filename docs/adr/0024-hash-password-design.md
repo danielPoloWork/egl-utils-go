@@ -1,6 +1,13 @@
 # ADR-0024: hash password design — bcrypt at default cost, per-hash salt, constant-time verify
 
-- **Status:** Accepted
+- **Status:** Accepted — the **value of the default cost** is superseded by
+  [ADR-0052](0052-hash-default-cost-12.md): `HashPassword` produces **cost 12**, this module's own
+  number rather than bcrypt's, at the `/v2` boundary. Everything else here stands: bcrypt itself, the
+  per-hash embedded salt, the constant-time verify, `ErrPasswordTooLong` over truncation, the sentinel
+  translation and the no-detail-to-the-end-user guidance. The reasoning below is worth reading with
+  ADR-0052: the "higher fixed cost (12+)" alternative rejected here was rejected on a
+  login-latency-and-DoS argument that ADR-0032 then **measured**, which is what let the decision be
+  re-taken on numbers instead of instinct.
 - **Date:** 2026-07-15
 - **Deciders:** Maintainer (Daniel Polo), architect agent, security-auditor role (sign-off required)
 - **Related:** spec §2 feature 20, §5 (`HashPassword(pw string) (string, error)`,
@@ -31,6 +38,10 @@ range is 10–31, validated locally because bcrypt silently promotes sub-`MinCos
 costs 4–9 verbatim. `HashPassword` now delegates to it at the default cost, so behaviour here is
 unchanged. The per-login DoS trade-off sketched above is now measured — verification costs the same as
 hashing — and its mitigation is ADR-0031's admission middleware.)*
+*(Superseded in roadmap 13.8 — [ADR-0052](0052-hash-default-cost-12.md): the default is **12**, and
+it is this module's constant rather than `bcrypt.DefaultCost`, so the strength of a consumer's hash
+store no longer moves with a dependency bump. The accepted range is unchanged, so cost 10 stays
+available — it simply has to be asked for.)*
 
 **Per-hash random salt, embedded in the output.** bcrypt generates a fresh salt per call and encodes
 the algorithm, cost, and salt into the returned string, so every call yields a different hash and no
@@ -68,6 +79,14 @@ in x/crypto's unused packages such as `ssh` are not reachable).
   additive `HashPasswordCost`.
 - **A higher fixed cost (12+)** — stronger, but meaningfully raises login latency and the DoS surface;
   a library should not impose that unilaterally. Rejected for the bcrypt default, tunable later.
+
+  > *Annotated 2026-07-30 ([ADR-0052](0052-hash-default-cost-12.md)): **adopted at the `/v2`
+  > boundary, and this entry names exactly what had to be settled first.*** "Meaningfully raises login
+  > latency" was an instinct here; ADR-0032 turned it into a number (**×4.03**, ~230 ms per verify at
+  > cost 12 on the reference workstation), and the same milestone shipped the admission control that
+  > bounds the DoS surface (ADR-0031, control C-5). What survives unchanged is "a library should not
+  > impose that unilaterally" — which is why it took a **major**, not a minor, and why the accepted
+  > range still admits 10 for a deployment that measured and chose it.
 - **Silently truncating at 72 bytes** — bcrypt's historical footgun (distinct long passwords collide);
   rejected for the explicit `ErrPasswordTooLong`.
 - **Returning bcrypt's raw errors** — leaks the bcrypt dependency into every caller's error handling;
@@ -80,7 +99,8 @@ in x/crypto's unused packages such as `ssh` are not reachable).
 - The module gains the `hash` package (`HashPassword`, `CheckPassword`, `ErrMismatch`,
   `ErrPasswordTooLong`) and its first new runtime dependency since yaml.v3: `golang.org/x/crypto`
   (ring 2). The 1.24 floor is preserved.
-- Passwords are stored only as salted, adaptive, cost-10 bcrypt hashes; verification is constant-time;
+- Passwords are stored only as salted, adaptive bcrypt hashes — cost 10 as decided here, **cost 12
+  from `/v2` onwards (ADR-0052)**, with hashes at either factor verifying unchanged; verification is constant-time;
   plaintext is never logged or persisted by this package — recorded as compliance control **C-4** and
   a threat-model row (offline cracking / timing oracle / user enumeration).
 - **Milestone 8 (validation & security) is complete.**

@@ -79,6 +79,12 @@ because upstream would silently accept every weak value in the table above.
   as breaking: the cost is documented behaviour and a silent 4× latency increase on every login would
   land in a patch upgrade. Deferred to the `/v2` ledger per ADR-0030; reachable today via
   `HashPasswordCost(pw, 12)`.
+
+  > *Annotated 2026-07-30: **landed in roadmap 13.8 at the `/v2` boundary**
+  > ([ADR-0052](0052-hash-default-cost-12.md)), which is where the ledger sent it. Nothing in this ADR
+  > is superseded — the range, its local enforcement, `ErrInvalidCost` and `Cost` are exactly as
+  > decided here, and ADR-0052 consumes them. The "4×" above was re-measured as **×4.03** on the same
+  > workstation before the switch was flipped.*
 - **Exporting `MinCost` / `MaxCost` / `DefaultCost` constants** so a caller can pre-validate an
   operator-supplied cost. Genuinely useful, and rejected only on surface discipline: three more
   symbols permanently frozen by the v1 commitment, when the range is documented, stated in the error
