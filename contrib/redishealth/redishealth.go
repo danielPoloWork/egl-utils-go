@@ -23,7 +23,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/danielPoloWork/egl-utils-go/health"
+	"github.com/danielPoloWork/egl-utils-go/v2/pkg/health"
 )
 
 // pinger is the only behaviour this package needs from a Redis client. Declaring

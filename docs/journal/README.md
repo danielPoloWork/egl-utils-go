@@ -19,6 +19,19 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-30 — 13.9: six lines, and the constraint that made them wait](2026/07/2026-07-30-m13-contrib-to-v2.md) —
+  roadmap 13.9. **`v2.0.0` tagged and pushed** (agent carry-through; CI drafted the Release, Publish is
+  the maintainer's), then both `contrib/*` modules moved to `require …/egl-utils-go/v2 v2.0.0` and
+  `…/v2/pkg/health`. Four import lines and two `go.mod` lines — **and the item's substance is why they
+  could not ship inside the major**: `unknown revision v2.0.0` before the tag, resolvable after it.
+  With the rejected `replace ../..` this could have shipped any time with CI green while the `require`
+  consumers resolve went unexercised, so **the constraint that delayed it is what makes it verified**.
+  Migrated using the `sed` snippet published in the release notes — contrib is that guide's first real
+  consumer, and it confirmed why the pattern anchors on the closing quote. Side effect invisible in the
+  diff: MVS raised `pgxhealth`'s `x/sync` v0.17.0 → v0.22.0. `x/text`'s uncalled GO-2026-5970 is
+  pre-existing, and its fix is **floor-safe** here (measured) — left to Dependabot. **contrib is
+  deliberately not tagged**, so consumers still resolve v0.1.0 against the core's v1.
+  **Milestone 13 complete, 10 of 10.**
 - [2026-07-30 — v2.0.0 release cut: the milestone that outlives its own release](2026/07/2026-07-30-v2.0.0-release-cut.md) —
   roadmap 13.10. `version.go` → 2.0.0, `[Unreleased]` rolled into a new `docs/changelog/v2/`, release
   notes carrying the whole migration (import rewrite **plus** the seven API changes), and **ADR-0030

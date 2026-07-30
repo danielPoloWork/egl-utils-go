@@ -71,7 +71,7 @@ setup.
 | 10 | Spec v2 reconciliation (v1.x additive) | ✅ done |
 | 11 | Governance: namespace contract & spec reconciliation | ✅ done |
 | 12 | Public-interface reconciliation | ✅ done |
-| 13 | `/v2` — `pkg/` layout and the ledger emptied | 🚧 v2.0.0 released; 13.9 (contrib → `/v2`) needs the tag |
+| 13 | `/v2` — `pkg/` layout and the ledger emptied | ✅ done |
 
 
 ## License
