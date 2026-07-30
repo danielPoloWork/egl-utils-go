@@ -19,6 +19,17 @@ _(newest first)_
 
 #### 07 — July
 
+- [2026-07-30 — v2.0.0 release cut: the milestone that outlives its own release](2026/07/2026-07-30-v2.0.0-release-cut.md) —
+  roadmap 13.10. `version.go` → 2.0.0, `[Unreleased]` rolled into a new `docs/changelog/v2/`, release
+  notes carrying the whole migration (import rewrite **plus** the seven API changes), and **ADR-0030
+  §2's ledger marked empty** with a per-item discharge table that says out loud what the ledger did
+  *not* say: an empty ledger is not a closed one, and five items shipped wider or narrower than their
+  shorthand. Ran **before 13.9** because ADR-0040 needs the released core — verified with
+  `go list -m …/v2@v2.0.0` returning "unknown revision", not assumed. **`consistency_lint` refused my
+  claim that M13 was complete** and was right: 13.9 remains, so the milestone outlives its own
+  release. The migration `sed` was *run*, not written — the conventional `s|…|…|` form dies on the
+  package alternation's own `|`, and matching the closing quote is what keeps a `contrib/*` import out
+  of the rewrite. Awaiting the maintainer's merge; the tag is the agent's carry-through.
 - [2026-07-30 — 13.8: a constant is a contract, and the default is the decision](2026/07/2026-07-30-m13-hash-default-cost.md) —
   roadmap 13.8. `hash.HashPassword` produces bcrypt cost 12. **Nothing in the surface moves — no
   identifier, no signature, no compile error** — and that is exactly why it needed a major: the
