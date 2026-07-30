@@ -1,6 +1,10 @@
 # ADR-0030: Spec v2.0 reconciliation — hybrid adoption: additive deltas in v1.x, breaking deferred to /v2
 
-- **Status:** Accepted
+- **Status:** Accepted — **§2's ledger is EMPTY as of v2.0.0 (2026-07-30)**. All seven deferred items
+  were discharged in Milestone 13, one PR and one ADR each (see §2 for the per-item mapping). Nothing
+  here is superseded: the hybrid disposition was the decision, and it completed. The section stays as
+  the record of what was deferred and where it landed, and it remains the destination ADR-0042 points
+  a future breaking change at — an empty ledger, not a closed one.
 - **Date:** 2026-07-16
 - **Deciders:** Maintainer (Daniel Polo — disposition chosen explicitly), architect agent
 - **Related:** `docs/specs/02_spec_v2_gap_analysis.md` (the full delta matrix);
@@ -53,6 +57,29 @@ signature (item 21) · **bcrypt default cost 10 → 12** (item 20): API-compatib
 behavioral contract (login latency ×4), so under spec §5's own rule it is major-only; the capability
 ships additively in 10.5 (`HashPasswordCost(pw, 12)`). No `/v2` is scheduled by this ADR; if opened,
 it follows Go's `/v2` module path rule.
+
+**Discharged 2026-07-30 — the ledger is empty.** `/v2` was opened by ROADMAP 13.1 and **all seven
+items shipped in `v2.0.0`**, one PR and one ADR each. The list above is preserved as written; this is
+where each entry went:
+
+| Ledger item | Roadmap | ADR | Supersedes |
+|---|---|---|---|
+| `errors`→`errx`, opt-in `WithStack`/`[]Frame` (25) | 13.2 | [0046](0046-errx-opt-in-stacks.md) | ADR-0029 |
+| `cache.Get` → `(V, bool)`, `New` (17) | 13.3 | [0047](0047-cache-comma-ok.md) | ADR-0021's `Get` signature + constructor name |
+| `workerpool.Stop` → `Close` (1) | 13.4 | [0048](0048-workerpool-close.md) | two *names* in ADR-0005 |
+| pubsub reshape — ctx subscription, `Publish(ctx) error`, `ErrSlowSubscriber` (2) | 13.5 | [0049](0049-pubsub-reshape.md) | two *signatures* in ADR-0006, the option *name* in ADR-0039 |
+| Prometheus SDK out of the metrics API (23) | 13.6 | [0050](0050-metrics-without-the-sdk.md) | ADR-0027's surface + implementation + pin; ring 3's membership in ADR-0004 |
+| `WaitForSignals(timeout, sigs...)` (21) | 13.7 | [0051](0051-lifecycle-shutdown-timeout.md) | exactly two points of ADR-0025 |
+| **bcrypt default cost 10 → 12** (20) | 13.8 | [0052](0052-hash-default-cost-12.md) | the *value* of ADR-0024's default cost |
+
+Two things this table is deliberately not. It is **not a closure**: ADR-0042 still names this section
+as the only destination for a breaking change, so §2 remains the place a future one accumulates —
+empty is a state, not an end. And it is **not a claim that the ledger was transcribed literally**:
+three items shipped wider than their entry (13.4 folded in `ErrPoolClosed`, 13.5 grew a three-valued
+policy, 13.6 removed the dependency and not merely the API surface) and two shipped narrower than
+their shorthand (`Close` kept its `ctx`, `Subscribe` kept its `topic`), each argued in its own ADR
+against this table's own gap column. The prose above records what was *promised*; the ADRs record
+what was *decided*.
 
 **Addendum 2026-07-27 — the module path itself, raised and declined.** Rendering the series
 namespace `it.d4np.utils.<component>` literally in Go source would require changing the module
