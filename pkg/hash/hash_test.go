@@ -22,8 +22,9 @@ func TestHashUsesDefaultCost(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	h, err := hash.HashPassword("pw")
 	require.NoError(t, err)
-	// bcrypt encodes the algorithm and cost in the prefix; default cost is 10.
-	require.True(t, strings.HasPrefix(h, "$2a$10$"), "unexpected hash prefix: %q", h)
+	// bcrypt encodes the algorithm and cost in the prefix; this package's default
+	// cost is 12, not bcrypt's own 10.
+	require.True(t, strings.HasPrefix(h, "$2a$12$"), "unexpected hash prefix: %q", h)
 }
 
 func TestHashIsSaltedPerCall(t *testing.T) {

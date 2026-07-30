@@ -178,6 +178,26 @@
 >   context winds up early, one ignoring it still completes, and the remaining hooks run either way,
 >   because ADR-0025's run-every-hook decision is untouched. ROADMAP 13.7.
 
+> - *2026-07-30* — **`HashPassword` produces bcrypt cost 12. SUPERSEDED**, by
+>   [ADR-0052](../adr/0052-hash-default-cost-12.md), which supersedes the *value of the default cost*
+>   in [ADR-0024](../adr/0024-hash-password-design.md) and **nothing else** — and supersedes nothing
+>   at all in [ADR-0032](../adr/0032-hash-password-cost-design.md), whose 10–31 range, local
+>   enforcement, `ErrInvalidCost` and `Cost` this change consumes unchanged. `/v2` boundary
+>   ([ADR-0030](../adr/0030-spec-v2-reconciliation.md) §2, item 20 — **the last of the seven**). **A
+>   constant is a breaking change here because the constant is the contract**: nothing in the
+>   signature moves, but verification costs the same as hashing and every login pays it, so re-measured
+>   at **×4.03** (57.7 → 232.3 ms per verify on the reference workstation) the default multiplies a
+>   login's CPU by four — invisible to a compiler and exactly what ADR-0042 makes major-only.
+>   **`minCost` stays 10, so the gap between default and floor is the mechanism**: the strong value is
+>   what a caller gets by not choosing, and cost 10 remains legal but has to be written down. The
+>   module also stops inheriting `bcrypt.DefaultCost` — the strength of a consumer's password store
+>   was previously whatever the dependency last chose, and is now this module's own constant. **No
+>   stored hash is invalidated and there is no data migration**: bcrypt encodes the factor in the hash,
+>   so v1's cost-10 hashes keep verifying and move to 12 through the verify-and-rehash-on-login pattern
+>   §7's cost note already prescribes. The DoS trade-off is now inherited rather than opted into
+>   (~4.3 verifies/second saturate a core), so the godoc states it at `HashPassword` itself and points
+>   at `ratelimit.(*Limiter).Middleware`. ROADMAP 13.8.
+
 ## 1. Objective & Business Context
 
 Provide a production-ready Go utilities module — advanced concurrency primitives,
@@ -299,7 +319,7 @@ module root as `import "github.com/danielPoloWork/egl-utils-go/v2"` for `utils.V
 - cache: New[K comparable, V any](ttl time.Duration, opts ...Option) *Cache[K, V]; Get(key K) (V, bool) — comma-ok, false when absent or expired; Set/Delete; Close(); WithCleanupInterval(d time.Duration) Option (ADR-0047, supersedes ADR-0021's Get signature)
 - db: Transaction(ctx, db *sql.DB, fn func(*sql.Tx) error) error — commit on nil, rollback on error or panic
 - validator: Struct(v any) error — tag grammar: required, email, min, max, oneof; ValidationErrors []*FieldError with Error() and Unwrap() []error; FieldError{Field, Tag, Param string}
-- hash: HashPassword(pw string) (string, error); HashPasswordCost(pw string, cost int) (string, error) (ADR-0032); CheckPassword(pw, hash string) error; Cost(hash string) (int, error); ErrMismatch; ErrPasswordTooLong; ErrInvalidCost
+- hash: HashPassword(pw string) (string, error) — bcrypt at this module's default cost of 12, not bcrypt's 10 (ADR-0052); HashPasswordCost(pw string, cost int) (string, error) — accepted range 10–31, so the default sits above the floor and cost 10 must be asked for explicitly (ADR-0032); CheckPassword(pw, hash string) error — verifies a hash at any accepted factor, so hashes written at an older default are unaffected; Cost(hash string) (int, error); ErrMismatch; ErrPasswordTooLong; ErrInvalidCost
 - lifecycle: Register(fn func(ctx) error); WaitForSignals(timeout time.Duration, sigs ...os.Signal) — timeout bounds the whole shutdown sequence and becomes the hooks' context deadline, measured from the signal; 0 imposes none and leaves the bound to the platform (ADR-0051); Shutdown(ctx) error; Trigger() (ADR-0030)
 - health: Handler(checks ...Check) http.Handler — Check{Name string, Probe func(ctx) error}
 - metrics: New() *Recorder; (*Recorder).Middleware() func(http.Handler) http.Handler; (*Recorder).Handler() http.Handler — the exposition endpoint for that Recorder, Prometheus text format 0.0.4 written directly with no client library (ADR-0050)

@@ -26,10 +26,9 @@ import (
 func TestBcryptWouldAcceptWeakCosts(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	require.Equal(t, 4, bcrypt.MinCost, "the upstream floor our minCost deliberately exceeds")
-	require.GreaterOrEqual(t, bcrypt.DefaultCost, minCost,
-		"HashPassword delegates with bcrypt.DefaultCost, so a default below our floor would make it "+
-			"return ErrInvalidCost for every password")
-	require.Equal(t, 10, bcrypt.DefaultCost, "the cost HashPassword is documented to produce")
+	require.Equal(t, 10, bcrypt.DefaultCost,
+		"the upstream default our defaultCost deliberately exceeds, and the value sub-MinCost costs "+
+			"are silently promoted to below")
 	require.Equal(t, 31, bcrypt.MaxCost, "maxCost tracks this")
 	require.Equal(t, bcrypt.MaxCost, maxCost)
 	require.Greater(t, minCost, bcrypt.MinCost, "our floor is stricter than bcrypt's")
@@ -62,4 +61,22 @@ func TestBcryptWouldAcceptWeakCosts(t *testing.T) {
 		_, err := bcrypt.GenerateFromPassword([]byte("pw"), bcrypt.MaxCost+1)
 		require.Error(t, err, "the ceiling is enforced upstream; the floor is not")
 	})
+}
+
+// TestDefaultCostIsInsideTheAcceptedRange guards the one way this package's own
+// default can break it: HashPassword delegates to HashPasswordCost, which
+// validates, so a default outside 10-31 would make HashPassword return
+// ErrInvalidCost for every password — a total outage of the hashing path that no
+// black-box test of the default cost's *value* would explain.
+//
+// It also pins the deliberate gap: the default sits above the floor, so asking
+// for the floor stays legal but has to be asked for.
+func TestDefaultCostIsInsideTheAcceptedRange(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	require.GreaterOrEqual(t, defaultCost, minCost, "HashPassword would reject every password")
+	require.LessOrEqual(t, defaultCost, maxCost, "HashPassword would reject every password")
+	require.Greater(t, defaultCost, minCost,
+		"the default is deliberately stronger than the weakest accepted cost")
+	require.Greater(t, defaultCost, bcrypt.DefaultCost,
+		"and deliberately stronger than bcrypt's own default")
 }

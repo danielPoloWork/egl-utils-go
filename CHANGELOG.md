@@ -21,6 +21,21 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- **BREAKING (behaviour, not signature)** — **`hash.HashPassword` now produces bcrypt cost 12**, up
+  from bcrypt's default of 10 ([ADR-0052](docs/adr/0052-hash-default-cost-12.md), supersedes the
+  *value* of the default cost in ADR-0024 and nothing else; ADR-0032's 10–31 range, its local
+  enforcement, `ErrInvalidCost` and `Cost` are unchanged). **Nothing to edit and nothing fails to
+  compile — which is why it is called out here:** verification costs the same as hashing and every
+  login pays it, so re-measured at **×4.03** (57.7 → 232.3 ms per verify on the reference
+  workstation) this quadruples the CPU a login costs. Roughly 4.3 verifications per second saturate
+  one core, on an endpoint an unauthenticated caller can reach, so **pair it with admission control**
+  (`ratelimit.(*Limiter).Middleware`). If your login path cannot absorb that, ask for the old factor
+  explicitly: `hash.HashPasswordCost(pw, 10)` — the accepted range is unchanged, so cost 10 stays
+  legal; it simply has to be written down. **No stored hash is invalidated and there is no data
+  migration:** bcrypt encodes the factor in the hash, so hashes written by v1 keep verifying and move
+  to 12 as their owners log in (the verify-and-rehash-on-login pattern in the package documentation;
+  `hash.Cost` reads a stored factor). The default is also now this module's own constant rather than
+  `bcrypt.DefaultCost`, so the strength of a password store no longer moves with a dependency bump.
 - **BREAKING** — **`lifecycle.WaitForSignals` takes a shutdown timeout as its first argument**
   ([ADR-0051](docs/adr/0051-lifecycle-shutdown-timeout.md), supersedes ADR-0025's "no hidden timeout"
   decision and its rejected default-timeout alternative, and nothing else). Migration:

@@ -80,11 +80,38 @@ must happen anyway. Rehash-on-login has no performance excuse.
    configuration silently weakens over time*. Costs should be reviewed on a schedule, and
    `hash.Cost` plus rehash-on-login is how a store is moved forward without a flag day.
 
+## Re-verification, 2026-07-30 — the default becomes 12 (roadmap 13.8)
+
+This report's numbers are what made the default-cost bump a decision instead of a preference, so the
+step that matters was re-measured on the same workstation before it was taken
+([ADR-0052](../adr/0052-hash-default-cost-12.md); branch `feat/v2-hash-default-cost-12`, parent
+`master` @ `103d619`, `golang.org/x/crypto v0.54.0`, `-benchtime=5x`, single run):
+
+| Cost | Hash | Verify |
+|------|------|--------|
+| 10 (v1's default) | 57.0 ms/op | 57.7 ms/op |
+| 11 | 114.3 ms/op | 117.1 ms/op |
+| 12 (**v2's default**) | 229.9 ms/op | 232.3 ms/op |
+| 13 | 462.3 ms/op | 465.5 ms/op |
+| 14 | 943.7 ms/op | 943.9 ms/op |
+
+**The 10 → 12 step costs ×4.03 in both directions**, and the doubling is still exact (successive
+ratios 2.00–2.03). The figures run ~3 % above July 26th's medians, which is what a single `5x` run
+under a workstation's ambient load looks like next to a median of three — it does not move the
+conclusion, and the ratio is the number the decision rests on, not the absolute.
+
+So the operational statement in the Interpretation is now the **default** rather than an opt-in: one
+core serves ~4.3 logins/s, and a login endpoint without admission control in front of it is a CPU
+amplifier by default. Steps 1–4 of the sizing guidance below are therefore no longer optional reading
+for a deployment that wants a *strong* hash — they are the check on whether the default fits, with
+`HashPasswordCost(pw, 10)` the documented way out if it does not.
+
 ## Reproduce
 
 ```bash
-git checkout feat/hash-password-cost   # or master once the 10.5 PR merges
-go test -run '^$' -bench 'BenchmarkHashPasswordCost|BenchmarkCheckPassword|BenchmarkCost' -benchmem -count 3 ./hash/
+git checkout master   # 10.5's numbers were taken on feat/hash-password-cost
+go test -run '^$' -bench 'BenchmarkHashPasswordCost|BenchmarkCheckPassword|BenchmarkCost' -benchmem -count 3 ./pkg/hash/
 ```
 
-Runtime is ~70 s: the benchmark is measuring work that is expensive by design.
+Runtime is ~70 s: the benchmark is measuring work that is expensive by design. (The package moved
+from `./hash/` to `./pkg/hash/` in roadmap 13.1, after this report's original run.)
