@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 
-	"github.com/danielPoloWork/egl-utils-go/health"
+	"github.com/danielPoloWork/egl-utils-go/v2/pkg/health"
 )
 
 // fakePinger stands in for a *pgxpool.Pool. A real pool cannot be usefully faked
