@@ -17,6 +17,24 @@ At the close of a state-changing session, the agent:
 
 _(newest first)_
 
+#### 08 — August
+
+- [2026-08-01 — post-v2.0.0 audit: contrib released, and the drift a release does not show](2026/08/2026-08-01-post-v2-audit-and-contrib-tags.md) —
+  no roadmap item; post-release maintenance. `v2.0.0` **published** and #80 merged, so the audit asked what
+  the release left behind. The release itself verified sound (tag on the release commit, both majors
+  coexisting on the proxy, CI and all four policy tools green). **`contrib/*` tagged `v0.2.0`** — a minor
+  inside `v0` because the move to the core's `/v2` changed the `health.Check` type they return while **no
+  identifier changed**, and `v1.0.0` would commit to stability on an API pinned to a driver major. The
+  procedure is now in `release.md`, trap included: **`release.yml` never fires for a `contrib/…` tag**, so
+  there is no CI run on the tagged tree and the verification must precede the tag. The rest was
+  **governance drift invisible to any diff or gate**: three of `github-setup.md`'s five sections had never
+  been applied — the label set did not exist (so every Dependabot PR errored), squash-only was prose only
+  and `delete_branch_on_merge` off (**63 stale branches**, deleted after checking merged PRs rather than
+  ancestry), two protection flags still off (left to the maintainer). M13's milestone was still open.
+  Finally the sweep `project.yaml` kept asking for, held to one test — *would a regeneration produce
+  something wrong?* — which is why `public_api` got a note pointing at the gate-enforced spec instead of a
+  rewrite.
+
 #### 07 — July
 
 - [2026-07-30 — 13.9: six lines, and the constraint that made them wait](2026/07/2026-07-30-m13-contrib-to-v2.md) —

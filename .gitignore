@@ -48,7 +48,14 @@ htmlcov/
 # Local agent / harness scratch (never commit)
 .questions
 .bugs
-.claude/settings.local.json
+# Harness-local: session settings and the EADOS slash-command bundle copied in beside them —
+# tooling that drives this repo, not source belonging to it (same reasoning as /.eados-core/).
+.claude/
+
+# The maintainer's authoring area for the spec and its drafts. What the project is held to is the
+# copy imported verbatim under docs/specs/; these are the working originals.
+/.spec/
+/d4np-go.md
 
 # EADOS factory tooling — the .eados-core/ bundle is copied in to (re)generate this repo; it is
 # not part of the project's own source.
