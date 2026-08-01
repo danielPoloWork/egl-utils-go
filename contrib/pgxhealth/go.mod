@@ -3,7 +3,7 @@ module github.com/danielPoloWork/egl-utils-go/contrib/pgxhealth
 go 1.25.0
 
 require (
-	github.com/danielPoloWork/egl-utils-go v1.0.0
+	github.com/danielPoloWork/egl-utils-go v1.1.1
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/goleak v1.3.0
@@ -16,7 +16,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.15.0 // indirect
-	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
