@@ -72,6 +72,7 @@ setup.
 | 11 | Governance: namespace contract & spec reconciliation | ✅ done |
 | 12 | Public-interface reconciliation | ✅ done |
 | 13 | `/v2` — `pkg/` layout and the ledger emptied | ✅ done |
+| 14 | Adoption: examples, the release act, and the supply chain | 🚧 in progress |
 
 
 ## License
