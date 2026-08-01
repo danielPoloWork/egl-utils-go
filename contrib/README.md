@@ -2,7 +2,7 @@
 
 Each directory here is a **separate Go module** with its own `go.mod`, its own
 dependencies, and its own release tags. They supply
-[`health.Check`](../health) probes for dependencies whose clients the core module
+[`health.Check`](../pkg/health) probes for dependencies whose clients the core module
 is not allowed to import.
 
 | Module | Probes | Driver |
@@ -41,13 +41,14 @@ They tag as `contrib/redishealth/vX.Y.Z` and `contrib/pgxhealth/vX.Y.Z` — Go's
 convention for nested modules — so a fix to one never forces a release of the core
 or of its sibling.
 
-> **These modules still target the core's v1 line.** The core opened `/v2` in
-> [ADR-0045](../docs/adr/0045-pkg-layout-and-v2.md), but this README and the `require`
-> lines below deliberately still say v1: ADR-0040 forbids a `replace` and requires the
-> **released** core, so contrib cannot reference `/v2` until `v2.0.0` is tagged. Migrating
-> them is a Milestone 13 item that runs *after* the tag. Their own module paths and tag
-> scheme are unaffected by the core's major — a contrib path never carries the core's
-> version suffix.
+> **These modules now target the core's `/v2` line** — `require github.com/danielPoloWork/egl-utils-go/v2 v2.0.0`,
+> importing `…/v2/pkg/health`. They moved once `v2.0.0` was tagged and not before, because
+> ADR-0040 forbids a `replace` and requires the **released** core (roadmap 13.9, which is why it
+> ran *after* the release rather than with the rest of the major).
+>
+> **Their own module paths and tags did not change and never will for this reason:** a contrib path
+> carries *its own* major version, not the core's, so `contrib/redishealth` stays
+> `contrib/redishealth` while depending on the core's v2. The suffix rule applies per module.
 
 ## Using
 
@@ -59,7 +60,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/danielPoloWork/egl-utils-go/health"
+	"github.com/danielPoloWork/egl-utils-go/v2/pkg/health"
 	"github.com/danielPoloWork/egl-utils-go/contrib/pgxhealth"
 	"github.com/danielPoloWork/egl-utils-go/contrib/redishealth"
 )

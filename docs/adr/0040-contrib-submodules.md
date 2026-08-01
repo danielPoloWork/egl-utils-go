@@ -32,7 +32,8 @@ importing another. A contrib module does both on purpose.
 ## Decision
 
 Each `contrib/*` directory is a separate module that **requires the core at a released
-version** (`v1.0.0`) with **no `replace` directive and no `go.work`**; its exported
+version** (`v1.0.0` when this ADR was written; **`/v2 v2.0.0` since roadmap 13.9** — see the
+amendment below) with **no `replace` directive and no `go.work`**; its exported
 constructor takes the **driver's own type** while its internals are written against a
 one-method interface so the probe is testable without a live server; and the three
 places that would otherwise silently ignore a nested module are extended —
@@ -127,6 +128,33 @@ places that would otherwise silently ignore a nested module are extended —
   The nil check catches an untyped nil; a typed nil in an interface is not detectable
   that way and is documented as failing on the first probe instead.
 - **Milestone 10 is complete.** The release carry-through is v1.1.0 for the core alone.
+
+**Amendment 2026-07-30 (roadmap 13.9) — the released core is now `/v2 v2.0.0`.** Both submodules
+now `require github.com/danielPoloWork/egl-utils-go/v2 v2.0.0` and import `…/v2/pkg/health`.
+**Nothing in this ADR is superseded; it was exercised.** Three of its decisions did real work here,
+and it is worth recording which:
+
+- **"Require the *released* core" set the schedule of an entire milestone.** Every other `/v2` item
+  shipped inside the major; this one could not, because the version it must name did not exist until
+  the core was tagged. That is why the ROADMAP orders it *after* the release (13.9 runs after 13.10)
+  and why an attempt to do it earlier fails concretely rather than stylistically:
+  `go list -m …/egl-utils-go/v2@v2.0.0` reported **"unknown revision"** while the published list
+  stopped at v1.1.1.
+- **The rejected `replace` would have hidden exactly this.** With `replace ../..` the migration could
+  have been done at any point during the major and CI would have been green throughout — while the
+  `require` line consumers resolve went unexercised. The constraint that made this item wait is the
+  same one that makes it *verified* when it lands.
+- **The per-module major-version suffix rule.** A contrib path carries its own major, not the core's,
+  so `contrib/redishealth` keeps its path while depending on the core's v2 — the module paths and tag
+  scheme are untouched, as this ADR anticipated.
+
+One measured side effect, recorded because it is invisible in the diff: MVS raised `pgxhealth`'s
+transitive `golang.org/x/sync` pin from **v0.17.0 to v0.22.0**, because the core v2 requires the
+newer one. A major bump in a dependency moves a submodule's indirect graph even when the submodule's
+own code does not change.
+
+Their first `/v2`-based tags are, as before, **a separate act**: this amendment migrates the source,
+it does not release it.
 
 ## References
 

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 
-	"github.com/danielPoloWork/egl-utils-go/health"
+	"github.com/danielPoloWork/egl-utils-go/v2/pkg/health"
 )
 
 // fakePinger stands in for a Redis client. go-redis has no in-memory server, so

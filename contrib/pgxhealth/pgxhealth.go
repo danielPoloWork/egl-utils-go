@@ -26,7 +26,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/danielPoloWork/egl-utils-go/health"
+	"github.com/danielPoloWork/egl-utils-go/v2/pkg/health"
 )
 
 // pinger is the only behaviour this package needs from a pool. Declaring it here
