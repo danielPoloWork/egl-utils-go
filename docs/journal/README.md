@@ -19,6 +19,21 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-01 — 14.2: documentation that runs, and the rule the unexported clocks forced](2026/08/2026-08-01-examples-convention.md) —
+  roadmap 14.2, [ADR-0053](../adr/0053-runnable-examples-convention.md). Thirteen examples across eight
+  packages, and the convention was the item. **The rule I did not get to choose:** the fake clocks that
+  make the tests deterministic are **unexported fields**, so rule 1 (external test package) puts them out
+  of an example's reach — two independently-chosen rules collided, and exporting a seam was refused twice
+  over (M14 promises no identifier; a knob whose only caller is documentation ships forever). The
+  replacement is honest instead of clever: a one-minute breaker timeout, `BaseDelay: 0`, a bucket that
+  starts full, an `ordering` guarantee via a `started` channel, and a semaphore whose bound is proved by
+  the example terminating. **`go test` compiles an `Example` with no `// Output:` and never runs it**, so
+  all thirteen were confirmed with `-v` rather than a package-level `ok`. Whatever an example prints is
+  enforced forever, hence shape and never strings. Two traps found by writing it: pubsub's **16-message
+  default buffer** is the only reason a sequential example works (ADR-0049 — otherwise every message
+  drops and the example hangs), and an empty header value leaves a **trailing space** the comparator does
+  not trim per line. Recorded cost: a nondeterministic behaviour can be described but not shown, so cache
+  TTL stays prose in 14.4.
 - [2026-08-01 — post-v2.0.0 audit: contrib released, and the drift a release does not show](2026/08/2026-08-01-post-v2-audit-and-contrib-tags.md) —
   no roadmap item; post-release maintenance. `v2.0.0` **published** and #80 merged, so the audit asked what
   the release left behind. The release itself verified sound (tag on the release commit, both majors
