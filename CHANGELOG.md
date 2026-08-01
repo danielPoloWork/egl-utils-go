@@ -12,6 +12,13 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Added
 
+- Runnable examples on pkg.go.dev for `workerpool`, `pubsub`, `fanin`, `fanout`, `semaphore`,
+  `circuitbreaker`, `retry` and `ratelimit` — 13 examples, each with output verified by `go test`
+  (roadmap 14.2, [ADR-0053](docs/adr/0053-runnable-examples-convention.md)). Documentation only: no
+  exported identifier, behaviour or dependency changed, and the examples are `_test.go` files a
+  consumer never compiles. They become visible only on the next tagged version, since pkg.go.dev
+  renders the tagged tree.
+
 ### Changed
 
 ### Deprecated
