@@ -31,3 +31,8 @@
 - name: security
   color: "b60205"
   description: "Security fix or advisory"
+# Not a Conventional-Commit type: a scope label, applied alongside one. Dependabot attaches it to
+# submodule updates (.github/dependabot.yml), so it has to exist or Dependabot reports it missing.
+- name: contrib
+  color: "d4c5f9"
+  description: "A contrib/* submodule: its own module, its own tags"

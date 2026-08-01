@@ -33,6 +33,38 @@ pre-1.0 milestone-driven.
 10. **CI builds & attaches artifacts** on the tag push.
 
 
+## Releasing a `contrib/*` submodule
+
+Each `contrib/*` directory is a module of its own with its own tags ([ADR-0040](../adr/0040-contrib-submodules.md)),
+so releasing one is a **separate act** from releasing the core: a driver bump never forces a core
+release, and a core release never publishes a submodule.
+
+- **Tag scheme:** `contrib/<name>/vX.Y.Z` — the directory path, then the version, per Go's
+  nested-module convention. That tag is what the proxy serves as the module's version.
+- **The version is the submodule's own.** It tracks that module's API and its driver, not the core's:
+  `contrib/redishealth/v0.2.0` requires the core's `/v2` while carrying no major suffix itself,
+  because a module path carries its own major.
+- **`release.yml` does not fire.** It triggers on `tags: ["v*.*.*"]`, which a `contrib/…` ref does not
+  match — so there is **no draft GitHub Release and no CI run on the tagged tree**. Verify before
+  tagging instead: from the submodule directory, `go build ./... && go vet ./... && go test ./...`,
+  plus the `contrib` CI job green on the commit being tagged.
+- **No GitHub Release is published for a submodule.** The annotated tag message is the record and the
+  proxy is the distribution; every `contrib/*` tag so far follows this.
+- **The core's release artifacts are untouched.** `version.go`, the README badge, `CHANGELOG.md`,
+  `docs/changelog/` and `docs/releases/` are core-only, and `consistency_lint.py`'s version-lockstep
+  check compares just those — a submodule tag can neither satisfy nor break it. `spec_api_lint.py`
+  likewise holds `contrib/*` outside the versioned surface.
+- **Verify what a consumer resolves** once the tag is pushed:
+  `go list -m github.com/danielPoloWork/egl-utils-go/contrib/<name>@<version>`. The proxy caches its
+  version *list* for a few minutes, so `@latest` can lag an explicit version briefly.
+
+The agent tags and pushes; the version choice is the maintainer's, and there is no Publish step to
+reach. Precedent from v2.0.0: both submodules went to **v0.2.0** — a minor bump inside `v0`, because
+moving to the core's `/v2` changed the `health.Check` type they return (breaking for consumers) while
+their own identifiers did not change, and `v0` still commits to no stability on an API pinned to a
+driver major.
+
+
 ## Boundary
 
 | Action | Who |
@@ -42,6 +74,8 @@ pre-1.0 milestone-driven.
 | Create & push the annotated tag, then the **draft** release (CI drafts it on tag-push) | Agent |
 | Publish the GitHub Release (click **Publish**) | **Human** |
 | Build & attach artifacts | CI |
+| Choose a `contrib/*` submodule version | **Human** |
+| Create & push a `contrib/<name>/vX.Y.Z` tag (no Release is drafted) | Agent |
 
 
 Agents never publish releases, never amend or delete published tags, and only delete-and-

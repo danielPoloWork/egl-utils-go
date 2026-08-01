@@ -39,10 +39,14 @@ language:                    # Phase 1: Q1.1 imported (Go, from the brief); Q1.3
   secondary_lang:  ""                 # Q1.2 (defaulted): none — db.Transaction wraps database/sql, owns no schema
   group_path:      "it/d4np"          # Q1.3 (asked) -> {{GROUP_PATH}}
   group_dotted:    "it.d4np"          # -> {{GROUP_DOTTED}}
-  namespace:       "github.com/danielPoloWork/egl-utils-go"   # Go: module path IS the namespace (profile note) -> {{NAMESPACE}}
+  namespace:       "github.com/danielPoloWork/egl-utils-go/v2"   # Go: module path IS the namespace (profile note) -> {{NAMESPACE}}
+                             # AMENDED 2026-08-01 (ADR-0045): the interview recorded the unsuffixed path; the module
+                             # opened /v2 at v2.0.0, and in Go a major suffix is part of the module path, so the
+                             # namespace carries it. v1 stays reachable at its own tags under the unsuffixed path.
   src_ext:         go
   comment_lang:    "en"               # Q4.7 (asked): all English -> {{CODE_COMMENT_LANG}}
-  public_include_hint: "import \"github.com/danielPoloWork/egl-utils-go/workerpool\""
+  public_include_hint: "import \"github.com/danielPoloWork/egl-utils-go/v2/pkg/workerpool\""
+                             # AMENDED 2026-08-01 (ADR-0045): /v2 suffix + the pkg/ parent, both live since v2.0.0.
 
 toolchain:                   # Phase 3 (defaulted): profiles/go.yaml resolved per generate.md Step 1
   build_tool:      "go build (go modules)"
@@ -52,7 +56,10 @@ toolchain:                   # Phase 3 (defaulted): profiles/go.yaml resolved pe
   linter:          "golangci-lint (govet, staticcheck, errcheck, revive, gosec)"
   sanitizers:      "go test -race (data-race detector), go vet, govulncheck"
   coverage_tool:   "go test -coverprofile (go tool cover)"
-  coverage_target: 80
+  coverage_target: 85          # AMENDED 2026-08-01 (ADR-0036): the interview recorded 80 module-wide. What CI
+                               # enforces is 85 PER PACKAGE via tools/coverage_gate.py — a module-wide figure sits
+                               # near 99% with most packages at 100%, so it could never fail. A regeneration must
+                               # produce the per-package gate, not a module-wide one.
   doc_tool:        "godoc / pkg.go.dev"
   version_file:    "version.go"
   version_const_hint: "const Version = \"X.Y.Z\""
@@ -169,10 +176,19 @@ spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, m
     - "Zero goroutine leaks: every goroutine-spawning component stops via context or close(done); per-component leak assertions (goleak) in tests"
     - "Race-free: go test -race green in CI on every PR — the canonical concurrency gate"
     - "Allocation-conscious hot paths: -benchmem benchmarks for pooled and middleware paths; syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun"
-    - "Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + vetted few (prometheus/client_golang, a YAML parser); test-only deps: testify, goleak, rapid"
+    - "Supply chain: govulncheck green; runtime deps limited to stdlib + golang.org/x/* + a YAML parser; test-only deps: testify, goleak, rapid"
+    # AMENDED 2026-08-01 (ADR-0050): prometheus/client_golang was dropped from the line above at v2.0.0 — metrics
+    # writes the exposition text format directly, which removed nine dependency modules and retired ring 3 of
+    # ADR-0004. Three runtime deps remain (x/crypto, x/sync, yaml.v3), each confined to its owning package and
+    # enforced by depguard + tools/import_graph_lint.py.
     - "Portability: Tier-1 Linux/Windows/macOS; CI on Go 1.25 & 1.26; go.mod language floor 1.25"
-    - "Coverage: at least 80 percent line coverage enforced in CI"
-    - "Compatibility: SemVer, pre-1.0 milestone-driven; breaking changes to the public interface require a MAJOR-intent note in the PR"
+    - "Coverage: at least 85 percent line coverage per package enforced in CI"
+    - "Compatibility: SemVer over the exported surface; a breaking change requires a MAJOR and an ADR"
+    # AMENDED 2026-08-01 (ADR-0042, ADR-0045): the two clauses above were the pre-1.0 phrasing — an 80 percent
+    # module-wide floor and a "MAJOR-intent note in the PR" for breakage. The module is past 1.0 (v2.0.0), so
+    # breakage is not noted, it is scheduled: ADR-0030's ledger collected the deltas and Milestone 13 discharged
+    # them in one major. Documented behaviour counts as surface (ADR-0042) — bcrypt's default cost changed nothing
+    # in a signature and was still major-only.
   architecture: |
     A flat collection of small, orthogonal packages — one concern per package — under a
     single Go module (github.com/danielPoloWork/egl-utils-go). There is no cross-package
@@ -201,6 +217,16 @@ spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, m
     series' Maven tree was built and measured first, then reverted — it costs a consumer 34
     characters per import against pkg/'s 7, for the same tidy root. A regeneration must
     produce neither the tree NOR a bare root: it is pkg/.
+    AMENDED 2026-08-01 — two package names in the group listing above are v1 spellings a
+    regeneration must not re-emit: `core: syncpool | errors` is now `syncpool | errx`
+    (ADR-0046 — the old name shadowed the stdlib package it wraps), and `lifecycle
+    (GracefulShutdown)` describes a package whose entry points are Register / Shutdown /
+    Trigger / WaitForSignals, never a function of that name. Same-layer internal edges exist
+    only where the spec mandates the composition — today exactly one, config -> validator
+    (ADR-0033) — which depguard and tools/import_graph_lint.py enforce
+    in both directions: an unsanctioned edge fails, and the sanctioned one disappearing
+    fails too. The contrib/* probe modules sit outside this graph entirely, each its own
+    module with its own tags (ADR-0040).
     AMENDED 2026-07-27 (ADR-0003, ADR-0041) — the Milestone 1 ADR called for below was
     decided as ADR-0003, which SUPERSEDES ADR-0002's cross-language tree for this
     repository. The interview recorded "packages live under the normative cross-language
@@ -223,9 +249,15 @@ spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, m
     - { name: "Functional Options", why: "idiomatic, forward-compatible construction for configurable components" }
   pattern_discipline: advisory   # default — the agent advises, the human decides
   layers: []
+  # AMENDED 2026-08-01 — the list below was the interview's v1 surface. It is NOT the source of truth: that is
+  # docs/specs/v2 section 5, gate-enforced against the compiled surface by tools/spec_api_lint.py (141 exported
+  # identifiers across 22 packages, no stale entries). The seven entries the /v2 major reshaped are corrected
+  # in place with their ADRs so a regeneration cannot re-emit the v1 shape; the additive v1.1.0 capabilities
+  # (circuitbreaker.State, ratelimit Middleware + ErrLimited, hash cost control, config.WithStructValidation)
+  # are in the spec, not duplicated here. Every path also gained the /v2 + pkg/ prefix (ADR-0045).
   public_api:
-    - "workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Stop(ctx) error; ErrQueueFull"
-    - "pubsub: NewBroker[T](opts ...Option) *Broker[T]; (*Broker[T]).Publish(topic string, msg T); (*Broker[T]).Subscribe(topic string, filter func(T) bool) (<-chan T, func())"
+    - "workerpool: New(workers, queueSize int, opts ...Option) *Pool; (*Pool).Submit(ctx, Task) error; (*Pool).Close(ctx) error; ErrQueueFull; ErrClosed"   # AMENDED 2026-08-01 (ADR-0048): Stop -> Close, ErrPoolClosed -> ErrClosed
+    - "pubsub: NewBroker[T](opts ...Option[T]) *Broker[T]; (*Broker[T]).Publish(ctx, topic string, msg T) error; (*Broker[T]).Subscribe(ctx, topic string, filter func(T) bool) <-chan T; (*Broker[T]).Close(); ErrSlowSubscriber; ErrClosed"   # AMENDED 2026-08-01 (ADR-0049): ctx-scoped subscription (cancelling ctx IS the unsubscribe, so the returned func is gone), a reporting Publish, and WithSlowSubscriberPolicy over a three-valued enum
     - "fanin: Merge[T](ctx, ins ...<-chan T) <-chan T"
     - "fanout: Split[T](ctx, in <-chan T, outs ...chan<- T)"
     - "semaphore: NewWeighted(capacity int64) *Weighted; Acquire(ctx, weight) error; Release(weight)"
@@ -240,16 +272,16 @@ spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, m
     - "env: GetDefault(key, fallback string) string; GetInt/GetBool/GetDuration variants"
     - "logger: NewStructured(opts ...Option) *slog.Logger — JSON handler tuned for log aggregation"
     - "logger: WithFields(ctx, ...Field) context.Context; FromContext(ctx) *slog.Logger"
-    - "cache: NewInMemory[K comparable, V any](ttl time.Duration, opts ...Option) *Cache[K, V]; Get/Set/Delete; Close(); ErrNotFound"
+    - "cache: New[K comparable, V any](ttl time.Duration, opts ...Option) *Cache[K, V]; Get(key K) (V, bool); Set/Delete; Close()"   # AMENDED 2026-08-01 (ADR-0047): NewInMemory -> New, Get returns comma-ok, ErrNotFound DELETED rather than kept as a landmark (a kept sentinel would still compile in errors.Is and simply never be true)
     - "db: Transaction(ctx, db *sql.DB, fn func(*sql.Tx) error) error — commit on nil, rollback on error or panic"
     - "validator: Struct(v any) error — tag grammar: required, email, min, max, oneof"
-    - "hash: HashPassword(pw string) (string, error); CheckPassword(pw, hash string) error"
-    - "lifecycle: Register(fn func(ctx) error); WaitForSignals(sig ...os.Signal); Shutdown(ctx) error"
+    - "hash: HashPassword(pw string) (string, error); HashPasswordCost(pw string, cost int) (string, error); Cost(hash string) (int, error); CheckPassword(pw, hash string) error; ErrMismatch; ErrPasswordTooLong; ErrInvalidCost"   # AMENDED 2026-08-01 (ADR-0032, ADR-0052): cost control added in v1.1.0 with the 10-31 range enforced locally (bcrypt SILENTLY PROMOTES a cost below 4 to 10 and honours 4-9 verbatim); the default work factor is 12 as of v2.0.0, and the module no longer inherits bcrypt.DefaultCost"
+    - "lifecycle: Register(fn func(ctx) error); WaitForSignals(timeout time.Duration, sigs ...os.Signal); Trigger(); Shutdown(ctx) error"   # AMENDED 2026-08-01 (ADR-0051): a mandatory shutdown timeout measured FROM THE SIGNAL, where 0 imposes no deadline (v1 behaviour, and the right posture under systemd/Kubernetes); Trigger() added in v1.1.0
     - "health: Handler(checks ...Check) http.Handler — Check{Name, Probe func(ctx) error}"
-    - "metrics: Prometheus(reg prometheus.Registerer) func(http.Handler) http.Handler; Handler() http.Handler"
+    - "metrics: New() *Recorder; (*Recorder).Middleware() func(http.Handler) http.Handler; (*Recorder).Handler() http.Handler"   # AMENDED 2026-08-01 (ADR-0050): no Prometheus SDK anywhere in the surface OR the graph — the recorder owns its registry and writes the exposition text format itself, verified against a golden captured from expfmt while the SDK was still a dependency
     - "syncpool: NewBufferPool() *BufferPool; (*BufferPool).Get() *bytes.Buffer; (*BufferPool).Put(*bytes.Buffer)"
-    - "errors: Wrap(err error, msg string) error; Wrapf(err, format, args...) error — errors.Is/As/Unwrap compatible"
-    - "Error model: exported sentinel errors per package (ErrQueueFull, ErrOpen, ErrNotFound, ...); context cancellation surfaces ctx.Err(); all wrapping is errors.Is/As transparent"
+    - "errx: Wrap(err error, msg string) error; Wrapf(err, format, args...) error; WithStack(err) error; Frames(err) []Frame; Frame; StackTracer — errors.Is/As/Unwrap compatible"   # AMENDED 2026-08-01 (ADR-0046): package `errors` renamed to `errx` (it shadowed the stdlib name it wraps) and stack capture became OPT-IN — Wrap never reaches the runtime, which made it 14.8x faster on a stackless chain
+    - "Error model: exported sentinel errors per package (ErrQueueFull, ErrClosed, ErrOpen, ErrSlowSubscriber, ...); context cancellation surfaces ctx.Err(); all wrapping is errors.Is/As transparent"   # AMENDED 2026-08-01: ErrNotFound is gone (ADR-0047)
     - "Versioning surface: SemVer over all exported identifiers above; MAJOR = any breaking change to these signatures or their documented behavioral contracts"
   verification: |
     Every functional requirement maps to package-level table-driven unit tests (go test);
@@ -259,8 +291,13 @@ spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, m
     timing-sensitive logic (retry, ratelimit, cache TTL). Property-based tests (rapid) cover
     pubsub delivery/filtering, fanin/fanout completeness (no message lost or duplicated),
     and backoff bound invariants. Static gates on every PR: gofumpt, golangci-lint (govet,
-    staticcheck, errcheck, revive, gosec), govulncheck. Coverage gate: at least 80 percent
-    line coverage (go test -coverprofile). Benchmarks (go test -bench -benchmem) for
+    staticcheck, errcheck, revive, gosec), govulncheck. Coverage gate: at least 85 percent
+    line coverage PER PACKAGE (tools/coverage_gate.py over go test -coverprofile; AMENDED
+    2026-08-01, ADR-0036 — the interview said 80 module-wide, which no realistic regression
+    could trip). Fuzz targets (config loading, validator tags) run a 10-minute CI budget with
+    a committed corpus (ADR-0034), and the NFR suite splits hardware-independent claims into
+    hard gates from throughput/latency, which is measured and reported (ADR-0037).
+    Benchmarks (go test -bench -benchmem) for
     workerpool, ratelimit, middleware, and syncpool, recorded under docs/benchmarks;
     syncpool.BufferPool asserts zero steady-state allocations via testing.AllocsPerRun.
     Manual-only gates: none — every requirement above has a mechanical check.
