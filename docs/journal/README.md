@@ -19,6 +19,19 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-01 — 14.3: the examples that assert a security property, and the one that had to say less](2026/08/2026-08-01-examples-http-observability.md) —
+  roadmap 14.3. Twelve examples across middleware, health, metrics, logger and lifecycle, with nothing
+  re-decided — ADR-0053 held. **Rule 3 turned out to be the design constraint**: `slog` and the Logger
+  middleware emit a moving `time` and `duration`, so those examples decode the line and print only the
+  stable fields, which documents the schema better than dumping it would; `metrics` filters the scrape to
+  the counter because histogram buckets depend on real latency. **Two examples assert a security property
+  rather than a happy path** — Recoverer's prints `false` for "is the password in the body", health's
+  shows a 503 naming *which* check failed and never why — which is where an example beats a promise in
+  prose. **`lifecycle` was answered by writing less**: `WaitForSignals` blocks on a signal that will never
+  come, so it is documented *as prose inside the example* while the runnable part proves LIFO order; the
+  package is the module's only process-wide singleton, so the file tells the next contributor to keep this
+  the only example, and the coupling was checked with `-shuffle` on four seeds. revive's unused-`ctx`
+  finding was fixed by making the probe **honour** the context, not by hiding the parameter.
 - [2026-08-01 — 14.2: documentation that runs, and the rule the unexported clocks forced](2026/08/2026-08-01-examples-convention.md) —
   roadmap 14.2, [ADR-0053](../adr/0053-runnable-examples-convention.md). Thirteen examples across eight
   packages, and the convention was the item. **The rule I did not get to choose:** the fake clocks that
