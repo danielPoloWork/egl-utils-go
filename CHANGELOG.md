@@ -18,6 +18,9 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   exported identifier, behaviour or dependency changed, and the examples are `_test.go` files a
   consumer never compiles. They become visible only on the next tagged version, since pkg.go.dev
   renders the tagged tree.
+- Runnable examples for `middleware`, `health`, `metrics`, `logger` and `lifecycle` — 12 more,
+  including a package-level example of the middleware chain in the order it should be composed
+  (roadmap 14.3). Same terms: documentation only, nothing exported or behavioural changed.
 
 ### Changed
 
