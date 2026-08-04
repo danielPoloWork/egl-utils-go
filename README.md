@@ -39,6 +39,13 @@ go test ./...
   tested from their own directories (`cd contrib/redishealth && go test ./...`) and version
   independently. See [`contrib/README.md`](contrib/README.md) and
   [ADR-0040](docs/adr/0040-contrib-submodules.md).
+- **[`examples/`](examples) holds runnable programs**, also as separate modules. Start with
+  [`examples/service`](examples/service) — one HTTP service composed from eight packages, showing
+  what a package's documentation cannot: the middleware chain order, the operational endpoints kept
+  out of it, liveness and readiness as two different questions, and an ordered shutdown. Run it with
+  `cd examples/service && go run .` — no configuration needed. See
+  [ADR-0054](docs/adr/0054-examples-service-module.md). Every package additionally carries runnable
+  `Example` functions on pkg.go.dev ([ADR-0053](docs/adr/0053-runnable-examples-convention.md)).
 
 See [`docs/development/local-build.md`](docs/development/local-build.md) for the full local
 setup.

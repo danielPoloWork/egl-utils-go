@@ -227,6 +227,17 @@ spec:                        # Phase 5 — Q5.0 (asked): IMPORT of d4np-go.md, m
     in both directions: an unsanctioned edge fails, and the sanctioned one disappearing
     fails too. The contrib/* probe modules sit outside this graph entirely, each its own
     module with its own tags (ADR-0040).
+    AMENDED 2026-08-04 (ADR-0054) — the repository now has a SECOND family of nested modules
+    that a regeneration must produce: examples/*, holding runnable programs that compose the
+    library (today examples/service). Same topology as contrib/* and for the mirror-image
+    reason — there the boundary keeps a driver dependency OUT of the core, here it keeps a
+    showcase's imports out — so a regeneration must emit examples/<name>/go.mod requiring the
+    RELEASED core with no replace and no go.work, plus examples/.golangci.yml (the root config
+    minus depguard, since composing many feature packages is what an example exists to do) and
+    an `examples / <module>` CI job. Unlike contrib/*, examples/* modules are NEVER tagged or
+    released, and they are deliberately NOT measured by tools/coverage_gate.py: a main() that
+    binds a port and blocks on a signal is unreachable from a test, and lowering the library's
+    per-package floor for a demo would weaken the gate that matters.
     AMENDED 2026-07-27 (ADR-0003, ADR-0041) — the Milestone 1 ADR called for below was
     decided as ADR-0003, which SUPERSEDES ADR-0002's cross-language tree for this
     repository. The interview recorded "packages live under the normative cross-language

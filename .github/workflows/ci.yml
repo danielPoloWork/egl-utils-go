@@ -146,6 +146,62 @@ jobs:
         run: go install golang.org/x/vuln/cmd/govulncheck@v1.4.0 && govulncheck ./...
 
   # ---------------------------------------------------------------------------
+  # examples/* modules (ADR-0054). Same reasoning as the contrib job above and a
+  # separate job rather than a matrix entry on it: `contrib / <module>` is a
+  # required status check on master, and renaming a required context leaves the
+  # branch waiting forever for a check that no longer reports.
+  #
+  # An example service is documentation, so the bar is that it *runs*: build, vet
+  # and a race-detector test run, because a directory of Go files that only
+  # compiles proves nothing — the same trap ADR-0053's verified `// Output:` rule
+  # closes for Example functions. Coverage is deliberately not gated here; see
+  # tools/coverage_gate.py and ADR-0054 for why.
+  # ---------------------------------------------------------------------------
+  examples:
+    name: examples / ${{ matrix.module }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [service]
+    defaults:
+      run:
+        working-directory: examples/${{ matrix.module }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@v7
+        with: { go-version: '1.26', cache: true }
+
+      - name: Build, vet and test under the race detector
+        run: |
+          go build ./...
+          go vet ./...
+          go test -race ./...
+
+      # The module requires the released core with no `replace`, so a `go.mod`
+      # that resolves only against the working tree must fail here rather than in
+      # a consumer's checkout. tools/import_graph_lint.py asserts the absence of
+      # the replace; this asserts the require actually resolves from the proxy.
+      - name: Verify the module is tidy against the released core
+        run: |
+          go mod tidy -diff
+          go mod verify
+
+      - name: gofumpt
+        run: go install mvdan.cc/gofumpt@v0.10.0 && test -z "$(gofumpt -l .)"
+
+      # examples/.golangci.yml shadows the root config here: the root's depguard
+      # rules forbid a package importing its siblings, which is exactly what a
+      # composition example exists to do.
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          working-directory: examples/${{ matrix.module }}
+
+      - name: govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.4.0 && govulncheck ./...
+
+  # ---------------------------------------------------------------------------
   # Coverage gate (spec v2 §7, ADR-0036) — 85% of statements *per package*, so the
   # threshold binds the weakest package instead of being absorbed by an average.
   # ---------------------------------------------------------------------------

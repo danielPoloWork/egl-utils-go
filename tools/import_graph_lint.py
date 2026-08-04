@@ -16,6 +16,15 @@ cannot:
     rule also objects, but that is a style rule, not the architecture);
   * drift between the two files, since both must agree for CI to pass.
 
+It additionally asserts the **nested-module topology** — `contrib/*` (ADR-0003,
+ADR-0040) and `examples/*` (ADR-0054). Those directories are separate modules,
+and that boundary is the only thing keeping their dependencies out of the core's
+graph. Nothing else here would notice if one lost its `go.mod`, because every
+other check asks `go list ./...` what the module contains and the answer would
+simply have grown. Read from the filesystem, this check runs first and
+short-circuits; it also refuses a `replace`, a committed `go.work`, and a core
+requirement pinned to anything but a released tag, none of which breaks a build.
+
 Run it from the repository root:
 
     python tools/import_graph_lint.py
@@ -30,6 +39,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -87,6 +97,25 @@ TEST_ONLY_DEPS = {
 # ---------------------------------------------------------------------------
 ALLOWED_INTERNAL_EDGES = {
     ("config", "validator"),
+}
+
+# ---------------------------------------------------------------------------
+# Directories whose immediate children are separate modules. Each maps to the
+# ADRs that decided the boundary and to what joining the root module would cost,
+# because the failure is the same in both cases and only the cost differs: a
+# directory of Go files with no go.mod of its own is silently part of the ROOT
+# module, and everything it imports joins the core's dependency graph while every
+# `go list ./...`-based check keeps passing.
+# ---------------------------------------------------------------------------
+NESTED_MODULE_PARENTS = {
+    "contrib": (
+        "ADR-0003, ADR-0040",
+        "its driver dependencies would enter the core's graph",
+    ),
+    "examples": (
+        "ADR-0054",
+        "everything the showcase imports would enter the core's graph",
+    ),
 }
 
 
@@ -213,47 +242,139 @@ def check_module_graph(problems: list[str]) -> None:
             )
 
 
-def check_contrib_is_separately_moduled(problems: list[str]) -> None:
-    """Every contrib/* package directory must carry its own go.mod.
+def unmoduled_go_file(top: str) -> str | None:
+    """The first Go file under `top` that belongs to no module of its own.
 
-    This is the load-bearing check for the contrib topology (ADR-0003, ADR-0040).
-    contrib modules deliberately import database drivers and cache clients, which
-    the core module is forbidden to touch; the only thing keeping those
-    dependencies out of the core is that each contrib directory is a *separate
-    module*, which `go list ./...` does not descend into.
+    Recursive rather than a listing of `top`, because the failure is the same one
+    directory deeper: `examples/foo/cmd/server/main.go` with no
+    `examples/foo/go.mod` above it still joins the ROOT module. Any directory
+    carrying its own go.mod is pruned — what is inside it is that module's
+    business, not the root's.
+    """
+    for dirpath, dirnames, filenames in os.walk(top):
+        dirnames.sort()
+        if dirpath != top and "go.mod" in filenames:
+            dirnames[:] = []
+            continue
+        for fn in sorted(filenames):
+            if fn.endswith(".go"):
+                return os.path.join(dirpath, fn).replace(os.sep, "/")
+    return None
+
+
+def check_nested_modules(problems: list[str]) -> None:
+    """Every contrib/* and examples/* package directory must carry its own go.mod.
+
+    This is the load-bearing check for both nested-module topologies (ADR-0003 and
+    ADR-0040 for contrib, ADR-0054 for examples). They exist for opposite-looking
+    reasons — contrib deliberately imports drivers the core is forbidden to touch,
+    examples deliberately imports many feature packages at once and may grow a
+    dependency of its own — but the mechanism protecting the core is identical and
+    it is not the lint config: it is that each directory is a *separate module*,
+    which `go list ./...` does not descend into.
 
     Delete or rename one of those go.mod files and the failure is silent: the .go
-    files underneath simply join the root module, the driver joins the core's
-    dependency graph, and every other check here keeps passing because it asks
-    `go list ./...` what the module contains. So this check looks at the
+    files underneath simply join the root module, whatever they import joins the
+    core's dependency graph, and every other check here keeps passing because it
+    asks `go list ./...` what the module contains. So this check looks at the
     filesystem instead.
     """
-    contrib = "contrib"
-    if not os.path.isdir(contrib):
-        return
-    for name in sorted(os.listdir(contrib)):
-        d = os.path.join(contrib, name)
-        if not os.path.isdir(d):
+    for parent in sorted(NESTED_MODULE_PARENTS):
+        adrs, consequence = NESTED_MODULE_PARENTS[parent]
+        if not os.path.isdir(parent):
             continue
-        has_go = any(f.endswith(".go") for f in os.listdir(d))
-        if not has_go:
-            continue
-        mod = os.path.join(d, "go.mod")
-        if not os.path.isfile(mod):
+        for name in sorted(os.listdir(parent)):
+            d = os.path.join(parent, name)
+            if not os.path.isdir(d):
+                continue
+            mod = os.path.join(d, "go.mod")
+            if not os.path.isfile(mod):
+                stray = unmoduled_go_file(d)
+                if stray is None:
+                    continue
+                problems.append(
+                    "%s holds Go files (%s) but no go.mod, so they are part of the ROOT "
+                    "module -- %s. Every %s/* package is a separate module (%s)."
+                    % (d, stray, consequence, parent, adrs)
+                )
+                continue
+            # A nested module carries its OWN major version, never the core's, so
+            # the expected path has no /vN suffix (ADR-0040's per-module rule).
+            want = "%s/%s/%s" % (REPO, parent, name)
+            with open(mod, encoding="utf-8") as fh:
+                first = fh.readline().strip()
+            if first != "module " + want:
+                problems.append(
+                    "%s declares %r but its directory implies module path %r; a mismatch "
+                    "breaks `go get` for that submodule." % (mod, first, want)
+                )
+
+
+def check_nested_modules_resolve_like_a_consumer(problems: list[str]) -> None:
+    """No `replace`, no workspace, and the core required at a released version.
+
+    ADR-0040 decided this for contrib and ADR-0054 repeats it for examples, and
+    until now it was intended rather than enforced. Both rejected alternatives
+    fail the same way — silently, with CI green:
+
+      * a `replace … => ../..` builds the nested module against the working tree,
+        so the `require` line consumers actually resolve is never exercised;
+      * a committed `go.work` switches every root-level `go build`, `go vet`,
+        `golangci-lint` and `govulncheck` invocation into workspace mode, which
+        changes resolution for the jobs that currently pass;
+      * a pseudo-version (`go get …@master`) means the module is built against a
+        commit no consumer can `go get` by name.
+
+    None of these breaks a build, which is exactly why they need a gate.
+    """
+    for workspace in ("go.work", "go.work.sum"):
+        if os.path.isfile(workspace):
             problems.append(
-                "%s holds Go files but no go.mod, so it is part of the ROOT module -- "
-                "its driver dependencies would enter the core's graph. Every contrib/* "
-                "package is a separate module (ADR-0003, ADR-0040)." % d
+                "%s exists in the repository root. A committed workspace switches every "
+                "root-level go/golangci-lint/govulncheck invocation into workspace mode "
+                "and changes dependency resolution for the whole module (ADR-0040 "
+                "rejected it explicitly). Nested modules build against the released "
+                "core instead." % workspace
             )
-            continue
-        want = "%s/%s/%s" % (REPO, contrib, name)   # contrib carries no core major suffix
-        with open(mod, encoding="utf-8") as fh:
-            first = fh.readline().strip()
-        if first != "module " + want:
+
+    for rel in nested_modules():
+        mod_file = os.path.join(rel, "go.mod")
+        mod = json.loads(run("go", "mod", "edit", "-json", mod_file))
+
+        for rep in mod.get("Replace") or []:
             problems.append(
-                "%s declares %r but its directory implies module path %r; a mismatch "
-                "breaks `go get` for that submodule." % (mod, first, want)
+                "%s has a replace directive (%s => %s). A nested module builds against the "
+                "RELEASED core so it is tested the way a consumer gets it; replace is "
+                "ignored for anyone who depends on the module, so it would validate a "
+                "configuration nobody receives (ADR-0040, ADR-0054)."
+                % (mod_file, rep["Old"]["Path"], rep["New"]["Path"])
             )
+
+        for req in mod.get("Require") or []:
+            if req["Path"] != MODULE:
+                continue
+            # A pseudo-version carries a timestamp-and-hash build suffix; a released
+            # tag does not. `vX.Y.Z` (with an optional pre-release) is a tag.
+            if not re.fullmatch(r"v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?", req["Version"]) or re.search(
+                r"-\d{14}-[0-9a-f]{12}$", req["Version"]
+            ):
+                problems.append(
+                    "%s requires %s at %s, which is not a released version. Nested modules "
+                    "require the core at a tag so CI resolves exactly what `go get` will "
+                    "(ADR-0040, ADR-0054)." % (mod_file, MODULE, req["Version"])
+                )
+
+
+def nested_modules() -> list[str]:
+    """Every nested module in the repository, as `<parent>/<name>` paths."""
+    found = []
+    for parent in sorted(NESTED_MODULE_PARENTS):
+        if not os.path.isdir(parent):
+            continue
+        for name in sorted(os.listdir(parent)):
+            if os.path.isfile(os.path.join(parent, name, "go.mod")):
+                found.append("%s/%s" % (parent, name))
+    return found
 
 
 def report(problems: list[str]) -> int:
@@ -264,22 +385,24 @@ def report(problems: list[str]) -> int:
         "\nPolicy: docs/adr/0004-runtime-dependency-policy.md (dependency rings),\n"
         "        docs/adr/0035-import-graph-enforcement.md (this gate),\n"
         "        docs/adr/0033-config-struct-validation.md (the one internal edge),\n"
-        "        docs/adr/0040-contrib-submodules.md (the contrib topology)."
+        "        docs/adr/0040-contrib-submodules.md (the contrib topology),\n"
+        "        docs/adr/0054-examples-service-module.md (the examples topology)."
     )
     return 1
 
 
 def main() -> int:
-    # The contrib check runs first and short-circuits, because it is the one
-    # failure that breaks the tools underneath it. A contrib directory without a
-    # go.mod joins the root module, and `go list ./...` then dies on the driver
+    # The nested-module check runs first and short-circuits, because it is the one
+    # failure that breaks the tools underneath it. A contrib or examples directory
+    # without a go.mod joins the root module, and `go list ./...` then dies on an
     # import it cannot resolve -- an opaque "no required module provides package"
     # error rather than the real problem. Diagnosing first, then measuring.
     problems: list[str] = []
-    check_contrib_is_separately_moduled(problems)
+    check_nested_modules(problems)
     if problems:
         return report(problems)
 
+    check_nested_modules_resolve_like_a_consumer(problems)
     check_direct_requirements(problems)
     check_package_imports(problems)
     check_edges_are_reachable(problems)
@@ -288,19 +411,16 @@ def main() -> int:
     if problems:
         return report(problems)
 
-    contrib = sorted(
-        n for n in (os.listdir("contrib") if os.path.isdir("contrib") else [])
-        if os.path.isfile(os.path.join("contrib", n, "go.mod"))
-    )
+    nested = nested_modules()
     print(
         "Import-graph lint: OK - %d runtime deps in their owning packages, "
         "%d sanctioned internal edge(s), no test-only deps in production, "
-        "%d contrib submodule(s) held outside the core graph%s."
+        "%d nested module(s) held outside the core graph%s."
         % (
             len(RUNTIME_DEPS),
             len(ALLOWED_INTERNAL_EDGES),
-            len(contrib),
-            (" (" + ", ".join(contrib) + ")") if contrib else "",
+            len(nested),
+            (" (" + ", ".join(nested) + ")") if nested else "",
         )
     )
     return 0

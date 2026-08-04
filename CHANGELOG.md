@@ -26,6 +26,14 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   over a stub `driver.Connector` built on `database/sql/driver`, so the transaction helper's
   commit/rollback/panic contract is demonstrated without the module gaining a driver dependency.
   Same terms: documentation only, nothing exported or behavioural changed.
+- [`examples/service`](examples/service) — a runnable HTTP service composing eight packages, as a
+  module of its own that requires the released core with no `replace` (roadmap 14.5,
+  [ADR-0054](docs/adr/0054-examples-service-module.md)). It shows what a package's documentation
+  cannot: the middleware chain order, the operational endpoints kept outside it, liveness and
+  readiness as two different questions, a readiness probe that exercises a real admission path, and
+  shutdown hooks registered in dependency order. Its `go.mod` has one `require` line and no
+  indirect requirements, which is the module's dependency policy made visible. Nothing in the core
+  imports it and the core's `go.mod`/`go.sum` are unchanged.
 
 ### Changed
 

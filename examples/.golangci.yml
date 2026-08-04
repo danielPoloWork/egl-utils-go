@@ -1,0 +1,38 @@
+# golangci-lint v2 configuration for the examples/* modules.
+#
+# golangci-lint searches upward from its working directory, so this file shadows
+# the repository root's config for every module under examples/ — one file, no
+# duplication as more are added.
+#
+# It is the root config minus **depguard**, for the same structural reason
+# contrib/.golangci.yml omits it (ADR-0040) and not as a convenience. The root's
+# depguard rules encode *core-module* policy: spec §3's layered import graph says
+# feature packages do not import each other, with config → validator the single
+# sanctioned edge. An example service is not a feature package — it is a
+# consumer, and importing eight feature packages at once is precisely what it
+# exists to demonstrate. Verified rather than assumed: with the root config in
+# force, every one of this module's `…/v2/pkg/…` imports is reported as an
+# unsanctioned internal edge.
+#
+# Note what that verification also shows. If examples/service ever lost its
+# go.mod, depguard *would* fire — but it would report "feature packages do not
+# import each other", which is not the mistake anyone made, and the fix it
+# suggests is to change the imports rather than to restore the module boundary.
+# That is why tools/import_graph_lint.py checks the filesystem first and
+# short-circuits with a message that names the real cause (ADR-0054).
+#
+# Everything else matches the root: warnings are errors, no broad disables, and a
+# targeted //nolint needs an in-line reason.
+version: "2"
+
+linters:
+  enable:
+    - revive
+    - gosec
+  exclusions:
+    rules:
+      # Mirrors the root config: property-style tests use seeded math/rand/v2
+      # deliberately so a failure reproduces exactly. Scoped to G404 in test files.
+      - path: _test\.go$
+        linters: [gosec]
+        text: "G404"
