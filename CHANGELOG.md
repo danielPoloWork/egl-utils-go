@@ -21,6 +21,11 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 - Runnable examples for `middleware`, `health`, `metrics`, `logger` and `lifecycle` — 12 more,
   including a package-level example of the middleware chain in the order it should be composed
   (roadmap 14.3). Same terms: documentation only, nothing exported or behavioural changed.
+- Runnable examples for `config`, `env`, `cache`, `db`, `validator`, `hash`, `syncpool` and `errx` —
+  29 more, completing the set at **55 examples across all 21 packages** (roadmap 14.4). `db`'s run
+  over a stub `driver.Connector` built on `database/sql/driver`, so the transaction helper's
+  commit/rollback/panic contract is demonstrated without the module gaining a driver dependency.
+  Same terms: documentation only, nothing exported or behavioural changed.
 
 ### Changed
 

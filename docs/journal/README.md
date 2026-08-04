@@ -19,6 +19,17 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-02 — 14.4: the driver that is not there, and the set that finishes](2026/08/2026-08-02-examples-config-core.md) —
+  roadmap 14.4. Twenty-nine examples across config, env, cache, db, validator, hash, syncpool and errx —
+  the set is complete at **55 across all 21 packages**. **The `db` fork dissolved on one observation**:
+  `database/sql/driver` is standard library, so a 35-line stub connector costs no dependency and ADR-0004
+  was never in the way — and because the stub counts commits and rollbacks, the three examples *assert*
+  the finalization contract, including the panic path where `recover()` sees the original value with the
+  rollback already done. **`hash` was budgeted rather than avoided**: five bcrypt operations, 0.74 s
+  measured, and `ExampleCost`'s explicit cost 10 is what a legacy store honestly contains. gosec's `G101`
+  on a DSN literal was fixed by printing what expansion *did* rather than by a `//nolint`. Two rule-3
+  judgements are recorded because they look like violations — `errx` prints a composed message whose every
+  word is the example's own, and asserts a frame by function suffix, not by path or line.
 - [2026-08-01 — 14.3: the examples that assert a security property, and the one that had to say less](2026/08/2026-08-01-examples-http-observability.md) —
   roadmap 14.3. Twelve examples across middleware, health, metrics, logger and lifecycle, with nothing
   re-decided — ADR-0053 held. **Rule 3 turned out to be the design constraint**: `slog` and the Logger

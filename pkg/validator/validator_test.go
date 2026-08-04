@@ -1,7 +1,6 @@
 package validator_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/danielPoloWork/egl-utils-go/v2/pkg/validator"
@@ -274,15 +273,4 @@ func TestMinMaxStringProperty(t *testing.T) {
 			require.Error(rt, err, "len %d should fail", n)
 		}
 	})
-}
-
-func ExampleStruct() {
-	type Signup struct {
-		Email    string `validate:"required,email"`
-		Password string `validate:"required,min=8"`
-		Plan     string `validate:"oneof=free pro"`
-	}
-	err := validator.Struct(Signup{Email: "bad", Password: "short", Plan: "enterprise"})
-	fmt.Println(err != nil)
-	// Output: true
 }
