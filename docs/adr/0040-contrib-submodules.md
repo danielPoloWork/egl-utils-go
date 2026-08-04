@@ -156,6 +156,27 @@ own code does not change.
 Their first `/v2`-based tags are, as before, **a separate act**: this amendment migrates the source,
 it does not release it.
 
+**Amendment 2026-08-04 (roadmap 14.5, [ADR-0054](0054-examples-service-module.md)) — two of this
+ADR's decisions stop being prose.** `examples/*` repeats this topology for runnable composition
+examples, so `tools/import_graph_lint.py`'s contrib check was generalized over both parents rather
+than duplicated, and it grew teeth this ADR needed and never had:
+
+- **"No `replace`" and "no `go.work`" are now enforced**, for contrib as well as examples. They were
+  argued here on 2026-07-27 and gated by nothing for the eight days since — which matters precisely
+  because neither one breaks a build, so nothing would have reported the drift. A core requirement
+  on a pseudo-version (from `go get …@master`) is refused for the same reason: the module would be
+  built against a commit no consumer can name.
+- **The go.mod check is now recursive.** The original listed the top level of each directory, so a
+  submodule whose only Go files sat in `cmd/server/` with no `go.mod` above them would have passed —
+  the same silent failure this ADR describes, one directory deeper.
+
+ADR-0054 also records the asymmetry between the two families, which is worth knowing here: a
+`contrib` directory losing its `go.mod` at least dies on the driver import, giving the opaque error
+this ADR's short-circuit exists to pre-empt. An `examples` directory losing its `go.mod` produces
+**no error at all** — verified — because everything a composition example imports is already in the
+core's graph. The filesystem check is a better diagnostic for contrib and the *only* signal for
+examples.
+
 ## References
 
 - Spec v2.0 item 22, §3; ADR-0003 (nested submodules, independent tags), ADR-0026

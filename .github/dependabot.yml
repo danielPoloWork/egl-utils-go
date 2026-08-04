@@ -35,3 +35,18 @@ updates:
     commit-message:
       prefix: "build"
     labels: ["build", "contrib"]
+  # examples/service is also its own module (ADR-0054) and equally invisible to the
+  # "/" entry. Its one requirement is the core itself, so what Dependabot does here
+  # is keep the showcase pinned to the newest *released* core — which is the whole
+  # point of forbidding a replace: the demo has to name a version, and a named
+  # version goes stale unless something watches it.
+  #
+  # No "examples" label: only the labels in .github/labels.yml exist on the
+  # repository, and Dependabot fails the whole label step when one is missing.
+  - package-ecosystem: "gomod"
+    directory: "/examples/service"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "build"
+    labels: ["build"]

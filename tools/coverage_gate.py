@@ -46,6 +46,20 @@ def module_dirs() -> list[str]:
     gate would silently stop covering contrib/* the moment those modules were
     added — a coverage gate that quietly ignores new code is the failure mode this
     tool exists to prevent (ADR-0036, ADR-0040).
+
+    **examples/* is deliberately absent, and this is the decision rather than an
+    oversight** (ADR-0054). Those modules are documentation: nobody imports them,
+    so no consumer's correctness rests on their statements. The number says so
+    too — `examples/service` measures 56.2%, because `main()` is 17 of its 48
+    statements and not one of them is reachable from a test: it binds a port and
+    blocks in `lifecycle.WaitForSignals` on the package's process-wide singleton.
+    Its composed logic, in service.go, is at 87.1% and would clear the floor on
+    its own. Including the module would therefore force one of two bad outcomes —
+    lower the floor for the whole repository, or add a second per-module threshold
+    to a tool whose entire argument is that there is one floor, applied per
+    package. What examples/* gets instead is a CI job that builds, vets and
+    *runs* it (`go test -race`), which is the bar that matters for a demo:
+    a directory of Go files that only compiles proves nothing.
     """
     dirs = ["."]
     contrib = "contrib"

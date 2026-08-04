@@ -19,6 +19,23 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-04 — 14.5: the boundary that fails silently, and the floor that was not applied](2026/08/2026-08-04-examples-service-module.md) —
+  roadmap 14.5, [ADR-0054](../adr/0054-examples-service-module.md). `examples/service` — one HTTP service
+  composing eight packages, as a module of its own. **The silent-failure claim was verified and it is
+  worse than in `contrib`**: with the `go.mod` moved aside, `go list ./...` reports the package *and*
+  `go list -deps ./...` still succeeds, because everything a composition example imports is already in
+  the core's graph — so the boundary can vanish with no error of any kind. **depguard is a second net
+  that fires accurately and diagnoses wrongly** ("feature packages do not import each other", a rule
+  nobody violated), which is the argument for short-circuiting on the cause. The check was generalized
+  over `contrib` + `examples` and now walks **recursively**, closing a hole the old top-level listing
+  had; and ADR-0040's "no `replace`, no `go.work`" — prose since 2026-07-27 — became three assertions,
+  all confirmed by deliberate violation. **A new CI job rather than a renamed matrix, because
+  `contrib / <module>` is a required status check and a renamed required context blocks a PR forever
+  instead of failing it.** **The coverage decision is no floor**, measured before deciding: the module
+  is at 56.2% because `main()` is 17 of 48 statements and none are reachable, while `service.go` is at
+  87.1% and clears the gate alone — so CI **runs** it instead, ADR-0053 rule 2's mechanism
+  transferred. One quotable number: **one `require` line, zero indirect requirements, 203 packages
+  resolved of which zero are third-party.**
 - [2026-08-02 — 14.4: the driver that is not there, and the set that finishes](2026/08/2026-08-02-examples-config-core.md) —
   roadmap 14.4. Twenty-nine examples across config, env, cache, db, validator, hash, syncpool and errx —
   the set is complete at **55 across all 21 packages**. **The `db` fork dissolved on one observation**:
