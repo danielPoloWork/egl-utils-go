@@ -77,7 +77,8 @@ func newService(cfg config, log *slog.Logger) *service {
 		// its connection — until the queue drains, so a saturated pool would
 		// convert into an unbounded backlog of held connections. Failing fast
 		// converts it into a 503 the caller can retry.
-		pool: workerpool.New(cfg.Workers, cfg.QueueSize,
+		pool: workerpool.New(
+			cfg.Workers, cfg.QueueSize,
 			workerpool.WithNonBlockingSubmit(),
 			// Without a handler the pool lets a task's panic propagate, which
 			// takes the process down. That is the right default for a library —
