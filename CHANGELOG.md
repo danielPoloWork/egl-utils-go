@@ -50,7 +50,7 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   the module's **runtime** dependencies — exactly the three a consumer links, which is
   [ADR-0004](docs/adr/0004-runtime-dependency-policy.md)'s policy in machine-readable form — and is
   byte-reproducible from the tag, asserted by `cmp` on every pull request rather than claimed.
-  `actions/attest-build-provenance` binds the document's digest to the workflow and commit that
+  `actions/attest` binds the document's digest to the workflow and commit that
   produced it; verify with `gh attestation verify`. The attestation covers **the SBOM, not the
   module**: what a consumer resolves is already anchored in `sum.golang.org`, and claiming otherwise
   would put a weaker guarantee beside a stronger one. Licence detection is deliberately off — it is

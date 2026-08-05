@@ -12,7 +12,7 @@ each was a measurement that disagreed with the roadmap line describing it.
   Twelve at `contents: read`; exactly one — `release.yml`'s `draft-release` — at `contents` +
   `id-token` + `attestations`, all write.
 - **A reproducible CycloneDX SBOM as the project's first release artifact**, attested with
-  `actions/attest-build-provenance`, generated and checked on every pull request as well as on the
+  `actions/attest`, generated and checked on every pull request as well as on the
   tag.
 - **Two new checks in `tools/consistency_lint.py`** (`action-pins`, `workflow-permissions`), taking
   it from eight to ten, gating all of the above on an already-required status context.

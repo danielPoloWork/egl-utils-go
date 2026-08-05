@@ -69,10 +69,23 @@ jobs:
       # consumer can tell the document apart from one somebody else attached. It does NOT
       # claim provenance for the module a consumer resolves — that claim belongs to
       # sum.golang.org, and ADR-0056 refuses to imply otherwise.
+      #
+      # `actions/attest` rather than `actions/attest-build-provenance`: as of v4 the latter
+      # is a composite wrapper that does nothing but forward these inputs to this action,
+      # and its own release notes say new implementations should come straight here. With
+      # only `subject-path` set this is SLSA build provenance, which is the wrapper's whole
+      # behaviour.
+      #
+      # `create-storage-record: false` is explicit rather than defaulted. Its default is
+      # true *and* it requires `push-to-registry`, which is false here — an ambiguity whose
+      # only consequence would be needing an `artifact-metadata: write` scope this job does
+      # not have. Since a tag is the earliest this step can ever run (roadmap 14.12), the
+      # ambiguity is settled here rather than discovered during a release.
       - name: Attest the SBOM's provenance
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
         with:
           subject-path: egl-utils-go-${{ github.ref_name }}.cdx.json
+          create-storage-record: false
 
       - name: Draft the release (a human publishes it)
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2

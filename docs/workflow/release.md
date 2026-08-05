@@ -33,7 +33,7 @@ pre-1.0 milestone-driven.
 10. **CI attaches the SBOM and attests it** on the tag push. `release.yml` generates
     `egl-utils-go-v<X.Y.Z>.cdx.json` — a CycloneDX inventory of the module's *runtime* dependencies —
     attaches it to the draft Release, and records an
-    [`actions/attest-build-provenance`](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations)
+    [`actions/attest`](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations)
     attestation over it ([ADR-0056](../adr/0056-build-time-supply-chain.md)).
     **This step first did something real in v2.0.1** — before 14.7 it promised attached artifacts and
     every release had none.

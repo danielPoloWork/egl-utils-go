@@ -123,8 +123,16 @@ already use in these jobs, and a form that resolves outside the current module, 
 - **No `-std`.** The standard library is not a dependency a consumer resolves; it would add
   hundreds of components describing the toolchain rather than the module.
 
-The provenance step is `actions/attest-build-provenance`, and **the subject is the SBOM.** This is
-the decision in this section, so it is stated plainly:
+The provenance step is `actions/attest` — **not** `actions/attest-build-provenance`, which as of its
+v4 is a composite wrapper that forwards its inputs verbatim to `actions/attest` and whose own release
+notes say new implementations should use that action directly. Reading the wrapper's `action.yml`
+settled a second question at the same time: `create-storage-record` defaults to `true` while also
+requiring `push-to-registry`, which is `false` here, and a storage record is what would demand an
+`artifact-metadata: write` scope this job does not hold. It is therefore set to `false` explicitly.
+Since a tag push is the earliest this step can ever execute, an ambiguity like that is worth settling
+by reading rather than discovering during a release.
+
+**The subject is the SBOM.** This is the decision in this section, so it is stated plainly:
 
 > The attestation says that *this document* was produced by *this workflow* at *this commit*. It
 > does **not** claim provenance for the module a consumer resolves, and this ADR refuses to imply
@@ -321,7 +329,8 @@ database plus a provenance attestation over what CI produces.
   `.eados-core/docs/adr/0013-dependabot-action-pin-auto-remediation.md`.
 - External rules relied on: a GitHub Actions `permissions:` block at job level replaces the
   workflow-level one, and `{}` grants nothing; a called workflow cannot hold more than its caller
-  granted; `actions/attest-build-provenance` needs `id-token: write` + `attestations: write` and is
+  granted; `actions/attest` needs `id-token: write` + `attestations: write` (and `artifact-metadata:
+  write` only when it creates a storage record, which requires `push-to-registry`) and is
   free for public repositories; `go install <pkg>@<version>` resolves outside the current module
   since Go 1.16; `cyclonedx-gomod` flag semantics as of v1.10.0; and the Go checksum database at
   `sum.golang.org`, whose `lookup` endpoint is a write — a mis-cased query during this work added a
