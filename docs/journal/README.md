@@ -19,6 +19,23 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-04 — 14.6: the parse is the job, and the Release that was refused](2026/08/2026-08-04-contrib-release-workflow.md) —
+  roadmap 14.6, [ADR-0055](../adr/0055-contrib-release-workflow.md). `contrib-release.yml` — a
+  `contrib/<name>/vX.Y.Z` tag is verified by CI instead of by hand, closing the hole `release.md`
+  recorded three days earlier. **The parse from tag name to module directory is the job, not a
+  preamble to it**, because a wrong answer would not fail — it would `go build ./...` in the
+  repository root, pass, and report a green submodule release for a module nobody touched. Five
+  refusals, all eight cases run rather than read; the leading character class in the directory regex
+  is load-bearing, since `contrib/../v1.0.0`'s `go.mod` test resolves to the *root* module. The sixth
+  check is the one that cannot be re-run: **reachability from `master` is the mechanical form of "the
+  contrib CI job green on the commit being tagged"** — and ancestry is the right test here even though
+  the 2026-08-01 audit proved it the wrong test for a merged branch. The job **repeats what would make
+  the module broken for a consumer and not what would make it merely untidy.** **And it drafts no
+  GitHub Release, on an argument that is not discoverability: an unpublished tag is a recoverable
+  mistake and a published Release is not** — verification necessarily happens after the push, so the
+  remedy is delete-and-repush, and a Publish checkpoint would attach itself to the very artifact whose
+  deletability is that remedy. Falls out for free: `contents: read`, and no way to manufacture
+  `v0.1.0`'s missing-Release asymmetry.
 - [2026-08-04 — 14.5: the boundary that fails silently, and the floor that was not applied](2026/08/2026-08-04-examples-service-module.md) —
   roadmap 14.5, [ADR-0054](../adr/0054-examples-service-module.md). `examples/service` — one HTTP service
   composing eight packages, as a module of its own. **The silent-failure claim was verified and it is

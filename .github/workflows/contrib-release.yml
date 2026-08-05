@@ -1,0 +1,164 @@
+name: contrib-release
+
+# Release verification for the `contrib/*` submodules (ADR-0040, ADR-0055).
+#
+# `release.yml` fires on `tags: ["v*.*.*"]`, which a `contrib/<name>/vX.Y.Z` ref does NOT
+# match — so until this workflow existed, a submodule tag ran nothing at all and the first
+# two submodule releases were verified by hand (docs/workflow/release.md, 2026-08-01).
+#
+# This workflow drafts NOTHING. A `contrib/*` release has no GitHub Release by design
+# (ADR-0055): the annotated tag message is the record, and leaving the tag unpublished is
+# what keeps `delete-and-repush` a legal remedy when this run goes red. It therefore needs
+# no write token — see `permissions:` below.
+
+on:
+  push:
+    # GitHub's ref filters treat `*` as "anything but `/`", so this matches
+    # `contrib/redishealth/v0.2.0` and does not match the core's `v2.0.0`.
+    tags: ["contrib/*/v*.*.*"]
+
+# Read-only: this workflow verifies, it never publishes. Narrower than `release.yml`'s
+# `contents: write`, and that difference is the decision in ADR-0055 made visible.
+permissions:
+  contents: read
+
+# Serialize per-tag and never cancel: a half-finished verification of a pushed tag is
+# worse than a queued one, for the same reason `release.yml` says so.
+concurrency:
+  group: contrib-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: verify ${{ github.ref_name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out the tagged tree
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0          # the reachability check below needs real history
+
+      # ---------------------------------------------------------------------
+      # The parse IS the job. Everything downstream runs in a directory this
+      # step derived from a tag name, so a wrong answer here would silently
+      # test the *root* module and report a green submodule release. Every
+      # failure below therefore exits non-zero with the value it rejected.
+      # ---------------------------------------------------------------------
+      - name: Derive and validate the module from the tag
+        id: tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+          dir="${tag%/*}"          # contrib/redishealth/v0.2.0 -> contrib/redishealth
+          version="${tag##*/}"     #                           -> v0.2.0
+
+          # The ref filter already constrains the shape; re-assert it here so the
+          # directory can never contain a path traversal or an extra path segment.
+          # The leading class is what rejects `contrib/../v1.0.0`, whose `go.mod`
+          # test would otherwise resolve to the repository root.
+          if [[ ! "$dir" =~ ^contrib/[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+            echo "::error::tag '$tag' does not name a single contrib module directory (got '$dir')"
+            exit 1
+          fi
+          if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::tag '$tag' does not end in a SemVer version (got '$version')"
+            exit 1
+          fi
+
+          # A tag naming a directory with no go.mod must fail loudly. Falling back to
+          # the root module would test the core and call it a submodule release.
+          if [[ ! -f "$dir/go.mod" ]]; then
+            echo "::error::tag '$tag' names '$dir', which has no go.mod — it is not a module."
+            echo "modules that do exist at this commit:"
+            find contrib -mindepth 2 -maxdepth 2 -name go.mod -printf '  %h\n' || true
+            exit 1
+          fi
+
+          declared="$(awk '$1=="module"{print $2; exit}' "$dir/go.mod")"
+          expected="github.com/danielPoloWork/egl-utils-go/$dir"
+
+          # Go's own rule, and the one a hand-written tag gets wrong: from v2 the major
+          # belongs in the module path. Without this, `contrib/x/v2.0.0` against a
+          # v1-shaped go.mod is a tag the proxy will refuse *after* it is pushed.
+          major="${version#v}"; major="${major%%.*}"
+          if [[ "$major" -ge 2 ]]; then
+            expected="$expected/v$major"
+          fi
+
+          if [[ "$declared" != "$expected" ]]; then
+            echo "::error::tag '$tag' requires module path '$expected', but $dir/go.mod declares '$declared'"
+            exit 1
+          fi
+
+          echo "dir=$dir"          >> "$GITHUB_OUTPUT"
+          echo "version=$version"  >> "$GITHUB_OUTPUT"
+          echo "path=$declared"    >> "$GITHUB_OUTPUT"
+          echo "Releasing $declared at $version from $dir"
+
+      # A tag may point anywhere. `ci.yml` runs on every push to `master` and the
+      # `contrib / <module>` contexts are required on it, so "reachable from master"
+      # is how a tag inherits the full quality gate — including the lint, format and
+      # vulnerability jobs this workflow deliberately does not repeat.
+      #
+      # Ancestry is the right test *here* even though it is the wrong test for a
+      # merged branch: squash merges leave no ancestor for the branch, but the commit
+      # being tagged is itself a commit on master.
+      - name: Assert the tagged commit is reachable from master
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --quiet origin master
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
+            echo "::error::tag ${GITHUB_REF_NAME} points at $GITHUB_SHA, which is not reachable from master — it has not passed the CI gate"
+            exit 1
+          fi
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with: { go-version: '1.26', cache: true }
+
+      # Re-verified rather than inferred from the step above, and the line is
+      # deliberate: this job repeats what would make the released module *broken for a
+      # consumer*, and does not repeat what would make it merely untidy. Format and
+      # lint findings are properties of the tree, already gated per pull request, and
+      # neither is a reason to unpublish a version.
+      - name: Build, vet and test the module under the race detector
+        working-directory: ${{ steps.tag.outputs.dir }}
+        run: |
+          go build ./...
+          go vet ./...
+          go test -race ./...
+
+      - name: Verify the module's dependencies against go.sum
+        working-directory: ${{ steps.tag.outputs.dir }}
+        run: go mod verify
+
+      # No Release is published, so the run itself has to be the durable record of
+      # what was verified. The proxy check stays manual on purpose: the module index
+      # takes a few minutes to see a new tag, so asserting it here would fail on
+      # timing rather than on correctness.
+      - name: Record what was verified
+        shell: bash
+        run: |
+          {
+            echo "### \`contrib\` release verified"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| tag | \`${GITHUB_REF_NAME}\` |"
+            echo "| module path | \`${{ steps.tag.outputs.path }}\` |"
+            echo "| version | \`${{ steps.tag.outputs.version }}\` |"
+            echo "| directory | \`${{ steps.tag.outputs.dir }}\` |"
+            echo "| commit | \`${GITHUB_SHA}\` |"
+            echo
+            echo "No GitHub Release is drafted for a submodule (ADR-0055); the annotated tag"
+            echo "message is the record. Confirm what a consumer resolves once the module index"
+            echo "has caught up:"
+            echo
+            echo '```'
+            echo "go list -m ${{ steps.tag.outputs.path }}@${{ steps.tag.outputs.version }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
