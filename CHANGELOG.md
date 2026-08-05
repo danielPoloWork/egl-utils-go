@@ -34,6 +34,16 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   shutdown hooks registered in dependency order. Its `go.mod` has one `require` line and no
   indirect requirements, which is the module's dependency policy made visible. Nothing in the core
   imports it and the core's `go.mod`/`go.sum` are unchanged.
+- `.github/workflows/contrib-release.yml` — a `contrib/<name>/vX.Y.Z` tag is now verified by CI
+  instead of by hand (roadmap 14.6, [ADR-0055](docs/adr/0055-contrib-release-workflow.md)).
+  `release.yml`'s `v*.*.*` filter never matched a submodule tag, so the first two submodule releases
+  ran nothing at all. The new workflow derives the module directory from the tag and refuses a tag
+  that names no module, whose `go.mod` declares a different path, that omits the `/vN` suffix Go
+  requires from `v2`, or that points at a commit unreachable from `master`; then it builds, vets,
+  runs `go test -race` and `go mod verify` in that directory. It **drafts no GitHub Release** — the
+  annotated tag stays the record, and leaving the tag unpublished is what keeps delete-and-repush
+  available when the run is red. No consumer-visible change: no Go file, exported identifier,
+  behaviour or dependency is touched.
 
 ### Changed
 

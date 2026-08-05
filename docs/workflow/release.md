@@ -44,12 +44,27 @@ release, and a core release never publishes a submodule.
 - **The version is the submodule's own.** It tracks that module's API and its driver, not the core's:
   `contrib/redishealth/v0.2.0` requires the core's `/v2` while carrying no major suffix itself,
   because a module path carries its own major.
-- **`release.yml` does not fire.** It triggers on `tags: ["v*.*.*"]`, which a `contrib/…` ref does not
-  match — so there is **no draft GitHub Release and no CI run on the tagged tree**. Verify before
-  tagging instead: from the submodule directory, `go build ./... && go vet ./... && go test ./...`,
-  plus the `contrib` CI job green on the commit being tagged.
-- **No GitHub Release is published for a submodule.** The annotated tag message is the record and the
-  proxy is the distribution; every `contrib/*` tag so far follows this.
+- **`release.yml` does not fire, and does not need to.** It triggers on `tags: ["v*.*.*"]`, which a
+  `contrib/…` ref does not match. `contrib-release.yml` covers that space instead
+  ([ADR-0055](../adr/0055-contrib-release-workflow.md)), firing on `tags: ["contrib/*/v*.*.*"]` — so
+  a submodule tag is now verified mechanically rather than by hand. It checks, and fails loudly on
+  each:
+  1. the tag names **one** directory under `contrib/`, followed by a SemVer version;
+  2. that directory **has a `go.mod`** — a tag naming a directory that is not a module fails instead
+     of falling back to the root module and reporting a green release for the core;
+  3. the `go.mod`'s `module` line is exactly `github.com/danielPoloWork/egl-utils-go/<dir>`, with the
+     **`/vN` suffix** Go requires from `v2` upward;
+  4. the tagged commit is **reachable from `master`**, which is how the tag inherits the
+     `contrib / <module>` required status check;
+  5. `go build`, `go vet`, `go test -race` and `go mod verify` from the module directory.
+- **A red run means: delete the tag, fix, re-tag.** Verification necessarily happens after the push,
+  so that is the remedy, and it is legal because nothing has been published (see the boundary rule at
+  the bottom of this page). The run's summary records the module path, version and commit that were
+  verified.
+- **No GitHub Release is published for a submodule**, and the workflow deliberately drafts none
+  (ADR-0055 (b)): the annotated tag message is the record, the proxy is the distribution, and keeping
+  the tag unpublished is what keeps delete-and-repush available. Every `contrib/*` tag so far follows
+  this.
 - **The core's release artifacts are untouched.** `version.go`, the README badge, `CHANGELOG.md`,
   `docs/changelog/` and `docs/releases/` are core-only, and `consistency_lint.py`'s version-lockstep
   check compares just those — a submodule tag can neither satisfy nor break it. `spec_api_lint.py`
@@ -76,6 +91,7 @@ driver major.
 | Build & attach artifacts | CI |
 | Choose a `contrib/*` submodule version | **Human** |
 | Create & push a `contrib/<name>/vX.Y.Z` tag (no Release is drafted) | Agent |
+| Verify a `contrib/*` tag — parse, module identity, reachability, build/vet/race/verify | CI (`contrib-release.yml`) |
 
 
 Agents never publish releases, never amend or delete published tags, and only delete-and-
