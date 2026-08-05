@@ -20,17 +20,19 @@ on:
     - cron: '0 3 * * *'      # 03:00 UTC daily
   workflow_dispatch:          # and on demand, e.g. before cutting a release
 
-permissions:
-  contents: read
+# The workflow grants nothing; the job below declares its own scope (ADR-0056).
+permissions: {}
 
 jobs:
   nfr:
     name: nfr / measure + compare
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with: { go-version: '1.26', cache: true }
 
       - name: Record the environment
@@ -64,7 +66,7 @@ jobs:
       # entry cannot be overwritten once written).
       - name: Restore the previous nightly baseline
         id: baseline
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: baseline.txt
           key: nfr-baseline-${{ github.ref_name }}-${{ github.run_id }}
@@ -111,13 +113,13 @@ jobs:
       - name: Publish this run as the next baseline
         run: cp current.txt baseline.txt
 
-      - uses: actions/cache/save@v6
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: baseline.txt
           key: nfr-baseline-${{ github.ref_name }}-${{ github.run_id }}
 
       - name: Upload the raw results
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: nfr-results-${{ github.run_id }}
           path: |

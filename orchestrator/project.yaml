@@ -78,23 +78,40 @@ ci:                          # Phase 3 (asked): profile matrix updated to the ch
     - { os: ubuntu-24.04, toolchain: "go-1.26", preset: test }
     - { os: windows-2022, toolchain: "go-1.26", preset: test }
     - { os: macos-14,     toolchain: "go-1.26", preset: test }
+  # AMENDED 2026-08-05 (ADR-0056) — the three embedded templates below were the interview's,
+  # and they are the ONLY part of this file a regeneration would use to undo a shipped
+  # decision rather than merely to restate a stale fact. They carried floating refs
+  # (`setup-go@v5`, `checkout@v6`, `golangci-lint-action@v6`), no `permissions:` block, and
+  # the matrix expression noted on `setup_steps` below. Every one of those is now a policy
+  # the live workflows are gated on by tools/consistency_lint.py's `action-pins` and
+  # `workflow-permissions` checks, so a regeneration emitting the old text would produce a
+  # tree that fails its own CI. Updated in place to the pinned, least-privilege form; the
+  # digests are whatever the pins in .github/workflows/ say at regeneration time, which is
+  # where Dependabot maintains them.
   setup_steps: |
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
         go-version: ${{ matrix.toolchain == 'go-1.25' && '1.25' || '1.26' }}
         cache: true
+  # NOTE 2026-08-05 (ADR-0056): the `go-version` expression above is correct ONLY in a job
+  # that has the `matrix:` block declared under `ci.matrix`. Rendered into a job without one
+  # — which is how release.yml and ci.yml's benchmark job each acquired it — `matrix` is
+  # undefined, the comparison is false, and it silently resolves to '1.26': a selector that
+  # only looks like one. A regeneration must emit a literal for every matrix-less job.
   extra_jobs: |
     quality:
       name: quality / lint + race + vuln
       runs-on: ubuntu-24.04
+      permissions:
+        contents: read
       steps:
-        - uses: actions/checkout@v6
-        - uses: actions/setup-go@v5
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
           with: { go-version: '1.26', cache: true }
         - name: gofumpt
           run: go install mvdan.cc/gofumpt@v0.10.0 && test -z "$(gofumpt -l .)"
-        - uses: golangci/golangci-lint-action@v6
+        - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         - name: race + vuln
           run: |
             go test -race ./...
@@ -103,11 +120,17 @@ ci:                          # Phase 3 (asked): profile matrix updated to the ch
     race:
       name: race / data-race detector
       runs-on: ubuntu-24.04
+      permissions:
+        contents: read
       steps:
-        - uses: actions/checkout@v6
-        - uses: actions/setup-go@v5
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
           with: { go-version: '1.26', cache: true }
         - run: go test -race ./...
+  # AMENDED 2026-08-05 (ADR-0056): a regeneration must also emit `permissions: {}` at each
+  # workflow's top level — the templates above only cover the two jobs this file owns, and
+  # the rule is that the workflow grants nothing while every job declares its own scope.
+  # release.yml's job is the single exception: contents + id-token + attestations, all write.
 
 governance:
   posture: enterprise                             # Q0.5 (asked, ADR-0015)

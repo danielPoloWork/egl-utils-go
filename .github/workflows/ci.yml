@@ -11,8 +11,10 @@ on:
     branches: [master]
   workflow_call:
 
-permissions:
-  contents: read
+# The workflow itself grants nothing. Every job below declares the scope it needs, so a
+# job added later cannot silently inherit a token nobody sized for it — which is the
+# defect this repository actually had, in release.yml (ADR-0056).
+permissions: {}
 
 # Cancel superseded runs on a PR; never cancel a run on master (its history matters).
 concurrency:
@@ -27,6 +29,8 @@ jobs:
     name: build / ${{ matrix.os }} / ${{ matrix.toolchain }} / ${{ matrix.preset }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -40,7 +44,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Go
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ matrix.toolchain == 'go-1.25' && '1.25' || '1.26' }}
           cache: true
@@ -60,6 +64,8 @@ jobs:
     name: consistency / lint
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -76,13 +82,15 @@ jobs:
   quality:
     name: quality / lint + race + vuln
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with: { go-version: '1.26', cache: true }
       - name: gofumpt
         run: go install mvdan.cc/gofumpt@v0.10.0 && test -z "$(gofumpt -l .)"
-      - uses: golangci/golangci-lint-action@v9
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
       - name: race + vuln
         run: |
           go test -race ./...
@@ -93,12 +101,18 @@ jobs:
     name: benchmark / reproducible perf
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Go
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: ${{ matrix.toolchain == 'go-1.25' && '1.25' || '1.26' }}
+          # A literal, because this job has no matrix. It previously read
+          # `matrix.toolchain == 'go-1.25' && '1.25' || '1.26'`, copied from the build
+          # job, where `matrix` is undefined and the expression silently resolved to
+          # '1.26' — a selector that only looked like one (roadmap 14.6 → 14.7).
+          go-version: '1.26'
           cache: true
       - name: Run the benchmark suite
         shell: bash
@@ -115,6 +129,8 @@ jobs:
     name: contrib / ${{ matrix.module }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -124,7 +140,7 @@ jobs:
         working-directory: contrib/${{ matrix.module }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with: { go-version: '1.26', cache: true }
 
       - name: Build, vet and test under the race detector
@@ -138,7 +154,7 @@ jobs:
 
       # contrib/.golangci.yml shadows the root config here: the root's depguard
       # rules forbid driver imports, which is exactly what a contrib module is for.
-      - uses: golangci/golangci-lint-action@v9
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           working-directory: contrib/${{ matrix.module }}
 
@@ -161,6 +177,8 @@ jobs:
     name: examples / ${{ matrix.module }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -170,7 +188,7 @@ jobs:
         working-directory: examples/${{ matrix.module }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with: { go-version: '1.26', cache: true }
 
       - name: Build, vet and test under the race detector
@@ -194,7 +212,7 @@ jobs:
       # examples/.golangci.yml shadows the root config here: the root's depguard
       # rules forbid a package importing its siblings, which is exactly what a
       # composition example exists to do.
-      - uses: golangci/golangci-lint-action@v9
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           working-directory: examples/${{ matrix.module }}
 
@@ -209,9 +227,11 @@ jobs:
     name: coverage / 85% per package
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with: { go-version: '1.26', cache: true }
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -229,9 +249,11 @@ jobs:
     name: imports / dependency rings + layer graph + spec surface
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with: { go-version: '1.26', cache: true }
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -246,6 +268,41 @@ jobs:
       - name: Assert spec section 5 matches the exported surface
         run: python tools/spec_api_lint.py
 
+      # Supply chain (ADR-0056). release.yml attaches a CycloneDX SBOM to the tag, and a
+      # generator whose first execution is a release is a generator nobody has run — the
+      # weakness ADR-0055 had to admit about contrib-release.yml. The same command therefore
+      # runs on every pull request, where the two properties the release depends on are
+      # asserted rather than assumed: the document describes THIS module, and `-noserial
+      # -notimestamp` really do make it byte-reproducible. Lives in this job because the
+      # SBOM *is* the dependency graph, which is what this job already gates.
+      - name: Generate the module SBOM and assert it is reproducible
+        shell: bash
+        run: |
+          go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@v1.10.0
+          gen() {
+            cyclonedx-gomod mod -json -type library -output-version 1.6 \
+              -noserial -notimestamp -output "$1" .
+          }
+          gen "$RUNNER_TEMP/sbom.cdx.json"
+          gen "$RUNNER_TEMP/sbom.again.json"
+
+          # Two runs of the same tree must be identical, or the release attaches a document
+          # that cannot be re-derived from the tag it names.
+          cmp "$RUNNER_TEMP/sbom.cdx.json" "$RUNNER_TEMP/sbom.again.json"
+
+          # Derived from go.mod rather than written down, so the check cannot rot when the
+          # module path changes (it already changed once, at /v2).
+          want="$(go list -m)"
+          got="$(jq -r '.metadata.component.name' "$RUNNER_TEMP/sbom.cdx.json")"
+          if [ "$got" != "$want" ]; then
+            echo "SBOM describes '$got' but the main module is '$want'" >&2
+            exit 1
+          fi
+          test "$(jq -r '.metadata.component.type' "$RUNNER_TEMP/sbom.cdx.json")" = library
+          test "$(jq '.components | length' "$RUNNER_TEMP/sbom.cdx.json")" -ge 1
+          jq -r '"\(.metadata.component.name): \(.components | length) runtime component(s)"' \
+            "$RUNNER_TEMP/sbom.cdx.json" >> "$GITHUB_STEP_SUMMARY"
+
   # ---------------------------------------------------------------------------
   # Fuzzing gate (spec v2 §7) — the 10-minute PR budget, split evenly between the
   # two targets. `-fuzz` accepts one target per invocation, so these are two runs
@@ -259,9 +316,11 @@ jobs:
     name: fuzz / 10-minute budget
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with: { go-version: '1.26', cache: true }
 
       - name: Fuzz the config loader
@@ -275,7 +334,7 @@ jobs:
       # so the artifact is what turns a red run into a committable regression test.
       - name: Upload fuzz reproducers
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: fuzz-reproducers
           path: '**/testdata/fuzz/**'
@@ -285,9 +344,11 @@ jobs:
   race:
     name: race / data-race detector
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with: { go-version: '1.26', cache: true }
       - run: go test -race ./...
 

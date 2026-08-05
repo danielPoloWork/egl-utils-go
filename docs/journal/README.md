@@ -19,6 +19,23 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-05 — 14.7: the half-pinned repository, one write token, and a gate that could not see its own subject](2026/08/2026-08-05-supply-chain-pinning.md) —
+  roadmap 14.7, [ADR-0056](../adr/0056-build-time-supply-chain.md), control C-6. Every action pinned
+  to a commit digest (**21 of 36 floated**, including `actions/checkout` at two sites in a file that
+  pinned it at eleven others — so the half-pinning was copy-paste, not three decisions), no
+  workflow-level token grant so a later job cannot inherit one, and a reproducible CycloneDX SBOM as
+  **the project's first release artifact** — all four prior releases have zero assets, so
+  `release.md` step 10 had been false since v0.1.0. **The provenance claim is deliberately scoped to
+  the SBOM and not to the module**, because what a consumer resolves is already anchored in
+  `sum.golang.org`, and asserting more would put a weaker claim beside a stronger one. Every SBOM flag
+  was decided against output: no `-test` yields **exactly ADR-0004's three runtime dependencies**,
+  `-noserial -notimestamp` makes it byte-identical across runs (now gated by `cmp` per PR), and
+  `-licenses` was **reversed on measurement** — it is wrong on all three components. **The signing
+  premise in the roadmap was false**: `master`'s commits are already `verified=true`, signed by
+  GitHub's web-flow key as a property of squash-only merging, so `required_signatures` is free and
+  only signed *tags* are declined. And the tenth deliberate-violation case was a blind spot in the new
+  check itself, which could not see a scope carrying a trailing comment and so passed green on the one
+  job it exists to police — ADR-0043's 12.1 lesson in a new place.
 - [2026-08-04 — 14.6: the parse is the job, and the Release that was refused](2026/08/2026-08-04-contrib-release-workflow.md) —
   roadmap 14.6, [ADR-0055](../adr/0055-contrib-release-workflow.md). `contrib-release.yml` — a
   `contrib/<name>/vX.Y.Z` tag is verified by CI instead of by hand, closing the hole `release.md`
