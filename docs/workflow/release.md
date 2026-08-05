@@ -30,7 +30,26 @@ pre-1.0 milestone-driven.
    `git push origin v<X.Y.Z>` immediately after merge; the tag push lets CI open the GitHub Release
    as a **draft**. The agent always carries the release this far — only **Publish** is the human's.
 9. **Publish** the GitHub Release — *the maintainer* (the deliberate human checkpoint).
-10. **CI builds & attaches artifacts** on the tag push.
+10. **CI attaches the SBOM and attests it** on the tag push. `release.yml` generates
+    `egl-utils-go-v<X.Y.Z>.cdx.json` — a CycloneDX inventory of the module's *runtime* dependencies —
+    attaches it to the draft Release, and records an
+    [`actions/attest`](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations)
+    attestation over it ([ADR-0056](../adr/0056-build-time-supply-chain.md)).
+    **This step first did something real in v2.0.1** — before 14.7 it promised attached artifacts and
+    every release had none.
+
+    A consumer verifies the document with:
+
+    ```bash
+    gh release download v<X.Y.Z> --repo danielPoloWork/egl-utils-go --pattern '*.cdx.json'
+    gh attestation verify egl-utils-go-v<X.Y.Z>.cdx.json --repo danielPoloWork/egl-utils-go
+    ```
+
+    What that proves and what it does not: it proves *this document* came from *this workflow* at
+    *this commit*. It says nothing about the module a consumer resolves — that is
+    `sum.golang.org`'s job, and `go.sum` already carries the hash it publishes. The attestation
+    exists because the SBOM is a new artifact with no other origin story, not because the module
+    needed one.
 
 
 ## Releasing a `contrib/*` submodule
@@ -88,7 +107,7 @@ driver major.
 | Open / merge the release PR | **Human** |
 | Create & push the annotated tag, then the **draft** release (CI drafts it on tag-push) | Agent |
 | Publish the GitHub Release (click **Publish**) | **Human** |
-| Build & attach artifacts | CI |
+| Build & attach artifacts — the SBOM, plus its provenance attestation | CI (`release.yml`) |
 | Choose a `contrib/*` submodule version | **Human** |
 | Create & push a `contrib/<name>/vX.Y.Z` tag (no Release is drafted) | Agent |
 | Verify a `contrib/*` tag — parse, module identity, reachability, build/vet/race/verify | CI (`contrib-release.yml`) |
@@ -96,3 +115,9 @@ driver major.
 
 Agents never publish releases, never amend or delete published tags, and only delete-and-
 repush an *unpublished* tag whose release run visibly failed.
+
+**Tags are annotated, not signed** — a deliberate decision, not an omission
+([ADR-0056](../adr/0056-build-time-supply-chain.md) §(e)): tag creation is the agent's
+carry-through above, and a tag is not what a consumer verifies. Commits on `master` *are* signed,
+by GitHub's own web-flow key, as a property of squash-only merging — so requiring signed commits
+would change nothing about this table.

@@ -287,6 +287,7 @@ Every PR must clear, at minimum:
 | Performance claims | backed by a reproducible co-located benchmark (`go test -bench`, ADR-0003) |
 | Versioning | SemVer; `CHANGELOG.md` updated for user-visible changes |
 | Congruence | all four policy tools pass: `consistency_lint.py`, `import_graph_lint.py`, `coverage_gate.py`, `spec_api_lint.py` |
+| Supply chain | every GitHub Action pinned to a 40-character commit digest with a `# vX.Y.Z` comment; no workflow-level token grant, every job declaring its own scope, `write` only where allowlisted — both enforced by `consistency_lint.py` ([ADR-0056](docs/adr/0056-build-time-supply-chain.md), control C-6) |
 | Review (enterprise) | **two** approving reviews before merge; a security-relevant change also requires the `security-auditor`'s sign-off |
 | Security ADR (enterprise) | every security-relevant decision carries an ADR (§7) — no undocumented judgment calls |
 | Compliance (enterprise) | `docs/compliance/` control register current; a touched control's row updated in the same PR |

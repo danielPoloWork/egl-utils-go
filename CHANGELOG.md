@@ -44,6 +44,17 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   annotated tag stays the record, and leaving the tag unpublished is what keeps delete-and-repush
   available when the run is red. No consumer-visible change: no Go file, exported identifier,
   behaviour or dependency is touched.
+- **A CycloneDX SBOM attached to each release, with a provenance attestation** — the first artifact
+  ever attached to a release of this project (roadmap 14.7,
+  [ADR-0056](docs/adr/0056-build-time-supply-chain.md)). `egl-utils-go-v<X.Y.Z>.cdx.json` inventories
+  the module's **runtime** dependencies — exactly the three a consumer links, which is
+  [ADR-0004](docs/adr/0004-runtime-dependency-policy.md)'s policy in machine-readable form — and is
+  byte-reproducible from the tag, asserted by `cmp` on every pull request rather than claimed.
+  `actions/attest` binds the document's digest to the workflow and commit that
+  produced it; verify with `gh attestation verify`. The attestation covers **the SBOM, not the
+  module**: what a consumer resolves is already anchored in `sum.golang.org`, and claiming otherwise
+  would put a weaker guarantee beside a stronger one. Licence detection is deliberately off — it is
+  wrong on all three components.
 
 ### Changed
 
@@ -54,6 +65,22 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 ### Fixed
 
 ### Security
+
+- **The build-time supply chain is now a gated policy rather than a half-applied one** (roadmap 14.7,
+  [ADR-0056](docs/adr/0056-build-time-supply-chain.md), control C-6). Every GitHub Action is pinned
+  to a 40-character commit digest with its release in a `# vX.Y.Z` comment: **21 of 36 references
+  were floating on mutable tags**, including `actions/checkout` at two sites in a file that pinned it
+  at eleven others. No workflow grants a token scope any more (`permissions: {}`) and each of the
+  thirteen jobs declares its own — `release.yml`'s `contents: write` used to sit at the *workflow*
+  level, where every job added later would have inherited it; exactly one job now holds write access.
+  Two new `consistency_lint.py` checks (`action-pins`, `workflow-permissions`) fail the build on a
+  reintroduced tag, a missing permissions block, or an unallowlisted `write`, and they ride the
+  already-required `consistency / lint` context rather than a new job that would not have been
+  required until someone edited branch protection by hand. Both verified by deliberate violation
+  across ten cases — the tenth being a blind spot in the new check itself, which could not see a
+  scope documented with a trailing comment and so passed green on the one job it exists to police.
+  Tags stay **annotated and unsigned**, deliberately and with the reasoning recorded; the commits on
+  `master` turn out to be signed already, by GitHub's web-flow key.
 
 ---
 

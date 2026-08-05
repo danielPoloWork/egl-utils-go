@@ -24,10 +24,20 @@ contract (the "congruence checks"):
      agrees with its id/discovered date, ids are unique and non-gapped, the index ↔ files
      bijection holds, and a `fixed` record names its `fixed-in`;
   7. i18n-freshness  — (only when i18n is enabled) no translated page is staler than its
-     English source.
+     English source;
+  8. posture         — AGENTS.md's enterprise-posture declaration and the compliance
+     register exist together or not at all (asserted in both directions);
+  9. action-pins     — every `uses:` in .github/workflows/ names a 40-character commit
+     digest and carries the `# vX.Y.Z` comment that makes the pin reviewable;
+ 10. workflow-permissions — no workflow grants a token scope at the workflow level, every
+     job declares its own, and a `write` scope appears only where it is allowlisted.
 
 Each check is independent; all run, then the report lists every failure. The checks are
 designed to PASS on a freshly-generated repository (empty catalogues, no releases yet).
+
+Checks 9 and 10 (ADR-0056) live here rather than in a policy tool of their own because
+`consistency / lint` is already a required status check on master, and a new CI job does not
+become a required context until someone adds it by hand.
 
 Generated configuration is in the CONFIG block below — EADOS fills it from project.yaml.
 """
@@ -397,6 +407,154 @@ def check_posture():
                    "enterprise governance posture — the register has no posture to serve")
 
 
+# ---------------------------------------------------------------------------
+# 9. Action pins — every third-party Action is referenced by commit digest
+# ---------------------------------------------------------------------------
+# A `uses:` on a mutable tag runs whatever the upstream owner last pushed to it, so the
+# review that approved the workflow approved a moving target. Both halves are required: the
+# 40-hex digest, which is what actually pins, and the `# vX.Y.Z` comment, which is what makes
+# the pin reviewable and is what Dependabot rewrites when it bumps one (ADR-0056).
+#
+# This is deliberately here rather than in a fifth policy tool: `consistency / lint` is
+# already a required status check on master, and adding a job does not add a required
+# context — it has to be added by hand, and until it is, the new gate can go red without
+# blocking anything (the trap ADR-0054 recorded).
+_USES_RE = re.compile(r"^\s*(?:-\s+)?uses:\s*(?P<ref>\S+)(?P<rest>.*)$")
+_DIGEST_RE = re.compile(r"^[0-9a-f]{40}$")
+_PIN_COMMENT_RE = re.compile(r"^\s*#\s*v\d+\.\d+\.\d+\s*$")
+
+
+def _workflow_files():
+    """Repo-relative paths of every workflow file, or [] when there are none."""
+    wf_dir = os.path.join(ROOT, ".github", "workflows")
+    if not os.path.isdir(wf_dir):
+        return []
+    return [".github/workflows/" + fn
+            for fn in sorted(os.listdir(wf_dir))
+            if fn.endswith((".yml", ".yaml"))]
+
+
+def check_action_pins():
+    name = "action-pins"
+    for rel in _workflow_files():
+        for lineno, line in enumerate(read(*rel.split("/")).splitlines(), start=1):
+            m = _USES_RE.match(line)
+            if m is None:
+                continue
+            ref, rest = m.group("ref"), m.group("rest")
+            # A local action (`./.github/actions/foo`) or a same-repo reusable workflow is
+            # this repository's own reviewed code; there is nothing external to pin.
+            if ref.startswith("./"):
+                continue
+            if "@" not in ref:
+                fail(name, f"{rel}:{lineno}: `uses: {ref}` has no version at all")
+                continue
+            repo, _, version = ref.rpartition("@")
+            if not _DIGEST_RE.match(version):
+                fail(name, f"{rel}:{lineno}: `{repo}` is pinned to '{version}', not a "
+                           f"40-character commit digest — a tag can be re-pointed by "
+                           f"whoever owns the action")
+                continue
+            if not _PIN_COMMENT_RE.match(rest):
+                fail(name, f"{rel}:{lineno}: `{repo}` is digest-pinned but carries no "
+                           f"`# vX.Y.Z` comment, so no reviewer can tell which release "
+                           f"{version[:12]}… is")
+
+
+# ---------------------------------------------------------------------------
+# 10. Workflow permissions — the workflow grants nothing, every job asks
+# ---------------------------------------------------------------------------
+# Two rules, and the second is the one with teeth:
+#
+#   * no workflow-level grant (`permissions: {}`), because a scope declared there is
+#     inherited by every job added to the file later — which is exactly how release.yml
+#     came to hand `contents: write` to any future job without anyone deciding to;
+#   * every job declares its own block, and a *write* scope must be on the allowlist below.
+#
+# Enforcing the house indentation (2 for a job key, 4 for its keys) is intentional: this is
+# a congruence lint, not a YAML implementation, and it stays standard-library only because
+# the `consistency` CI job installs no packages (ADR-0056).
+# The trailing `(?:#.*)?` on the scope pattern is load-bearing and was added after the
+# check was written: the one job in this repository that holds write scopes documents each
+# of them with an end-of-line comment, so a pattern anchored straight to `$` matched none of
+# them, saw an empty write set, and passed its own allowlist vacuously. A gate that cannot
+# see the case it exists to police is worse than no gate, because it reports green.
+_JOB_KEY_RE = re.compile(r"^  ([A-Za-z_][A-Za-z0-9_-]*):\s*$")
+_SCOPE_RE = re.compile(r"^      ([a-z][a-z-]*):\s*(read|write|none)\s*(?:#.*)?$")
+
+
+def _uncommented(line):
+    """`line` with a trailing YAML comment removed. Safe here because the lines this is
+    applied to are permission mappings, which never contain a quoted '#'."""
+    return line.split("#", 1)[0].strip()
+
+# (workflow file, job key) -> the write scopes that job is allowed to hold.
+_ALLOWED_WRITES = {
+    ("release.yml", "draft-release"): {"contents", "id-token", "attestations"},
+}
+
+
+def check_workflow_permissions():
+    name = "workflow-permissions"
+    for rel in _workflow_files():
+        basename = rel.rsplit("/", 1)[-1]
+        lines = read(*rel.split("/")).splitlines()
+
+        top = [ln for ln in lines if ln.startswith("permissions:")]
+        if not top:
+            fail(name, f"{rel}: no workflow-level `permissions:` — declare "
+                       f"`permissions: {{}}` so no job can inherit a scope by default")
+        elif _uncommented(top[0]) != "permissions: {}":
+            fail(name, f"{rel}: workflow-level permissions is '{_uncommented(top[0])}'; it "
+                       f"must be `permissions: {{}}` — a grant here is inherited by every "
+                       f"job added to this file later")
+
+        try:
+            jobs_at = next(i for i, ln in enumerate(lines) if ln.startswith("jobs:"))
+        except StopIteration:
+            fail(name, f"{rel}: no `jobs:` block")
+            continue
+
+        # Job keys are the only lines indented by exactly two spaces that end in a colon.
+        starts = [i for i in range(jobs_at + 1, len(lines)) if _JOB_KEY_RE.match(lines[i])]
+        for n, start in enumerate(starts):
+            key = _JOB_KEY_RE.match(lines[start]).group(1)
+            end = starts[n + 1] if n + 1 < len(starts) else len(lines)
+            block = lines[start + 1:end]
+
+            perms_at = [i for i, ln in enumerate(block)
+                        if ln.startswith("    permissions:")]
+            if not perms_at:
+                fail(name, f"{rel}:{start + 1}: job '{key}' declares no `permissions:` — "
+                           f"with `permissions: {{}}` at the workflow level it would run "
+                           f"with no token scope at all")
+                continue
+
+            declared = _uncommented(block[perms_at[0]])
+            if declared != "permissions:":
+                # An inline form (`permissions: {}` / `write-all`) — the first is fine, the
+                # second is the opposite of the rule.
+                if declared != "permissions: {}":
+                    fail(name, f"{rel}:{start + perms_at[0] + 2}: job '{key}' has "
+                               f"'{declared}'; spell the scopes out one per line")
+                continue
+
+            writes = set()
+            for ln in block[perms_at[0] + 1:]:
+                scope = _SCOPE_RE.match(ln)
+                if scope is None:
+                    break  # end of the permissions mapping
+                if scope.group(2) == "write":
+                    writes.add(scope.group(1))
+
+            allowed = _ALLOWED_WRITES.get((basename, key), set())
+            for scope in sorted(writes - allowed):
+                fail(name, f"{rel}: job '{key}' grants `{scope}: write`, which is not on "
+                           f"this job's allowlist — a write token belongs only to a job "
+                           f"that publishes something (ADR-0056). If that is genuinely "
+                           f"new, add it to _ALLOWED_WRITES with the reason")
+
+
 CHECKS = [
     check_version_lockstep,
     check_adr_index,
@@ -406,6 +564,8 @@ CHECKS = [
     check_bugs,
     check_i18n_freshness,
     check_posture,
+    check_action_pins,
+    check_workflow_permissions,
 ]
 
 

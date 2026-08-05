@@ -64,6 +64,50 @@ JSON
 Add the build matrix contexts (e.g. `build / ubuntu-24.04 / …`) to `contexts` once you have
 seen their exact names in the first CI run.
 
+> **Renaming a required context is the one edit to avoid.** A required check that no longer
+> reports does not fail a pull request — it leaves it waiting forever. Adding a CI *job* also does
+> not add its context; that is a separate call to this API (ADR-0054).
+
+### Signatures — what this project requires, and what it does not
+
+Decided in [ADR-0056](../adr/0056-build-time-supply-chain.md) §(e); recorded here because it is a
+repository setting, so nothing in the tree can prove it either way.
+
+- **`required_signatures` on `master`: recommended, and free.** The repository is squash-only, and
+  GitHub creates and signs the squash commit itself — `68fd847`, `b8c1165` and `51b9310` each report
+  `verified=true`, `reason=valid`, committer `GitHub`. So the flag is *already satisfied* by every
+  commit on the branch; turning it on closes the paths that remain (an administrator's direct push,
+  or a future change of merge strategy) and breaks nothing. An agent's unsigned feature-branch
+  commits never land on `master` as themselves.
+
+  ```bash
+  gh api -X POST repos/$OWNER/$REPO/branches/$BRANCH/protection/required_signatures
+  ```
+
+- **Signed *tags*: deliberately not required.** `release.md` step 8 gives tag creation to the agent
+  as carry-through, so requiring signed tags moves tagging to the maintainer and rewrites three
+  boundary tables. The benefit is thin because a tag is not the artifact a consumer verifies —
+  `sum.golang.org` holds an append-only record of what each published version resolves to. Handing an
+  automated process an unattended key would also make the signature attest "a machine with a key did
+  this", which is not what a signature claims.
+
+### Actions policy — refuse an unpinned action server-side
+
+`tools/consistency_lint.py`'s `action-pins` check enforces digest pinning inside the repository
+(ADR-0056). This is the backstop for anything the lint cannot see, and it is `false` today:
+
+```bash
+# Require every `uses:` to name a commit digest. Satisfied by the current tree.
+gh api -X PUT repos/$OWNER/$REPO/actions/permissions \
+  -F enabled=true -F allowed_actions=all -F sha_pinning_required=true
+```
+
+Also worth confirming, because it is a floor a repository administrator can lower without any diff:
+
+```bash
+gh api repos/$OWNER/$REPO/actions/permissions/workflow   # expect default_workflow_permissions: read
+```
+
 ## 4. Discussions, Pages, and the security policy
 
 ```bash
