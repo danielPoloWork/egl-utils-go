@@ -203,15 +203,24 @@ const submitBatch = 1000
 //
 // **The queue does fill, and the figure is the better for it.** An earlier
 // version of this comment claimed the queue was "deep enough that Submit never
-// waits on a worker"; the Linux numbers refute it. This benchmark's mean
-// (105.8–108.1 ns/op on the 2026-08-06 nightly) matches
-// BenchmarkNFR02Throughput's (103.9–107.9) even though that one queues 8192 and
-// this one 65536 — an 8× deeper queue buys nothing, so the steady-state rate is
-// set by how fast eight workers drain a shared channel, not by depth. The p50
-// batch mean of ~66 ns/op is what an unblocked Submit costs; the gap to the mean
-// is back-pressure. The reported p99 therefore *includes* waiting on a worker,
-// which makes it an upper bound on the uncontended tail the NFR asks about — the
-// verdict is conservative rather than flattering.
+// waits on a worker"; the Linux numbers refute it, and the refutation is
+// BenchmarkNFR02ThroughputCounted rather than anything measured here. Putting an
+// atomic increment inside the *task body* slows **submission** from 106 to
+// 144 ns/op. A producer that never waited on the queue could not be slowed by
+// what the consumers do with what it queued, so the pipeline is consumer-limited
+// and Submit blocks on a worker for part of every run. Queue depth confirms it
+// from the other side: this benchmark queues 65536 against Throughput's 8192 and
+// measures the same ~107 ns/op, so depth is not the binding constraint — the
+// drain rate of eight workers on one shared channel is.
+//
+// The reported p99 therefore *includes* waiting on a worker, which makes it an
+// upper bound on the uncontended tail the NFR asks about: the verdict is
+// conservative rather than flattering. (An earlier reading of these numbers took
+// the p50 to be the unblocked cost and the gap to the mean to be back-pressure.
+// Two runs of the same commit on the same image put the p50 at 67.5 and at 111.4
+// ns/op — Submit's *distribution* varies by runner instance, not just its centre,
+// so that decomposition does not survive a second sample. The consumer-limited
+// argument above does.)
 func BenchmarkNFR02SubmitP99(b *testing.B) {
 	p := workerpool.New(nfrWorkers, 1<<16)
 	ctx := context.Background()

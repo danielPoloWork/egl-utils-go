@@ -72,6 +72,18 @@ goroutine** that visits the shards in turn, each under its own lock. No API chan
 - **NFR-06 is now met at the mean, and the fix is worth 7.5×** on the workload the NFR describes.
   Measured before/after on the same machine (median of 5):
 
+  > **Flagged 2026-08-06 (roadmap 14.8).** "Met at the mean" needs a correction that does **not** touch
+  > this decision. `NFR06Mixed` is a parallel benchmark, so its ns/op is an *aggregate throughput*
+  > figure — Go divides wall time by operations across all goroutines — and NFR-06's 200 ns is a
+  > *latency* target. Caller-observed latency is the aggregate times the concurrency, so at eight
+  > goroutines a mix measuring 46.6 ns/op has each `Get` occupying several hundred nanoseconds of its
+  > caller's wall clock. **The 7.5× stands and so does everything below it**: more throughput on the
+  > contended path is more throughput, and `GetOnly` no longer beating `Mixed` is still the evidence
+  > that write serialisation stopped being the bottleneck. What does not stand is the phrase "meets
+  > NFR-06". The measured tail and what to do about the target are in
+  > [ADR-0037](0037-nfr-benchmark-methodology.md)'s 2026-08-06 amendments and the
+  > [NFR report](../benchmarks/2026-07-26-nfr-suite.md).
+
   | Benchmark | Before | After | Change |
   |---|---|---|---|
   | `NFR06Mixed` (90/10, 8 goroutines, 1 M) | 349.8 ns | **46.6 ns** | **7.5× faster** |

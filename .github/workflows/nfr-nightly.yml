@@ -70,12 +70,17 @@ jobs:
       # is what makes the measurement visible without downloading anything.
       - name: Surface the tail percentiles
         run: |
+          tails=$(grep -E 'SubmitP99|GetTail' current.txt || echo "no tail benchmark matched")
+          # Printed to the step log as well as the summary, deliberately. Writing
+          # them to one place nobody greps is the mistake being corrected here,
+          # and a summary is not reachable from `gh run view --log`.
+          echo "$tails"
           {
             echo
             echo "## Tail percentiles (NFR-02 Submit, NFR-06 mixed load)"
             echo
             echo '```'
-            grep -E 'SubmitP99|GetTail' current.txt || echo "no tail benchmark matched"
+            echo "$tails"
             echo '```'
             echo
             echo "_A batch mean at N goroutines on M cores is a residency time when N > M;"
