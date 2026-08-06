@@ -192,14 +192,26 @@ func BenchmarkNFR02ThroughputCounted(b *testing.B) {
 // Linux and still below one tick on Windows -- see reportTail.
 const submitBatch = 1000
 
-// BenchmarkNFR02SubmitP99 measures Submit's tail latency uncontended: one
-// submitting goroutine, a queue deep enough that Submit never waits on a worker.
+// BenchmarkNFR02SubmitP99 measures Submit's tail latency from a single
+// submitting goroutine into a 65536-deep queue.
 //
 // The NFR asks for p99 ≤ 2 µs. Note that the target is *below* the Windows
 // clock's 3.2 µs resolution, so per-operation sampling cannot answer the
 // question there at all — the first version of this benchmark reported a p99 of
 // exactly 0 ns for that reason. The batch mean is reported instead, with the
 // clock resolution alongside it so the number can be judged.
+//
+// **The queue does fill, and the figure is the better for it.** An earlier
+// version of this comment claimed the queue was "deep enough that Submit never
+// waits on a worker"; the Linux numbers refute it. This benchmark's mean
+// (105.8–108.1 ns/op on the 2026-08-06 nightly) matches
+// BenchmarkNFR02Throughput's (103.9–107.9) even though that one queues 8192 and
+// this one 65536 — an 8× deeper queue buys nothing, so the steady-state rate is
+// set by how fast eight workers drain a shared channel, not by depth. The p50
+// batch mean of ~66 ns/op is what an unblocked Submit costs; the gap to the mean
+// is back-pressure. The reported p99 therefore *includes* waiting on a worker,
+// which makes it an upper bound on the uncontended tail the NFR asks about — the
+// verdict is conservative rather than flattering.
 func BenchmarkNFR02SubmitP99(b *testing.B) {
 	p := workerpool.New(nfrWorkers, 1<<16)
 	ctx := context.Background()
