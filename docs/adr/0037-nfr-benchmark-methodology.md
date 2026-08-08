@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-07-26
 - **Deciders:** senior project architect (agent), maintainer (Daniel Polo)
-- **Related:** ADR-0030 (spec v2 reconciliation: 10.10 adopted), ADR-0036 (coverage gate — same "a gate that cannot fail is not a gate" reasoning), ADR-0012 (ratelimit's injected clock, which makes NFR-04 gateable), ADR-0006 (pubsub drop policy, which shapes NFR-03's measurement), ADR-0013/0014/0016/0017 (the middleware NFR-01 measures), spec v2.0 §5 and §7, roadmap 10.10, roadmap 10.11 (consumes NFR-06's numbers)
+- **Related:** ADR-0030 (spec v2 reconciliation: 10.10 adopted), ADR-0036 (coverage gate — same "a gate that cannot fail is not a gate" reasoning), ADR-0012 (ratelimit's injected clock, which makes NFR-04 gateable), ADR-0006 (pubsub drop policy, which shapes NFR-03's measurement), ADR-0013/0014/0016/0017 (the middleware NFR-01 measures), spec v2.0 §5 and §7, roadmap 10.10, roadmap 10.11 (consumes NFR-06's numbers), roadmap 14.8 (the two tails, measured on Linux CI — see the 2026-08-06 amendments in Consequences)
 
 ## Context
 
@@ -118,6 +118,50 @@ measured floor**.
   wasting an idle window's refill against the cap; and the clock behaviour above.
 - The local workstation cannot verify two of the six NFRs. That is a real limitation of this report, and
   CI is the authority for them — the same posture the repo already takes for `-race` and `-fuzz`.
+  **(Amendment 2026-08-06, roadmap 14.8 — the authority was already exercising itself unread. The
+  nightly had been measuring both tails on `ubuntu-24.04` from the day this ADR was accepted, at a
+  29 ns clock resolution, publishing percentiles on every run; they went only into the uploaded
+  artifact, so eleven nights of results existed before one was looked at. This decision was therefore
+  never wrong, merely never collected — and the gap it exposes is worth naming, because it is not
+  specific to benchmarks: **a job that runs is not a number that has been read.** The workflow now
+  prints the tail lines into the run summary and warns when a tail comes back `tail-unmeasurable` on a
+  runner whose clock should manage it, which is the measurement-going-blind case rather than a
+  performance one — hardware-independent in kind, so it warrants a signal even in a job that never
+  fails. Verdicts: **NFR-02's Submit p99 is met at 176 ns against 2 µs** — conservatively, since the
+  measured tail includes queue back-pressure the NFR's "uncontended" excludes, `ThroughputCounted` being
+  the evidence that the pipeline is consumer-limited: an atomic *inside the task body* slows
+  **submission** from 106 to 144 ns/op, which a producer that never waited on the queue could not be.
+  **NFR-06's p99 is not met** — see the next bullet.)**
+- **Amendment 2026-08-06 (roadmap 14.8): batched sampling has a second weakness, and it is not the
+  clock.** A batch timed in wall clock from *inside* one goroutine measures **residency**, not service
+  time: with N goroutines on M cores and N > M, each goroutine runs about M/N of the wall clock, so the
+  per-goroutine batch mean is the aggregate `ns/op` times N. NFR-06's 8-goroutine tail on a 4-core
+  runner demonstrates it from inside a single benchmark line — aggregate 97.1 ns/op, p50 batch mean
+  743 ns/op, and 97.1 × 8 = 777 with the p50 sitting under a mean the p99 of 1604 pulls up. The number
+  is a sound regression detector for the NFR's stated load and **not** a `Get` latency; comparing it to
+  the 200 ns target is a category error, and publishing it as NFR-06's p99 would have repeated the
+  Windows-tick mistake in a new costume. Two corrections follow. The 8-goroutine figure is published as
+  a residency time with the arithmetic that reads it, and `BenchmarkNFR06GetTailPerCore` runs the same
+  90/10 mix at exactly one goroutine per core, where N = M makes a batch mean a service time again
+  (117.3 × 4 = 469 against a p50 of 455 — the same identity, checked at a second point). That variant is
+  explicitly a diagnostic and not the NFR — fewer goroutines means less shard contention — but it
+  separates the code's tail from the machine's scheduling, and **the separation changed the verdict
+  rather than confirming the expected one**. The service-time p99 is **887 ns against 200 ns**, so the
+  shortfall survives with oversubscription removed entirely and the spec's 8-core reference machine
+  would not close a 4.4× gap. NFR-06's tail is therefore recorded as **not met**, and what blocks a
+  final answer is no longer hardware but what the target means.
+- **Amendment 2026-08-06 (roadmap 14.8): the same arithmetic reads backwards onto a verdict this ADR
+  already recorded.** "NFR-06 met at the mean, 46.6 ns" (10.11) compares an aggregate *throughput*
+  figure against a *latency* target — Go divides a parallel benchmark's wall time by total operations
+  across all goroutines, so a mix measuring ~96 ns/op at eight goroutines has each `Get` occupying
+  ~775 ns of its caller's wall clock. ADR-0038's sharding result is untouched: 7.5× more throughput on
+  the contended path is 7.5× more throughput, and the Get-only/mixed convergence still shows write
+  contention stopped being the bottleneck. What does not survive is reading that number as the latency
+  NFR-06 asks about. This is **flagged and not decided**, because the live question is a spec one:
+  `GetHit` uncontended is 32.9 ns and comfortably inside 200 ns, so if NFR-06 means uncontended latency
+  it is met and the suite has been measuring the wrong quantity, while if it means latency under an
+  8-way 90/10 mix it is unreachable on any hardware measured here and needs the treatment NFR-01's
+  0-allocs target got in [ADR-0030](0030-spec-v2-reconciliation.md) §3. Recorded for the maintainer.
 - Deferred: the same-runner A/B PR gate; a spec amendment for NFR-01's allocation target; and
   re-measuring NFR-06 after 10.11.
 - **Resolved 2026-07-27 (v1.1.1):** the `middleware.HeaderName` canonicalisation, worth the 2

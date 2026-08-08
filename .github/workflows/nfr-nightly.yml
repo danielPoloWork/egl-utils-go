@@ -61,6 +61,39 @@ jobs:
             ./pkg/ratelimit/ ./pkg/syncpool/ \
             | tee current.txt
 
+      # The two p99 NFRs — NFR-02's Submit and NFR-06's mixed load — are the
+      # reason this job matters beyond regression tracking: the reference
+      # workstation's clock cannot measure them at all (ADR-0037), so this runner
+      # is where they are judged. They were already being measured here nightly
+      # and the percentiles were only ever written into the uploaded artifact,
+      # where they sat unread for eleven nights. Surfacing them on the run page
+      # is what makes the measurement visible without downloading anything.
+      - name: Surface the tail percentiles
+        run: |
+          tails=$(grep -E 'SubmitP99|GetTail' current.txt || echo "no tail benchmark matched")
+          # Printed to the step log as well as the summary, deliberately. Writing
+          # them to one place nobody greps is the mistake being corrected here,
+          # and a summary is not reachable from `gh run view --log`.
+          echo "$tails"
+          {
+            echo
+            echo "## Tail percentiles (NFR-02 Submit, NFR-06 mixed load)"
+            echo
+            echo '```'
+            echo "$tails"
+            echo '```'
+            echo
+            echo "_A batch mean at N goroutines on M cores is a residency time when N > M;"
+            echo "see \`docs/benchmarks/2026-07-26-nfr-suite.md\` on reading these._"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # A refusal here is not a perf regression, it is the measurement going
+          # blind — a coarsened clock or a batch too short for it. That is
+          # hardware-independent in kind, so it is worth a warning even in a job
+          # that never fails.
+          if grep -q 'tail-unmeasurable' current.txt; then
+            echo "::warning title=NFR tail unmeasurable::a tail benchmark refused to publish a percentile on this runner; the clock resolution or the batch size regressed (ADR-0037)"
+          fi
+
       # restore-keys prefix-matches, so the most recent nightly's baseline is
       # picked up even though each run saves under a run-id-suffixed key (a cache
       # entry cannot be overwritten once written).

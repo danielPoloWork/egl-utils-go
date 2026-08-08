@@ -183,11 +183,61 @@ func BenchmarkNFR06GetOnly(b *testing.B) {
 	})
 }
 
-// BenchmarkNFR06GetTail samples the read path's tail under the 90/10 mix.
+// BenchmarkNFR06GetTail samples the read path's tail under the 90/10 mix at the
+// NFR's eight goroutines.
+//
+// **What this number is.** A batch is timed in wall clock from inside one
+// goroutine, so when the goroutines outnumber the cores it measures *residency*
+// — service time plus the time the goroutine spent runnable-but-descheduled —
+// not the latency of a `Get`. The relationship is arithmetic, not a suspicion:
+// with every core saturated, a per-goroutine batch mean equals the aggregate
+// ns/op times the goroutine count. On a 4-core runner the 2026-08-06 CI run
+// measured 97.1 ns/op aggregate on this mix and a p50 batch mean of 743 ns/op,
+// which is 97.1 × 8 less the gap between a median and a mean.
+//
+// So this benchmark answers "what does a goroutine in this workload wait, end to
+// end" and is the right regression detector for the NFR's stated load. It is
+// *not* comparable to NFR-06's 200 ns target unless the runner has eight cores to
+// give it. BenchmarkNFR06GetTailPerCore below is the service-time figure that is.
+func BenchmarkNFR06GetTail(b *testing.B) {
+	benchGetTail(b, parallelismFor(nfrGoroutines))
+}
+
+// BenchmarkNFR06GetTailPerCore samples the same 90/10 mix with exactly one
+// goroutine per core, which is the only way to read a service time off a
+// wall-clock batch: with no goroutine oversubscribed there is no scheduler
+// queueing folded into the sample.
+//
+// The trade is stated rather than hidden. This is *not* NFR-06's load — the NFR
+// says eight goroutines and this runs GOMAXPROCS of them — so on a runner with
+// fewer than eight cores it measures the tail of a lighter mix, and lock
+// contention on the shards (ADR-0038) is correspondingly lower. It is a
+// diagnostic that isolates the code's own tail from the machine's scheduling,
+// which is what makes the residency figure above interpretable.
+//
+// It is also the number that settled NFR-06's verdict, in the direction nobody
+// expected: 887 ns at the p99 against a 200 ns target with no oversubscription at
+// all, so the shortfall is not the runner's missing four cores. Note too that
+// four goroutines measure *worse* aggregate throughput than eight (117.3 against
+// 96.4 ns/op) — random access over 1 M entries stalls on memory, and
+// oversubscribing hides those stalls behind other goroutines' work. Throughput
+// and latency pull in opposite directions here, which is the whole reason these
+// two benchmarks are separate.
+func BenchmarkNFR06GetTailPerCore(b *testing.B) {
+	benchGetTail(b, 1)
+}
+
+// benchGetTail runs the 90/10 mix at parallelism × GOMAXPROCS goroutines and
+// reports the batch-derived tail.
 //
 // Samples are collected per goroutine and merged once at the end, so the
-// collection itself adds no cross-goroutine contention to the measurement.
-func BenchmarkNFR06GetTail(b *testing.B) {
+// collection itself adds no cross-goroutine contention to the measurement. The
+// goroutine and core counts are reported alongside the percentiles because,
+// per the note on BenchmarkNFR06GetTail, their ratio is what decides whether a
+// batch mean is a service time or a residency time — a reader of the raw
+// benchmark output should not have to reconstruct it.
+func benchGetTail(b *testing.B, parallelism int) {
+	b.Helper()
 	c := newLoadedCache(b)
 	defer c.Close()
 
@@ -196,7 +246,8 @@ func BenchmarkNFR06GetTail(b *testing.B) {
 		all []time.Duration
 	)
 
-	b.SetParallelism(parallelismFor(nfrGoroutines))
+	procs := runtime.GOMAXPROCS(0)
+	b.SetParallelism(parallelism)
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		rng := xorshift(0x9E3779B97F4A7C15)
@@ -230,5 +281,7 @@ func BenchmarkNFR06GetTail(b *testing.B) {
 	})
 	b.StopTimer()
 
+	b.ReportMetric(float64(parallelism*procs), "goroutines")
+	b.ReportMetric(float64(procs), "procs")
 	reportTail(b, all, getBatch)
 }

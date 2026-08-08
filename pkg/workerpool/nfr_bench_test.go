@@ -192,14 +192,35 @@ func BenchmarkNFR02ThroughputCounted(b *testing.B) {
 // Linux and still below one tick on Windows -- see reportTail.
 const submitBatch = 1000
 
-// BenchmarkNFR02SubmitP99 measures Submit's tail latency uncontended: one
-// submitting goroutine, a queue deep enough that Submit never waits on a worker.
+// BenchmarkNFR02SubmitP99 measures Submit's tail latency from a single
+// submitting goroutine into a 65536-deep queue.
 //
 // The NFR asks for p99 ≤ 2 µs. Note that the target is *below* the Windows
 // clock's 3.2 µs resolution, so per-operation sampling cannot answer the
 // question there at all — the first version of this benchmark reported a p99 of
 // exactly 0 ns for that reason. The batch mean is reported instead, with the
 // clock resolution alongside it so the number can be judged.
+//
+// **The queue does fill, and the figure is the better for it.** An earlier
+// version of this comment claimed the queue was "deep enough that Submit never
+// waits on a worker"; the Linux numbers refute it, and the refutation is
+// BenchmarkNFR02ThroughputCounted rather than anything measured here. Putting an
+// atomic increment inside the *task body* slows **submission** from 106 to
+// 144 ns/op. A producer that never waited on the queue could not be slowed by
+// what the consumers do with what it queued, so the pipeline is consumer-limited
+// and Submit blocks on a worker for part of every run. Queue depth confirms it
+// from the other side: this benchmark queues 65536 against Throughput's 8192 and
+// measures the same ~107 ns/op, so depth is not the binding constraint — the
+// drain rate of eight workers on one shared channel is.
+//
+// The reported p99 therefore *includes* waiting on a worker, which makes it an
+// upper bound on the uncontended tail the NFR asks about: the verdict is
+// conservative rather than flattering. (An earlier reading of these numbers took
+// the p50 to be the unblocked cost and the gap to the mean to be back-pressure.
+// Two runs of the same commit on the same image put the p50 at 67.5 and at 111.4
+// ns/op — Submit's *distribution* varies by runner instance, not just its centre,
+// so that decomposition does not survive a second sample. The consumer-limited
+// argument above does.)
 func BenchmarkNFR02SubmitP99(b *testing.B) {
 	p := workerpool.New(nfrWorkers, 1<<16)
 	ctx := context.Background()

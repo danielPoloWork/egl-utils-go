@@ -19,6 +19,21 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-06 — 14.8: the job was already running, and the number it published was not a latency](2026/08/2026-08-06-nfr-tails-on-linux.md) —
+  roadmap 14.8, [ADR-0037](../adr/0037-nfr-benchmark-methodology.md) amended, the
+  [NFR report](../benchmarks/2026-07-26-nfr-suite.md) updated in place. Both premises of the roadmap
+  line were false. **There was no job to add** — `nfr-nightly` had been publishing both tail
+  percentiles on Linux since 10.10, into an artifact nobody opened for eleven nights, which is 14.7's
+  lesson one layer out: **a job that runs is not a number that has been read.** **NFR-02's `Submit` p99
+  is met at 176 ns against 2 µs**, conservatively, since `ThroughputCounted` proves the pipeline is
+  consumer-limited and the tail includes back-pressure the NFR excludes. **NFR-06's p99 is not met at
+  887 ns against 200 ns** — and the figure that mattered was not the 8-goroutine one: a wall-clock batch
+  timed inside one of N goroutines on M cores with N > M measures **residency**, so 97.1 ns/op aggregate
+  and a 743 ns/op batch p50 are the same work seen twice. `GetTailPerCore` removes the scheduling and
+  the shortfall survives, so it is not a hardware gap. The same arithmetic makes 10.11's **"met at the
+  mean, 46.6 ns" a throughput figure read as a latency**; ADR-0038's sharding result stands, the latency
+  reading does not, and whether the 200 ns target means the uncontended `Get` (32.9 ns) or the loaded one
+  (~775 ns) is handed to the maintainer as a spec question.
 - [2026-08-05 — 14.7: the half-pinned repository, one write token, and a gate that could not see its own subject](2026/08/2026-08-05-supply-chain-pinning.md) —
   roadmap 14.7, [ADR-0056](../adr/0056-build-time-supply-chain.md), control C-6. Every action pinned
   to a commit digest (**21 of 36 floated**, including `actions/checkout` at two sites in a file that
