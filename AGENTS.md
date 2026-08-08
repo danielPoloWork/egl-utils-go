@@ -241,6 +241,11 @@ Documentation is part of the deliverable. Every PR ships its own doc updates.
   undocumented judgment call.
 - **Workflow docs** — `docs/workflow/` holds the git, documentation, release, and maintenance
   conventions, plus `github-setup.md` (one-time repo configuration).
+- **Contributor docs** — [`CONTRIBUTING.md`](CONTRIBUTING.md) is this contract's counterpart for
+  **humans**, and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) governs participation. They restate
+  the same gates in §10 and the same workflow in §6, so **a change to a gate, a label, a pinned
+  tool version, or the ADR triggers updates both files in the same PR** — this file is the source
+  of truth and `CONTRIBUTING.md` drifting from it is a defect, not a variant.
 
 
 ## 8. Design Patterns Policy
