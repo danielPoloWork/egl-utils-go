@@ -14,6 +14,12 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- **Signed commits are now required on `master`.** Every commit on the branch already satisfied it —
+  the repository is squash-only, so GitHub creates and signs the squash commit itself — which is why
+  [ADR-0056](docs/adr/0056-build-time-supply-chain.md) §(e) recorded it as free. Enabling it closes
+  the paths that remained: an administrator's direct push, or a future change of merge strategy.
+  Release **tags** are unaffected and remain annotated-but-unsigned, deliberately and for the reasons
+  in that ADR. Governance only: no code, surface or behaviour changed.
 - **`examples / service` is now a required status check on `master`** — fourteen contexts instead of
   thirteen. It was the last CI job that ran without blocking anything, which is how
   [BUG-0002](docs/bugs/2026/08/BUG-0002-unbuffered-started-channel-deadlocks-two-examples-service-tests.md)

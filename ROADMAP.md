@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-08-08 — the hole stays open, and now it is a decision](docs/journal/2026/08/2026-08-08-v0.1.0-release-not-backfilled.md).
+  [2026-08-08 — the hand-off that was blocked by an endpoint, not a policy](docs/journal/2026/08/2026-08-08-enable-required-signatures.md).
 
 ### Agent guidance (model × effort)
 
