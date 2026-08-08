@@ -54,8 +54,15 @@ pre-1.0 milestone-driven.
 ### Backfilling a Release for an old tag
 
 If a tag was pushed and the Publish step skipped, the Release can be written after the fact from its
-`docs/releases/vX.Y.Z.md` — that file is the record and the Release is a copy of it. `v0.1.0` was
-backfilled this way on 2026-08-08 (roadmap 14.11).
+`docs/releases/vX.Y.Z.md` — that file is the record and the Release is a copy of it.
+
+**Decide whether it is worth publishing before drafting it.** This procedure was exercised on
+`v0.1.0` on 2026-08-08 (roadmap 14.11) and the draft was then **deliberately discarded**: that
+version predates every feature package, its own notes say installing it is not recommended, and
+`docs/releases/v0.1.0.md` already holds the record — so the Release would have published little
+beyond "do not use this". A backfill is worth doing when the Release adds something a reader cannot
+get from the repository; an old tag that nobody should install is the case where it does not.
+See [ADR-0055](../adr/0055-contrib-release-workflow.md).
 
 **Pass `--latest=false`.** `gh release create` marks a new Release as "Latest" by default, so
 backfilling an *older* tag without that flag moves the Latest badge off the current release and onto

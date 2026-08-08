@@ -19,6 +19,19 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-08 — the hole stays open, and now it is a decision](2026/08/2026-08-08-v0.1.0-release-not-backfilled.md) —
+  a correction session. 14.11 drafted `v0.1.0`'s missing Release; the maintainer chose **not** to
+  publish it and the draft was removed — but `v2.0.1` had already shipped announcing the backfill, so
+  **a released changelog asserted something that does not exist**. Verified first: no `v0.1.0` release
+  at all, tag intact. Keeping it deleted is defensible (that version predates every feature package,
+  its own notes say not to install it, and `docs/releases/v0.1.0.md` already holds the record — the
+  Release would publish little beyond "do not use this"), and the asymmetry is now **a recorded
+  decision rather than an oversight**, which is what differs from the starting state. **A released
+  record is corrected BESIDE the original claim, never in place of it** — deleting it would make the
+  published release notes and the repository disagree about what `v2.0.1` said. Five documents
+  amended; the 14.11 journal left untouched, because a dated trail exists precisely so history is not
+  rewritten to match the present. `release.md`'s backfill procedure survives with the clause it was
+  missing: **decide whether it is worth publishing before drafting it.**
 - [2026-08-08 — the last job that blocked nothing](2026/08/2026-08-08-require-examples-service-context.md) —
   governance follow-through after M14 closed: **`master` now requires 14 status contexts, not 13** —
   `examples / service` is the new one, app-pinned like the rest. ADR-0054's warning ("adding a job

@@ -117,10 +117,17 @@ Two secondary consequences of the same choice, both worth having:
   Adding a per-driver-bump Publish step to the module line that releases most often is a machine
   for manufacturing that hole.
 
-> *Amended 2026-08-08: **the hole is filled.** 14.11 backfilled `v0.1.0`'s Release from
-> `docs/releases/v0.1.0.md`, so all five core tags now have one. Nothing here is superseded — the
-> argument was that a skipped Publish step leaves an artifact only a human can restore, and
-> restoring it by hand four weeks later is what that costs.*
+> *Amended 2026-08-08: **the hole stays open, by decision.** 14.11 drafted `v0.1.0`'s Release from
+> `docs/releases/v0.1.0.md`, and the maintainer chose not to publish it; the draft was removed. So
+> `v0.1.0` still has a git tag and no GitHub Release, and the argument above is unchanged — if
+> anything it is sharpened. A skipped Publish step leaves an artifact only a human can restore, the
+> restoration has to be **worth doing four weeks later**, and here it was judged not to be: `v0.1.0`
+> predates every feature package, its own notes say installing it is not recommended, and the record
+> a reader actually needs already exists in `docs/releases/v0.1.0.md` and
+> `docs/changelog/v0/v0.1.0.md`. What the Release would add is a publication whose content is "do not
+> use this". **The cost is real and stated rather than argued away: the release history is
+> permanently asymmetric, and this ADR's reason for drafting no Release for `contrib/*` tags is
+> exactly that such asymmetries are easy to create and awkward to remove.***
 
 What replaces the Release as a record is the workflow run: the final step writes the tag, module
 path, version, directory and commit into `$GITHUB_STEP_SUMMARY`, together with the

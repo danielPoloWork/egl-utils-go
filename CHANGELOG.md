@@ -25,6 +25,15 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Removed
 
+- **The `v0.1.0` GitHub Release that `v2.0.1` announced was never published**, and the draft has been
+  removed. `v0.1.0` keeps its git tag and, as before, has no Release. That version predates every
+  feature package and its own notes say installing it is not recommended, so the Release would have
+  published little beyond "do not use this", while
+  [`docs/releases/v0.1.0.md`](docs/releases/v0.1.0.md) already holds the record. The `v2.0.1`
+  [changelog](docs/changelog/v2/v2.0.1.md) and [notes](docs/releases/v2.0.1.md) carry a dated
+  correction beside the original claim rather than in place of it. No code, surface or behaviour is
+  affected.
+
 ### Fixed
 
 - **Two `examples/service` tests could deadlock until the 10-minute test timeout**
