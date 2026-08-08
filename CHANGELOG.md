@@ -12,6 +12,15 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Added
 
+- **A `Packages` section in the README** — all 21 feature packages, grouped by what they are for,
+  each with a sentence on what it does and a link to its **full documentation on pkg.go.dev**, where
+  every exported identifier and all 55 runnable examples live. The front door described the module
+  and never listed what was in it, so a reader had to guess at the inventory or browse `pkg/`. It
+  also states the property that makes the list usable: **no package here imports another**, so taking
+  one pulls in no siblings. `consistency_lint.py` gains a twelfth check asserting the section names
+  exactly the packages that exist, in both directions — a hand-written table of 21 rows is precisely
+  what goes stale when the twenty-second arrives.
+
 ### Changed
 
 - **Signed commits are now required on `master`.** Every commit on the branch already satisfied it —
