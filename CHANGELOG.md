@@ -65,6 +65,18 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   a capability. The Code of Conduct is Contributor Covenant 2.1. Both are linked from the issue
   chooser and the README. Documentation only: no Go file, exported identifier, behaviour or
   dependency changed.
+- **The [additive-capability ledger](docs/adr/0057-additive-capability-ledger.md)** — every
+  capability this project deliberately deferred, in one place, each with the **trigger** that would
+  schedule it (roadmap 14.10, [ADR-0057](docs/adr/0057-additive-capability-ledger.md)). Until now
+  those decisions lived as one-line notes in the Consequences section of 26 different ADRs, findable
+  only by grep. §A holds 49 open capabilities across the public surface, §B seven internal
+  deferrals, §C the eleven that had already been built without the deferring ADR ever saying so, and
+  §D two that turned out not to be additive and belong to a future major. If you have been working
+  around a gap, the ledger is where to check whether it is already known — and the useful thing to
+  send is the trigger: what you need, what you do instead today, and what that costs
+  (`CONTRIBUTING.md` §7). `consistency_lint.py` gains an eleventh check so a new deferral cannot be
+  recorded only in prose. Documentation and tooling only: no Go file, exported identifier, behaviour
+  or dependency changed.
 
 ### Changed
 

@@ -19,6 +19,21 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-08 — 14.10: the ledger that would have proposed work already shipped](2026/08/2026-08-08-additive-capability-ledger.md) —
+  roadmap 14.10, [ADR-0057](../adr/0057-additive-capability-ledger.md). Both of the roadmap line's
+  numbers were wrong: not "roughly twenty capabilities in sixteen ADRs" but **49 open capabilities
+  across 26 ADRs** — and **eleven deferrals had already been built without the deferring ADR ever
+  saying so**, so assembling the ledger the obvious way (grep `deferred`, transcribe) would have
+  published as future work capability the module already exports. Each entry was checked against the
+  **source** instead, which also found two that are not additive at all (`*Pool` as `io.Closer`,
+  argon2id as the default) and belong to a future major. **The trigger column is the item**: falsifiable
+  evidence over six kinds, never "when it becomes important" — and **exactly one trigger has fired**
+  (`env`'s missing float getter, found by *writing* `examples/service`, not by reading the surface),
+  so a milestone built from §A today would be one entry long, which is the ledger working rather than
+  disappointing. Gated by `consistency_lint.py` check 11, verified by deliberate violation **and** by
+  printing the sets it sees (13 marked, 36 cited, neither empty — an empty input passes vacuously,
+  which is 14.7's hole); the marker's blind spot over the other 13 ADRs is documented rather than
+  retrofitted away.
 - [2026-08-08 — 14.9: the contact that looks real and delivers nothing](2026/08/2026-08-08-contributing-and-conduct.md) —
   roadmap 14.9; `CONTRIBUTING.md` + `CODE_OF_CONDUCT.md`, no ADR (0057 is reserved for 14.10). The
   Covenant needs a contact and the obvious one was a decoy: every commit carries
