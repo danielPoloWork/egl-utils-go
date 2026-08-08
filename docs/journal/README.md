@@ -19,6 +19,17 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-08 — the last job that blocked nothing](2026/08/2026-08-08-require-examples-service-context.md) —
+  governance follow-through after M14 closed: **`master` now requires 14 status contexts, not 13** —
+  `examples / service` is the new one, app-pinned like the rest. ADR-0054's warning ("adding a job
+  does not add the context") **was not theoretical**: BUG-0002 rode two merges red, the second being
+  the `v2.0.1` release PR. **Order was the decision — fix the flake first, require second**, because
+  requiring an intermittently-failing job makes a repository unmergeable rather than stricter, and
+  the pressure that follows is to drop the requirement. New `github-setup.md` §3.1 records the API
+  detail: **never re-`PUT` the whole protection object** to add one context (it silently disables
+  anything omitted); PATCH the sub-resource with **`checks`, not `contexts`** (the latter adds it
+  *unpinned*), sending the full array because it replaces rather than merges. **The trap survives one
+  level down** — the job is a matrix, so a second module yields a new, unrequired context.
 - [2026-08-08 — BUG-0002: the signal that was dropped because nobody was listening yet](2026/08/2026-08-08-bug-0002-test-deadlock.md) —
   [BUG-0002](../bugs/2026/08/BUG-0002-unbuffered-started-channel-deadlocks-two-examples-service-tests.md),
   the first work after M14 closed and not a roadmap item. Two `examples/service` tests announced

@@ -167,7 +167,8 @@ is what avoids repeating it. The job's `name:` is untouched, so no required stat
 
 Two new checks — `action-pins` and `workflow-permissions` — bring that tool to ten. They are there
 rather than in `tools/workflow_lint.py` for a reason outside the code: **`consistency / lint` is
-already one of master's thirteen required status checks**, and ADR-0054 recorded that adding a job
+already one of master's thirteen required status checks** *(fourteen since 2026-08-08 —
+`examples / service`; the argument is unchanged)*, and ADR-0054 recorded that adding a job
 does not add a required context. A new tool would have shipped a gate that could go red without
 blocking anything until someone edited branch protection by hand, and would have rewritten "all four
 policy tools" in `AGENTS.md` §10, the pull-request template and nine journal files to describe five.

@@ -177,6 +177,16 @@ Four mechanisms make the topology enforced rather than intended:
   job is red. Flagged in the pull request rather than assumed, because the repository has been
   bitten by exactly this class of drift before (the labels and merge-mode findings of 2026-08-01):
   governance state lives outside the repository and no gate here can assert it.
+
+  > *Amended 2026-08-08: **it is required now** — `master` went from thirteen contexts to fourteen.
+  > The warning above was not theoretical and it is worth recording what it cost: between being
+  > written and being acted on, this job went red on **two** pull requests and both merged anyway,
+  > the second being the `v2.0.1` **release PR**. The defect behind it
+  > ([BUG-0002](../bugs/2026/08/BUG-0002-unbuffered-started-channel-deadlocks-two-examples-service-tests.md))
+  > was fixed first and the context added second, which is the right order: making a flaky job
+  > required converts an ignorable red into a blocked repository. **The trap survives one level
+  > down** — the job is a matrix over `module`, so a second entry produces `examples / <name>`,
+  > which is a new context and equally not required by default.*
 - **The demo pins `v2.0.0`, and something has to keep it current.** That is the accepted cost of
   forbidding `replace`: the version is written down, so it goes stale. Dependabot now watches
   `/examples/service`, and after 14.12 tags `v2.0.1` the bump should arrive as an ordinary

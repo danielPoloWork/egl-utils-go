@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-08-08 — BUG-0002: the signal that was dropped because nobody was listening yet](docs/journal/2026/08/2026-08-08-bug-0002-test-deadlock.md).
+  [2026-08-08 — the last job that blocked nothing](docs/journal/2026/08/2026-08-08-require-examples-service-context.md).
 
 ### Agent guidance (model × effort)
 

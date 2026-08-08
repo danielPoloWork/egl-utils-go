@@ -77,7 +77,9 @@ are built, tested and linted from their own directories. CI does the same, in an
    [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) and a `gomod` entry
    in [`.github/dependabot.yml`](../.github/dependabot.yml) — neither is
    discovered automatically. Ask the maintainer to add the new job to `master`'s
-   required status checks; a job that is not required is a job a merge can skip.
+   required status checks ([`github-setup.md` §3.1](../docs/workflow/github-setup.md));
+   a job that is not required is a job a merge can skip — `examples / service`
+   proved it, riding two merges red before the context was added.
 4. The shared [`.golangci.yml`](.golangci.yml) in this directory applies.
 5. Add a row to the table above, and give the module a `README.md` saying what it
    demonstrates and how to run it.
