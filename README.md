@@ -2,7 +2,7 @@
 
 > Production-ready Go utilities for concurrency, resilience, HTTP middleware, configuration, and observability.
 
-![Status](https://img.shields.io/badge/Status-v2.0.0-blue)
+![Status](https://img.shields.io/badge/Status-v2.0.1-blue)
 
 Part of the **Enterprise-Grade Libraries** series. A
 library written in **Go 1.25+**, built and governed to an enterprise quality
@@ -81,7 +81,7 @@ setup.
 | 11 | Governance: namespace contract & spec reconciliation | ✅ done |
 | 12 | Public-interface reconciliation | ✅ done |
 | 13 | `/v2` — `pkg/` layout and the ledger emptied | ✅ done |
-| 14 | Adoption: examples, the release act, and the supply chain | 🚧 in progress |
+| 14 | Adoption: examples, the release act, and the supply chain | ✅ done |
 
 
 ## License

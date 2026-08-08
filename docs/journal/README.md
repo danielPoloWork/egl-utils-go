@@ -19,6 +19,18 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-08 — 14.12: the release whose entire payload is a tag](2026/08/2026-08-08-release-v2.0.1.md) —
+  roadmap 14.12; **Milestone 14 complete, 12/12**. `v2.0.1` prepared: version constant, `[Unreleased]`
+  moved into [the per-version changelog](../changelog/v2/v2.0.1.md) in roadmap order,
+  [notes](../releases/v2.0.1.md) drafted, badge and milestone rows flipped. **A PATCH with no code in it and a real reason to cut
+  it** — pkg.go.dev renders from the *tagged tree*, so 55 examples across 21 packages had been
+  invisible in `master` for a week, and the release *artifacts* changed (first tag on which 14.7's
+  SBOM path does anything; all four earlier releases have zero assets). The notes **lead with "no
+  code changed" and prove it** — no `pkg/` file touched, surface still 141, `go.mod`/`go.sum`
+  byte-identical. The `milestones` gate caught the README row being flipped before 14.12's own
+  checkbox: **the last item of a milestone is the one most easily left unticked.** Lockstep verified
+  by reverting `version.go` and the badge in turn. **M15 is deliberately unchosen** — 49 ledger
+  entries, one fired trigger.
 - [2026-08-08 — 14.11: the private reporting form nobody could reach](2026/08/2026-08-08-repo-metadata-and-v0.1.0-release.md) —
   roadmap 14.11, [ADR-0058](../adr/0058-no-documentation-site.md). **Private vulnerability reporting
   was DISABLED**, while `SECURITY.md`, `CODE_OF_CONDUCT.md` and two issue-chooser links all sent

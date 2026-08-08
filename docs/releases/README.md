@@ -10,6 +10,7 @@ README badge.
 
 | Version | Date | Highlights | Notes |
 |---------|------|------------|-------|
+| v2.0.1  | 2026-08-08 | M14 — adoption: 55 runnable examples reach pkg.go.dev (which renders the tagged tree), `examples/service`, the verified `contrib/*` release act, the pinned supply chain with the project's first release artifact, `CONTRIBUTING.md`, the capability ledger, and the last two NFR tails. **No code changed** | [v2.0.1.md](v2.0.1.md) |
 | v2.0.0  | 2026-07-30 | M13 — the second major: `pkg/` layout and the `/v2` module path (every import changes), plus all seven deferred breaking changes discharged at once; nine dependency modules dropped. One change no compiler reports: bcrypt's default cost 10 → 12 | [v2.0.0.md](v2.0.0.md) |
 | v1.1.1  | 2026-07-27 | Two allocations removed from every `RequestID` request via a canonical header key, `HeaderName` unchanged (ADR-0044); the `-race` CI jobs repaired after a day red (BUG-0001). No API change | [v1.1.1.md](v1.1.1.md) |
 | v1.1.0  | 2026-07-27 | M10 — spec v2.0 reconciliation (additive bucket): new capability across 7 packages, cache sharded 7.5×, fuzzing + import-graph + coverage gates, the NFR suite, and the contrib/* probe modules | [v1.1.0.md](v1.1.0.md) |
