@@ -19,6 +19,18 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-08 — the front door that never said what was inside](2026/08/2026-08-08-readme-package-inventory.md) —
+  the README described the module, its governance and its milestones, and **never listed its
+  packages**. Adds a `Packages` section: 21 packages in eight groups, one sentence each, every name
+  linking to **pkg.go.dev** — which ADR-0058 already made the doc site, so the README needed the
+  *index into* it, not a second copy. Descriptions derived mechanically from each package's **own doc
+  comment**, which independently confirmed two carried-forward numbers: all 21 have a doc comment,
+  and the example count really is **55**. Gated by `consistency_lint` check 12 (`readme-packages`,
+  a both-ways bijection), because a hand-written 21-row table is what goes stale when the 22nd
+  package arrives. **The second deliberate violation FAILED TO FAIL** — a `…/pkg/semaphoreX` typo
+  passed, because the name pattern `[a-z0-9_]+` matched the leading lowercase run and stopped, so
+  *any* uppercase typo would have slipped through; widened to `[A-Za-z0-9_-]+`. **A test that fails
+  to fail is the only signal separating "the check works" from "the check agrees with me today".**
 - [2026-08-08 — the hand-off that was blocked by an endpoint, not a policy](2026/08/2026-08-08-enable-required-signatures.md) —
   `required_signatures: true` on `master`, discharging a hand-off open since 14.7. ADR-0056's premise
   (squash-only, so GitHub signs the commit that lands) was **re-checked against four newer commits
