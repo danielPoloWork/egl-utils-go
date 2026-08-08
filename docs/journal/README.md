@@ -19,6 +19,20 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-08 — 14.11: the private reporting form nobody could reach](2026/08/2026-08-08-repo-metadata-and-v0.1.0-release.md) —
+  roadmap 14.11, [ADR-0058](../adr/0058-no-documentation-site.md). **Private vulnerability reporting
+  was DISABLED**, while `SECURITY.md`, `CODE_OF_CONDUCT.md` and two issue-chooser links all sent
+  reporters to that form — reachable only by someone who can already create a draft advisory, so the
+  entire audience for both documents had no route. 14.9 rejected the GitHub `noreply` address for
+  being a contact that receives nothing and then chose a channel that was switched off: **the
+  reasoning was right and the verification stopped one level too early.** Third instance of the
+  governance-drift lesson — **a document pointing at a configuration makes a claim no gate here can
+  see.** Also: the roadmap's "three unapplied §4 items" were **undocumented, not unapplied** (§4
+  never mentioned description/topics/homepage), so the fix is a new §4.1 as much as a `PATCH`. Pages
+  **costed and declined** — 30 of 579 links escape `docs/` and they are exactly the root governance
+  files Pages cannot serve; the curated version is registered in ADR-0057 §B, which made ADR-0058 the
+  **new ledger gate's first real exercise, one day old**. `v0.1.0`'s Release drafted with
+  **`--latest=false`** — the flag that stops a backfill stealing the Latest badge from `v2.0.0`.
 - [2026-08-08 — 14.10: the ledger that would have proposed work already shipped](2026/08/2026-08-08-additive-capability-ledger.md) —
   roadmap 14.10, [ADR-0057](../adr/0057-additive-capability-ledger.md). Both of the roadmap line's
   numbers were wrong: not "roughly twenty capabilities in sixteen ADRs" but **49 open capabilities
