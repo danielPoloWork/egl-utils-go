@@ -640,6 +640,13 @@ _PKGDEV_RE = re.compile(
     r"https://pkg\.go\.dev/github\.com/danielPoloWork/egl-utils-go/v2/pkg/([A-Za-z0-9_-]+)")
 
 
+# Documents that link packages by their pkg.go.dev URL. README.md is held to a full
+# bijection — the front door must name every package. The others are checked one way only,
+# against dead links: a task-oriented guide is entitled to omit a package it has no recipe
+# for, but never to point at one that does not exist.
+_PKG_LINK_DOCS = ("docs/usage/README.md",)
+
+
 def check_readme_packages():
     name = "readme-packages"
     src = os.path.join(ROOT, CONFIG["src_main"])
@@ -659,6 +666,13 @@ def check_readme_packages():
     for pkg in sorted(listed - on_disk):
         fail(name, f"README.md's Packages section links '{pkg}', which does not exist under "
                    f"{CONFIG['src_main']}/ — the link renders a 404 on pkg.go.dev")
+
+    for rel in _PKG_LINK_DOCS:
+        if not exists(rel):
+            continue
+        for pkg in sorted(set(_PKGDEV_RE.findall(read(*rel.split("/")))) - on_disk):
+            fail(name, f"{rel} links package '{pkg}', which does not exist under "
+                       f"{CONFIG['src_main']}/ — the link renders a 404 on pkg.go.dev")
 
 
 CHECKS = [

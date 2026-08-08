@@ -6,7 +6,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-08-08 — the front door that never said what was inside](docs/journal/2026/08/2026-08-08-readme-package-inventory.md).
+  [2026-08-08 — the README proved the project was well-run and never sold it](docs/journal/2026/08/2026-08-08-readme-and-usage-guide.md).
 
 ### Agent guidance (model × effort)
 

@@ -2,25 +2,104 @@
 
 > Production-ready Go utilities for concurrency, resilience, HTTP middleware, configuration, and observability.
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/danielPoloWork/egl-utils-go/v2.svg)](https://pkg.go.dev/github.com/danielPoloWork/egl-utils-go/v2)
+[![CI](https://github.com/danielPoloWork/egl-utils-go/actions/workflows/ci.yml/badge.svg)](https://github.com/danielPoloWork/egl-utils-go/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/danielPoloWork/egl-utils-go/v2)](https://goreportcard.com/report/github.com/danielPoloWork/egl-utils-go/v2)
+[![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&logoColor=white)](go.mod)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Status](https://img.shields.io/badge/Status-v2.0.1-blue)
 
-Part of the **Enterprise-Grade Libraries** series. A
-library written in **Go 1.25+**, built and governed to an enterprise quality
-bar: full CI matrix, static analysis, sanitizers, documented design decisions, and SemVer
-releases.
+The building blocks a Go backend service needs and the standard library leaves to you —
+bounded worker pools, circuit breakers, rate limiting, HTTP middleware, caching, structured
+logging, health and metrics endpoints — as **21 independent packages in one governed module**.
 
-## What it is
+Assembling these yourself normally means a dependency per concern, each with its own release
+cadence, licence and supply chain. This module is **three runtime dependencies in total**, and
+**no package here imports another**, so taking one costs you nothing you did not ask for.
 
-Provide a production-ready Go utilities module — advanced concurrency primitives,
-resilience patterns, high-performance HTTP middleware, and API-development helpers —
-that removes boilerplate and correctness risk (goroutine leaks, GC pressure, unsafe
-shutdown) from Go backend services. Design philosophy (imported from the brief):
-idiomatic Go throughout (channels, context.Context, the error interface); zero goroutine
-leaks — every internal goroutine stops deterministically via context or close(done);
-allocation-conscious hot paths via pointer discipline and sync.Pool object reuse.
+Every package is documented on [pkg.go.dev](https://pkg.go.dev/github.com/danielPoloWork/egl-utils-go/v2)
+with runnable examples, holds a ≥ 85% per-package test coverage floor, and runs under the race
+detector on every change.
 
-The frozen specification is in
-[`docs/specs/01_spec_utils.md`](docs/specs/01_spec_utils.md).
+## Installation
+
+```bash
+go get github.com/danielPoloWork/egl-utils-go/v2
+```
+
+Requires **Go 1.25 or later**. Import each package by its own path:
+
+```go
+import "github.com/danielPoloWork/egl-utils-go/v2/pkg/workerpool"
+```
+
+## Quickstart
+
+A complete HTTP service with bounded background work, rate limiting, request logging, panic
+recovery, a health endpoint and an ordered shutdown — in one file:
+
+```go
+package main
+
+import (
+	"context"
+	"log/slog"
+	"net/http"
+	"os"
+	"syscall"
+	"time"
+
+	"github.com/danielPoloWork/egl-utils-go/v2/pkg/health"
+	"github.com/danielPoloWork/egl-utils-go/v2/pkg/lifecycle"
+	"github.com/danielPoloWork/egl-utils-go/v2/pkg/middleware"
+	"github.com/danielPoloWork/egl-utils-go/v2/pkg/ratelimit"
+	"github.com/danielPoloWork/egl-utils-go/v2/pkg/workerpool"
+)
+
+func main() {
+	log := slog.Default()
+
+	// Four workers, a 64-slot queue, and a full queue fails fast instead of
+	// parking the caller's goroutine — so saturation becomes a 503, not a backlog
+	// of held connections.
+	pool := workerpool.New(4, 64, workerpool.WithNonBlockingSubmit())
+	limiter := ratelimit.NewLimiter(20, 40) // 20 requests/second, burst of 40
+
+	app := http.NewServeMux()
+	app.HandleFunc("POST /orders", func(w http.ResponseWriter, r *http.Request) {
+		err := pool.Submit(r.Context(), func(context.Context) {
+			// ... the slow part, off the request path
+		})
+		if err != nil {
+			http.Error(w, "busy", http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	mux := http.NewServeMux()
+	mux.Handle("/healthz", health.Handler())
+	mux.Handle("/", middleware.Recoverer( // a panic becomes a clean 500
+		middleware.RequestID( // correlation id before anything logs
+			middleware.Logger(log)( // one structured line per request
+				limiter.Middleware()(app), // 429 + Retry-After when over budget
+			),
+		),
+	))
+
+	srv := &http.Server{Addr: ":8080", Handler: mux}
+	go func() { _ = srv.ListenAndServe() }()
+
+	// Hooks run in reverse registration order, bounded by the deadline you choose.
+	lifecycle.Register(pool.Close)
+	lifecycle.Register(srv.Shutdown)
+	lifecycle.WaitForSignals(15*time.Second, os.Interrupt, syscall.SIGTERM)
+}
+```
+
+**Next:** the [usage guide](docs/usage/README.md) answers "how do I…" for each package, and
+[`examples/service`](examples/service) is the fuller version of the program above — runnable with
+`cd examples/service && go run .`, and exercised by CI.
 
 ## Packages
 
@@ -98,35 +177,49 @@ identifier with its contract, plus **55 runnable `Example` functions** whose out
 its own answer: [`examples/service`](examples/service) is a runnable HTTP service composed from eight
 of these packages. `cd examples/service && go run .` — no configuration needed.
 
-## Build, test, run
+## Documentation
 
-```bash
-go build ./...
-go test ./...
-```
+| Where | What you get |
+|---|---|
+| **[pkg.go.dev](https://pkg.go.dev/github.com/danielPoloWork/egl-utils-go/v2)** | The reference: every exported identifier with its contract, and 55 runnable examples |
+| **[Usage guide](docs/usage/README.md)** | Task-oriented recipes — "how do I bound concurrency / retry safely / shed load / shut down cleanly" |
+| **[`examples/service`](examples/service)** | A complete HTTP service composing eight packages, runnable and exercised by CI |
+| **[`contrib/`](contrib)** | Optional driver-backed `health.Check` probes for Redis and PostgreSQL |
+| **[`docs/specs/01_spec_utils.md`](docs/specs/01_spec_utils.md)** | The frozen behavioural contract each package is built against |
 
-- **Toolchain:** go build (go modules), go test (+ testify; rapid for property tests), gofumpt (gofmt superset), golangci-lint (govet, staticcheck, errcheck, revive, gosec).
-- **Supported platforms:** Linux / Windows / macOS on Go 1.25 & 1.26 (module floor 1.25).
-- Consumers import the public surface via: `import "github.com/danielPoloWork/egl-utils-go/v2/pkg/workerpool"`,
-  and the module root as `import "github.com/danielPoloWork/egl-utils-go/v2"` for `utils.Version`.
-- **[`contrib/`](contrib) holds separate modules**, each with its own `go.mod` — driver-backed
-  `health.Check` probes for Redis and PostgreSQL, kept out of this module so a consumer inherits
-  no driver dependencies. `./...` does not descend into a nested module, so they are built and
-  tested from their own directories (`cd contrib/redishealth && go test ./...`) and version
-  independently. See [`contrib/README.md`](contrib/README.md) and
-  [ADR-0040](docs/adr/0040-contrib-submodules.md).
-- **[`examples/`](examples) holds runnable programs**, also as separate modules. Start with
-  [`examples/service`](examples/service) — one HTTP service composed from eight packages, showing
-  what a package's documentation cannot: the middleware chain order, the operational endpoints kept
-  out of it, liveness and readiness as two different questions, and an ordered shutdown. Run it with
-  `cd examples/service && go run .` — no configuration needed. See
-  [ADR-0054](docs/adr/0054-examples-service-module.md). Every package additionally carries runnable
-  `Example` functions on pkg.go.dev ([ADR-0053](docs/adr/0053-runnable-examples-convention.md)).
+**`contrib/` is deliberately outside this module.** Each probe is its own module with its own
+`go.mod` and tags, so a consumer of the core inherits no database drivers
+([ADR-0040](docs/adr/0040-contrib-submodules.md)).
 
-See [`docs/development/local-build.md`](docs/development/local-build.md) for the full local
-setup.
+## Compatibility and stability
 
-## How this project is run
+- **Go 1.25 or later.** CI builds and tests on Go 1.25 and 1.26 across Linux, Windows and macOS.
+- **Semantic Versioning.** The exported surface of `v2` is stable; breaking changes require a new
+  major and a new import path.
+- **`/v2` is the current major.** `v1` remains resolvable from the module proxy but receives no
+  fixes — see [`SECURITY.md`](SECURITY.md) for the supported window, and the
+  [`v2.0.0` release notes](docs/releases/v2.0.0.md) for the migration.
+- **Three runtime dependencies**, all `golang.org/x` or `gopkg.in/yaml.v3`. Every release ships a
+  CycloneDX SBOM with a provenance attestation
+  ([ADR-0056](docs/adr/0056-build-time-supply-chain.md)).
+
+## Contributing and support
+
+- **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md) — setup, the gates that run before review,
+  and when a change needs an ADR. By participating you agree to the
+  [Code of Conduct](CODE_OF_CONDUCT.md).
+- **Questions, ideas, capability proposals:** [Discussions](https://github.com/danielPoloWork/egl-utils-go/discussions).
+- **Bugs:** [open an issue](https://github.com/danielPoloWork/egl-utils-go/issues/new/choose).
+- **Security:** never in a public issue — see [`SECURITY.md`](SECURITY.md).
+
+## Project governance
+
+This library is part of the **Enterprise-Grade Libraries** series and is developed under a written
+contract: every design decision is recorded as an ADR, every release is gated by the same CI, and
+the plan is public.
+
+<details>
+<summary><strong>Where the project's own documents live</strong></summary>
 
 | Document | Purpose |
 |---|---|
@@ -139,8 +232,12 @@ setup.
 | [`docs/workflow/`](docs/workflow/) | Git, documentation, release, and maintenance conventions. |
 | [`CHANGELOG.md`](CHANGELOG.md) | User-visible changes per release. |
 | [`SECURITY.md`](SECURITY.md) | How to report a vulnerability. |
+| [`docs/development/local-build.md`](docs/development/local-build.md) | Full local build and test setup. |
 
-## Milestones
+</details>
+
+<details>
+<summary><strong>Delivery milestones</strong> — all 14 complete</summary>
 
 | # | Title | Status |
 |---|---|---|
@@ -159,6 +256,7 @@ setup.
 | 13 | `/v2` — `pkg/` layout and the ledger emptied | ✅ done |
 | 14 | Adoption: examples, the release act, and the supply chain | ✅ done |
 
+</details>
 
 ## License
 

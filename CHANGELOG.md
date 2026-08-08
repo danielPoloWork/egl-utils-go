@@ -12,6 +12,18 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Added
 
+- **A [usage guide](docs/usage/README.md)** — task-oriented recipes answering "how do I…" for every
+  package, with the smallest code that answers each. It fills the layer this project was missing:
+  between a one-line install and per-identifier reference documentation, there was nothing that
+  showed the packages doing a job. Every snippet is derived from code CI compiles and runs — the
+  package examples and `examples/service` — rather than written from memory.
+- **A rewritten README front page.** It now opens the way a library should: what the module is for,
+  `go get`, and a complete runnable service in ~40 lines using `workerpool`, `ratelimit`,
+  `middleware`, `health` and `lifecycle` together. Adds installation, documentation, compatibility
+  and stability, and contributing/support sections; standard Go badges (Go Reference, CI, Go Report
+  Card, Go version, licence); and moves the delivery milestones and the project's internal document
+  index into a collapsed **Project governance** section, so the visible page addresses someone
+  evaluating the library rather than someone auditing the process.
 - **A `Packages` section in the README** — all 21 feature packages, grouped by what they are for,
   each with a sentence on what it does and a link to its **full documentation on pkg.go.dev**, where
   every exported identifier and all 55 runnable examples live. The front door described the module
