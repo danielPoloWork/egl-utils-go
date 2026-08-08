@@ -117,11 +117,16 @@ did not implement it.
 - **CI: a 10-minute stall and a red job**, roughly one PR run in six. It cost two pull requests a red
   check (#97 and #98) and burned the full timeout budget each time.
 - **Signal erosion, which is the reason this is `medium` and not `low`.** Because
-  `examples / service` is **not a required status check** (recorded as an open hand-off since roadmap
+  `examples / service` was **not a required status check** (recorded as an open hand-off since roadmap
   14.5 — "adding a job does not add a required context"), both pull requests merged with it red,
   and the second was the `v2.0.1` **release PR**. A job that fails intermittently and blocks nothing
   trains a reader to ignore it, which is exactly what happened: the failure on #97 went unremarked
   until the identical failure recurred on #98.
+
+  > *Closed 2026-08-08: `examples / service` **is** a required status check now — `master` went from
+  > thirteen contexts to fourteen. Deliberately in this order: the flake was fixed first, because
+  > making an intermittently-failing job required converts an ignorable red into a blocked
+  > repository.*
 
 ## Fix / workaround
 
@@ -156,7 +161,7 @@ way, and the two sites fixed here are the only non-blocking *sends*.
 - `CHANGELOG` entry: `[Unreleased]` → **Fixed**
 - Failing run: [31249725684](https://github.com/danielPoloWork/egl-utils-go/actions/runs/31249725684)
   (job `examples / service`, step "Build, vet and test under the race detector")
-- Related: [ADR-0054](../../../adr/0054-examples-service-module.md) (the module's boundary, and why
-  it is never tagged), [ADR-0053](../../../adr/0053-runnable-examples-convention.md) (no example or
-  its test may depend on the clock), roadmap 14.5 (the still-open hand-off making
-  `examples / service` a required status check)
+- Related: [ADR-0054](../../../adr/0054-examples-service-module.md) (the module's boundary, why it is
+  never tagged, and the required-context hand-off — **closed 2026-08-08**, after this fix),
+  [ADR-0053](../../../adr/0053-runnable-examples-convention.md) (no example or its test may depend on
+  the clock)

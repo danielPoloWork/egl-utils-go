@@ -68,6 +68,53 @@ seen their exact names in the first CI run.
 > reports does not fail a pull request — it leaves it waiting forever. Adding a CI *job* also does
 > not add its context; that is a separate call to this API (ADR-0054).
 
+### 3.1 Adding one required context to an existing protection
+
+**Do not re-`PUT` the whole protection object to add a context.** That call replaces every setting
+on the branch, so anything omitted from the payload is silently turned off. Patch the
+`required_status_checks` sub-resource instead — it touches nothing else:
+
+```bash
+# 1. Read the current state first; this is also the backup.
+gh api repos/$OWNER/$REPO/branches/$BRANCH/protection/required_status_checks > rsc-before.json
+
+# 2. Send `strict` plus the FULL checks array — existing entries and the new one.
+#    `checks` (not `contexts`) is what preserves the app_id pinning.
+gh api -X PATCH repos/$OWNER/$REPO/branches/$BRANCH/protection/required_status_checks --input - <<'JSON'
+{
+  "strict": true,
+  "checks": [
+    { "context": "consistency / lint",  "app_id": 15368 },
+    { "context": "examples / service",  "app_id": 15368 }
+  ]
+}
+JSON
+
+# 3. Verify with a fresh read, not the response echo.
+gh api repos/$OWNER/$REPO/branches/$BRANCH/protection/required_status_checks \
+  --jq '"strict=\(.strict) contexts=\(.contexts|length)"'
+```
+
+Three things that matter in that payload:
+
+- **`checks` rather than `contexts`.** Both work, but `contexts` adds the check unpinned, so *any*
+  app reporting that name satisfies it. `app_id: 15368` is GitHub Actions; every context on this
+  repository is pinned to it, and a mixed set is worth avoiding.
+- **The array is replaced, not merged.** Omitting an existing entry removes it. Build the new array
+  from the file you read in step 1.
+- **The context string must match the job's rendered `name:` exactly**, matrix expansion included —
+  `examples / ${{ matrix.module }}` reports as `examples / service`.
+
+**Require a job only once it is reliably green.** A required context that fails intermittently does
+not make the repository stricter, it makes it unmergeable; and one that never reports leaves every
+pull request waiting forever. `examples / service` was added on 2026-08-08 **after**
+[BUG-0002](../bugs/2026/08/BUG-0002-unbuffered-started-channel-deadlocks-two-examples-service-tests.md)
+removed its flake — in the other order it would have blocked the repository. Before requiring a job,
+confirm it has no `if:` condition and its workflow no path filter, or it will not report on every
+pull request.
+
+`master` currently requires **14** contexts, `strict: true`, all pinned to GitHub Actions.
+
 ### Signatures — what this project requires, and what it does not
 
 Decided in [ADR-0056](../adr/0056-build-time-supply-chain.md) §(e); recorded here because it is a

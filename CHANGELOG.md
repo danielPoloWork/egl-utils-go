@@ -14,6 +14,13 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- **`examples / service` is now a required status check on `master`** — fourteen contexts instead of
+  thirteen. It was the last CI job that ran without blocking anything, which is how
+  [BUG-0002](docs/bugs/2026/08/BUG-0002-unbuffered-started-channel-deadlocks-two-examples-service-tests.md)
+  went red on two pull requests and merged both, the second being the `v2.0.1` release. The context
+  was added **after** the flake was fixed, because requiring an intermittently-failing job blocks the
+  repository rather than protecting it. Governance only: no code, surface or behaviour changed.
+
 ### Deprecated
 
 ### Removed

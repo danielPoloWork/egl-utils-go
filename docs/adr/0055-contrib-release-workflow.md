@@ -76,7 +76,9 @@ a legal `v1.0.0`, a legal pre-release, and the four failures above — rather th
 ### The reachability check, which is how the tag inherits the quality gate
 
 `ci.yml` runs on every push to `master`, and `contrib / redishealth` and `contrib / pgxhealth` are
-two of `master`'s thirteen required status checks. So `git merge-base --is-ancestor $GITHUB_SHA
+two of `master`'s thirteen required status checks *(fourteen since 2026-08-08, when
+`examples / service` was added; the two `contrib` contexts and this argument are unaffected)*. So
+`git merge-base --is-ancestor $GITHUB_SHA
 origin/master` is the mechanical form of "the `contrib` CI job green on the commit being tagged" —
 the second half of the hand procedure, which no amount of re-running commands on the tag can
 establish, because it is a claim about *gating*, not about passing.
