@@ -172,6 +172,10 @@ does not add a required context. A new tool would have shipped a gate that could
 blocking anything until someone edited branch protection by hand, and would have rewritten "all four
 policy tools" in `AGENTS.md` §10, the pull-request template and nine journal files to describe five.
 
+> *Amended 2026-08-08: **eleven.** [ADR-0057](0057-additive-capability-ledger.md) added
+> `ledger-coverage` on exactly the reasoning in this paragraph — `consistency / lint` is already
+> required, a new job would not be. Nothing here is superseded; the count moved.*
+
 `workflow-permissions` is the half with teeth. It refuses a workflow-level grant, requires every job
 to declare a block, and allows a `write` scope only where an explicit allowlist names the file and
 job. A future pull request adding `contents: write` to a test job fails the build.
