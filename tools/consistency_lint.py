@@ -33,7 +33,9 @@ contract (the "congruence checks"):
      job declares its own, and a `write` scope appears only where it is allowlisted;
  11. ledger-coverage  — every ADR that defers a capability with the canonical
      `Deferred, additive:` marker is cited by the additive-capability ledger (ADR-0057),
-     and every ADR the ledger cites exists.
+     and every ADR the ledger cites exists;
+ 12. readme-packages  — the README's Packages section names exactly the feature packages
+     that exist under the source root, asserted in both directions.
 
 Each check is independent; all run, then the report lists every failure. The checks are
 designed to PASS on a freshly-generated repository (empty catalogues, no releases yet).
@@ -615,6 +617,50 @@ def check_ledger_coverage():
                        f"docs/adr/ — a ledger row pointing at nothing is worse than no row")
 
 
+# ---------------------------------------------------------------------------
+# 12. README package inventory — the front door lists exactly what ships
+# ---------------------------------------------------------------------------
+# The README's "Packages" section is a hand-written table of all 21 feature packages, each
+# linking to its pkg.go.dev page. That is the one artifact a reader meets first and the one
+# nothing else forces anyone to update, so package 22 would ship documented nowhere and
+# nobody would notice. Asserted as a bijection, the same both-ways discipline the ADR index
+# and bug ledger use.
+#
+# WHAT THIS CHECK DOES NOT SEE: it compares the *set* of packages, never the prose beside
+# them. A row whose description has gone stale passes. Checking the text against each
+# package's doc comment was considered and rejected — the README deliberately paraphrases
+# (shorter, and it adds cross-references a doc comment should not carry), so the check would
+# either fail on every honest edit or need a similarity threshold nobody can justify.
+#
+# The name class is deliberately wider than Go's lowercase convention. Anchored to `[a-z]`
+# it matched the leading lowercase run of a mistyped link and stopped — `…/pkg/semaphoreX`
+# yielded `semaphore`, which is on disk, so a broken link passed. Found by a deliberate
+# violation that failed to fail.
+_PKGDEV_RE = re.compile(
+    r"https://pkg\.go\.dev/github\.com/danielPoloWork/egl-utils-go/v2/pkg/([A-Za-z0-9_-]+)")
+
+
+def check_readme_packages():
+    name = "readme-packages"
+    src = os.path.join(ROOT, CONFIG["src_main"])
+    if not os.path.isdir(src) or not exists("README.md"):
+        return
+
+    on_disk = {
+        d for d in os.listdir(src)
+        if os.path.isdir(os.path.join(src, d)) and not d.startswith((".", "_"))
+    }
+    listed = set(_PKGDEV_RE.findall(read("README.md")))
+
+    for pkg in sorted(on_disk - listed):
+        fail(name, f"package '{CONFIG['src_main']}/{pkg}' is not listed in README.md's "
+                   f"Packages section — a package the front door does not name is one a "
+                   f"consumer cannot find")
+    for pkg in sorted(listed - on_disk):
+        fail(name, f"README.md's Packages section links '{pkg}', which does not exist under "
+                   f"{CONFIG['src_main']}/ — the link renders a 404 on pkg.go.dev")
+
+
 CHECKS = [
     check_version_lockstep,
     check_adr_index,
@@ -627,6 +673,7 @@ CHECKS = [
     check_action_pins,
     check_workflow_permissions,
     check_ledger_coverage,
+    check_readme_packages,
 ]
 
 

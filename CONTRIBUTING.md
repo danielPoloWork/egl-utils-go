@@ -93,7 +93,8 @@ round trip. They are fast — seconds, not minutes.
 python tools/consistency_lint.py     # cross-artifact congruence (version lockstep, ADR index,
                                      # patterns, spec coverage map, milestones, bug ledger,
                                      # posture, action pins, workflow permissions,
-                                     # additive-capability ledger coverage)
+                                     # additive-capability ledger coverage, README package
+                                     # inventory)
 python tools/import_graph_lint.py    # dependency rings + internal edges (ADR-0035)
 python tools/coverage_gate.py        # >= 85% statements, per package (ADR-0036)
 python tools/spec_api_lint.py        # spec section 5 <-> exported surface (ADR-0043)
