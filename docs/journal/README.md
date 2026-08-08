@@ -19,6 +19,20 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-08 — the README proved the project was well-run and never sold it](2026/08/2026-08-08-readme-and-usage-guide.md) —
+  a product-lens evaluation of the front door, and the rewrite. Measured, not asserted: **0 lines of
+  Go on the page**, `go get` absent (the first actionable command was `go build ./...`, which a
+  *contributor* runs), 20 of 165 lines spent on an internal milestone tracker, and no statement of
+  why to choose this over assembling four libraries. Now opens with the value proposition, `go get`,
+  and a **complete ~40-line service**; milestones and the document index moved into a collapsed
+  *Project governance* section. **Checking the lint constraints first changed the plan**: wrapping
+  the milestone table in `<details>` keeps all 14 rows parseable, so the page got clean with **no
+  gate loosened** — a gate should not be relaxed for a layout preference. New
+  [usage guide](../usage/README.md) fills the layer between `go get` and per-identifier reference.
+  **Every snippet derived from code CI compiles and runs**, because there is no Go toolchain here —
+  which caught a genuine error: `fanout.Split` takes variadic output channels and returns nothing,
+  so the draft's `outs := fanout.Split(ctx, in, 4)` would not have compiled, in the document that
+  exists to show people how to use the library.
 - [2026-08-08 — the front door that never said what was inside](2026/08/2026-08-08-readme-package-inventory.md) —
   the README described the module, its governance and its milestones, and **never listed its
   packages**. Adds a `Packages` section: 21 packages in eight groups, one sentence each, every name
