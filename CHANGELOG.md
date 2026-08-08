@@ -20,6 +20,16 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Fixed
 
+- **Two `examples/service` tests could deadlock until the 10-minute test timeout**
+  ([BUG-0002](docs/bugs/2026/08/BUG-0002-unbuffered-started-channel-deadlocks-two-examples-service-tests.md)).
+  `TestReadinessFailsWhileTheQueueIsFull` and `TestOrderIsShedWhenTheQueueIsFull` announced "a worker
+  has dequeued the first task" with a non-blocking send on an **unbuffered** channel, so whenever the
+  worker reached the send before the test reached the receive there was no receiver, `select`'s
+  `default` was taken, and the signal was silently dropped — after which the test waited forever.
+  The channel is now buffered, which makes the first send land whether or not the receiver has
+  arrived. **No consumer is affected:** `examples/service` is a separate module that is never tagged
+  and is not part of the published `…/v2` module, and no production code changed.
+
 ### Security
 
 ---

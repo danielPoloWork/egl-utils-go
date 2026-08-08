@@ -19,6 +19,17 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-08 — BUG-0002: the signal that was dropped because nobody was listening yet](2026/08/2026-08-08-bug-0002-test-deadlock.md) —
+  [BUG-0002](../bugs/2026/08/BUG-0002-unbuffered-started-channel-deadlocks-two-examples-service-tests.md),
+  the first work after M14 closed and not a roadmap item. Two `examples/service` tests announced
+  "a worker dequeued the first task" with a **non-blocking send on an unbuffered channel** — which
+  only delivers if a receiver is already parked, so whenever the worker got there first the signal
+  was dropped and both goroutines waited forever, to the 10-minute timeout. **The comment above it
+  claimed "no timing assumption"; `select`/`default` IS one, and it was the one that failed.** Fixed
+  with one character of buffer capacity; a sleep was rejected as converting a deadlock into a slow
+  flake. Found by the release PR's own CI, after failing unremarked on #97 first — **`examples /
+  service` is still not a required status check** (14.5's open hand-off), so both merged red, and a
+  **monitor that times out is not a green result.** No consumer affected: the module is never tagged.
 - [2026-08-08 — 14.12: the release whose entire payload is a tag](2026/08/2026-08-08-release-v2.0.1.md) —
   roadmap 14.12; **Milestone 14 complete, 12/12**. `v2.0.1` prepared: version constant, `[Unreleased]`
   moved into [the per-version changelog](../changelog/v2/v2.0.1.md) in roadmap order,
