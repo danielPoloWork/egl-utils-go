@@ -213,6 +213,13 @@ nothing, breaks nothing, and closes the paths that remain (an administrator's di
 future change of merge strategy). It is recommended to the maintainer as a hand-off, with the
 evidence, rather than adopted here, because it is a repository setting and no diff can carry it.
 
+> *Amended 2026-08-08: **the hand-off is discharged — `required_signatures` is enabled on `master`.**
+> The premise was re-verified against four newer commits (`1c2d928`, `abc6a1b`, `9007f7a`,
+> `c598002`), all `verified=true`, committer `GitHub`, before the flag was set. Nothing in this
+> section is superseded; the recommendation became the state. Note it has its own endpoint, so it
+> needed none of the whole-object `PUT` that still blocks `required_linear_history` and
+> `required_conversation_resolution` — which is why this one could be closed alone.*
+
 Signed **tags** are the real block and are declined. `release.md` step 8 gives tag creation to the
 agent as carry-through; requiring signatures on tags moves that to the maintainer and rewrites three
 tables in lockstep (`AGENTS.md` §6.1, `release.md` step 8 and its `## Boundary` table). The cost is
@@ -311,6 +318,15 @@ database plus a provenance attestation over what CI produces.
   two long-open branch-protection flags plus `examples / service` as a required context. They are
   recorded in `github-setup.md` as commands, not run, because the whole-object `PUT` is the class of
   call that was blocked before and tool-shopping around that block is not on the table.
+
+  > *Amended 2026-08-08: two of these are now applied, and the distinction that decided which turned
+  > out to be the endpoint rather than the setting. **`examples / service` is a required context**
+  > (`PATCH …/required_status_checks`) and **`required_signatures` is on**
+  > (`POST …/required_signatures`) — both have narrow, dedicated endpoints. Still open:
+  > `sha_pinning_required`, and `required_linear_history` + `required_conversation_resolution`, which
+  > are settable only through the whole-object `PUT`. The sentence above generalised from that one
+  > call to all five; the accurate rule is **prefer the sub-resource endpoint, and only the settings
+  > that lack one are blocked.***
 - **`orchestrator/project.yaml` was amended in place**, because its embedded workflow templates
   carried `setup-go@v5`, `checkout@v6` and `golangci-lint-action@v6` with no permissions blocks: a
   regeneration would have emitted a tree that fails the gate this ADR adds. This is the first time

@@ -120,16 +120,26 @@ pull request.
 Decided in [ADR-0056](../adr/0056-build-time-supply-chain.md) §(e); recorded here because it is a
 repository setting, so nothing in the tree can prove it either way.
 
-- **`required_signatures` on `master`: recommended, and free.** The repository is squash-only, and
-  GitHub creates and signs the squash commit itself — `68fd847`, `b8c1165` and `51b9310` each report
-  `verified=true`, `reason=valid`, committer `GitHub`. So the flag is *already satisfied* by every
-  commit on the branch; turning it on closes the paths that remain (an administrator's direct push,
-  or a future change of merge strategy) and breaks nothing. An agent's unsigned feature-branch
-  commits never land on `master` as themselves.
+- **`required_signatures` on `master`: ENABLED 2026-08-08** (recommended in ADR-0056 §(e) and applied
+  here). The repository is squash-only, and GitHub creates and signs the squash commit itself —
+  `68fd847`, `b8c1165` and `51b9310` each report `verified=true`, `reason=valid`, committer `GitHub`,
+  and the premise was re-checked against `1c2d928`, `abc6a1b`, `9007f7a` and `c598002` before the
+  flag was set. So the rule was *already satisfied* by every commit on the branch; turning it on
+  closes the paths that remain (an administrator's direct push, or a future change of merge strategy)
+  and breaks nothing. An agent's unsigned feature-branch commits never land on `master` as themselves.
 
   ```bash
   gh api -X POST repos/$OWNER/$REPO/branches/$BRANCH/protection/required_signatures
+  gh api repos/$OWNER/$REPO/branches/$BRANCH/protection/required_signatures   # expect {"enabled":true}
   ```
+
+  It has its **own endpoint**, so unlike `required_linear_history` and
+  `required_conversation_resolution` it needs no whole-object `PUT` (§3.1) — which is why it could be
+  applied on its own while those two remain open. Reverting is one `DELETE` to the same path.
+
+  **This does not constrain tags.** Branch protection applies to the branch ref only, so the agent's
+  annotated-but-unsigned release tags are unaffected — see the next bullet, which is the decision
+  rather than an oversight.
 
 - **Signed *tags*: deliberately not required.** `release.md` step 8 gives tag creation to the agent
   as carry-through, so requiring signed tags moves tagging to the maintainer and rewrites three

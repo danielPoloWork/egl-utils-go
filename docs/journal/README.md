@@ -19,6 +19,17 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-08 — the hand-off that was blocked by an endpoint, not a policy](2026/08/2026-08-08-enable-required-signatures.md) —
+  `required_signatures: true` on `master`, discharging a hand-off open since 14.7. ADR-0056's premise
+  (squash-only, so GitHub signs the commit that lands) was **re-checked against four newer commits
+  before flipping anything**, not inherited. **The finding: the blocker was the ENDPOINT, not the
+  setting.** ADR-0056 had generalised "the whole-object `PUT` is blocked" to all its hand-offs; in
+  fact `required_signatures` and the `examples / service` context each have a narrow sub-resource
+  endpoint and were closable alone, while `required_linear_history` and
+  `required_conversation_resolution` genuinely need the whole-object call. **Prefer the sub-resource
+  endpoint; only settings that lack one are blocked.** Tags are unaffected (branch protection binds
+  the branch ref), reverting is one `DELETE`, and **the next merge is the real test** — `enforce_admins`
+  is true, so the rule applies to the maintainer too.
 - [2026-08-08 — the hole stays open, and now it is a decision](2026/08/2026-08-08-v0.1.0-release-not-backfilled.md) —
   a correction session. 14.11 drafted `v0.1.0`'s missing Release; the maintainer chose **not** to
   publish it and the draft was removed — but `v2.0.1` had already shipped announcing the backfill, so
