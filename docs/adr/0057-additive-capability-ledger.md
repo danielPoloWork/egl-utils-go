@@ -290,6 +290,7 @@ No consumer will report these. Each waits on a repository event the maintainer o
 | A spec amendment for NFR-01's allocation target | [0037](0037-nfr-benchmark-methodology.md) | Maintainer decision; the measurement is already recorded | paired |
 | A spec answer for what NFR-06's 200 ns target measures | [0037](0037-nfr-benchmark-methodology.md), 14.8 | **Maintainer decision, outstanding.** 14.8 measured `GetHit` uncontended at 32.9 ns (met) and the same `Get` under the 8-way mix at ~775 ns (not met); which one the target means is a spec question, and ADR-0030 §3 is the register | paired |
 | CycloneDX SBOMs for `contrib/*` tags | [0055](0055-contrib-release-workflow.md), [0056](0056-build-time-supply-chain.md) | A record that outlives 90 days. Blocked by design, not effort: ADR-0055 gives contrib tags no GitHub Release, so there is nothing to attach an SBOM to, and a 90-day artifact is not a record | paired |
+| A curated documentation site over a subset of `docs/`, with a hand-written index and navigation | [0058](0058-no-documentation-site.md) | A reader who cannot find what they need through the repository — **reported, not assumed** — or `docs/` growing past the point where GitHub's file browser is a usable index. Neither has happened: 160 files across 12 directories, most carrying a `README.md`. Note the rejected option is *enabling Pages*, which would 404 on the governance documents; the entry is the product, not the switch | consumer |
 
 ## §C · Discharged
 

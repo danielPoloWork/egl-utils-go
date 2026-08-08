@@ -108,20 +108,64 @@ Also worth confirming, because it is a floor a repository administrator can lowe
 gh api repos/$OWNER/$REPO/actions/permissions/workflow   # expect default_workflow_permissions: read
 ```
 
-## 4. Discussions, Pages, and the security policy
+## 4. Repository metadata, Discussions, and the security policy
+
+### 4.1 Description, topics, homepage
+
+**The first thing a human sees, and the one piece of metadata `pkg.go.dev` cannot infer.** This
+section did not exist until 14.11, which is why all three were empty for the project's whole life —
+undocumented setup is unapplied setup.
 
 ```bash
-# Enable Discussions (questions/ideas; linked from the issue chooser).
-gh api -X PATCH repos/$OWNER/$REPO -F has_discussions=true
+gh api -X PATCH repos/$OWNER/$REPO \
+  -f description="Production-ready Go utilities for concurrency, resilience, HTTP middleware, configuration, and observability." \
+  -f homepage="https://pkg.go.dev/github.com/danielPoloWork/egl-utils-go/v2"
 
-# GitHub Pages from the docs/ folder on the default branch (optional doc site).
-gh api -X POST repos/$OWNER/$REPO/pages \
-  -F "source[branch]=$BRANCH" -F "source[path]=/docs" 2>/dev/null \
-  || echo "Pages already configured or needs the web UI once."
+gh api -X PUT repos/$OWNER/$REPO/topics \
+  -f "names[]=go" -f "names[]=golang" -f "names[]=concurrency" -f "names[]=resilience" \
+  -f "names[]=http-middleware" -f "names[]=circuit-breaker" -f "names[]=rate-limiting" \
+  -f "names[]=worker-pool" -f "names[]=observability" -f "names[]=go-library" \
+  -f "names[]=enterprise" -f "names[]=zero-dependencies"
 ```
 
-Private vulnerability reporting (the SECURITY.md target) is enabled in the web UI:
-**Settings → Code security → Private vulnerability reporting → Enable**.
+The description is the README's own one-liner, so the two cannot drift into different claims. The
+homepage points at `pkg.go.dev` rather than at a site of our own — see §4.3.
+
+### 4.2 Discussions
+
+```bash
+# Questions, ideas, and capability proposals (linked from the issue chooser; CONTRIBUTING.md §7).
+gh api -X PATCH repos/$OWNER/$REPO -F has_discussions=true
+```
+
+### 4.3 GitHub Pages — deliberately not enabled
+
+**Decided against in [ADR-0058](../adr/0058-no-documentation-site.md); do not enable it without
+reading that first.** Pages from `docs/` publishes *only* `docs/`, and 30 relative links across 12
+files point outside it — seven to `AGENTS.md`, and one each to `CONTRIBUTING.md` and
+`CODE_OF_CONDUCT.md`, which are root files by convention and cannot be served from `docs/`. The doc
+site for a Go library is `pkg.go.dev`, which already renders 55 verified runnable examples.
+
+A curated site over a subset of `docs/` is registered as a deferred capability in
+[ADR-0057](../adr/0057-additive-capability-ledger.md) §B, with the trigger that would schedule it.
+
+### 4.4 Private vulnerability reporting — required, not optional
+
+```bash
+gh api -X PUT repos/$OWNER/$REPO/private-vulnerability-reporting
+gh api repos/$OWNER/$REPO/private-vulnerability-reporting   # expect {"enabled":true}
+```
+
+**This is load-bearing for two policies, not one.** `SECURITY.md` names the form as the way to
+report a vulnerability, and since 14.9 `CODE_OF_CONDUCT.md` designates the same form for conduct
+reports — it is the only private, authenticated channel the repository offers. With the setting
+**off**, that form is reachable only by users who can already create a draft advisory, so an outside
+reporter — the entire audience for both documents — has no route at all.
+
+It was off until 2026-08-08 (14.11 found it and turned it on), which is the same failure 14.9
+reasoned about in the abstract: **a contact that looks real and delivers nothing.** Verify it with
+the readback above rather than assuming; the web-UI equivalent is
+**Settings → Code security → Private vulnerability reporting**.
 
 ## 5. Roadmap milestones — seed every `MN — name`
 
