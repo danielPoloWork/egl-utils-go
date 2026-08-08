@@ -19,6 +19,21 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-08 — 14.9: the contact that looks real and delivers nothing](2026/08/2026-08-08-contributing-and-conduct.md) —
+  roadmap 14.9; `CONTRIBUTING.md` + `CODE_OF_CONDUCT.md`, no ADR (0057 is reserved for 14.10). The
+  Covenant needs a contact and the obvious one was a decoy: every commit carries
+  `…@users.noreply.github.com`, already public and already the maintainer's, and it **accepts no
+  incoming mail** — a contact that looks real and silently discards reports is worse than a missing
+  one, because the reporter believes they have reported. The maintainer chose the private
+  security-advisory form, and the security/conduct mismatch is **designated in writing three times**
+  (Code of Conduct, issue chooser, `SECURITY.md` from the receiving end) so a reviewer finds a
+  decision rather than a copy-paste error; a report about the maintainer routes to GitHub Support
+  instead. `CONTRIBUTING.md` is written against what a contributor gets wrong — the `gofumpt@latest`
+  trap that fails CI on a diff they never wrote, and the one-item-at-a-time rule given its mechanism
+  (a squash merge leaves the branch as no ancestor of `master`) rather than as an instruction. §7
+  refuses a feature-request template in favour of four evidence-shaped questions feeding 14.10's
+  ledger. Also corrected: **`SECURITY.md` still promised `0.x` support "until `v1.0.0`"**. A drafted
+  SPDX instruction was deleted after checking — **0 of 116 Go files carry one**.
 - [2026-08-06 — 14.8: the job was already running, and the number it published was not a latency](2026/08/2026-08-06-nfr-tails-on-linux.md) —
   roadmap 14.8, [ADR-0037](../adr/0037-nfr-benchmark-methodology.md) amended, the
   [NFR report](../benchmarks/2026-07-26-nfr-suite.md) updated in place. Both premises of the roadmap
