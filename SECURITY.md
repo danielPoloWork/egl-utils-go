@@ -2,14 +2,20 @@
 
 ## Supported versions
 
-Until `egl-utils-go` reaches `v1.0.0`, only the latest released minor line receives
-security fixes. After `1.0.0`, the supported window is defined in
+Only the **latest released minor line of the current major** receives security fixes. The
+current major is `v2`, published as [`v2.0.0`](https://github.com/danielPoloWork/egl-utils-go/releases/tag/v2.0.0);
+the supported window is defined in
 [`docs/workflow/maintenance.md`](docs/workflow/maintenance.md).
 
 | Version | Supported |
 |---------|-----------|
-| latest released `0.x` | ✅ |
-| older `0.x` | ❌ |
+| latest released `v2.x` | ✅ |
+| older `v2.x` | ❌ |
+| `v1.x` and earlier | ❌ |
+
+`v1.1.1` remains resolvable from the module proxy — Go never withdraws a published version — but
+it receives no fixes. Migrating is the remedy; see the
+[`v2.0.0` release notes](docs/releases/v2.0.0.md) for the import rewrite.
 
 ## Reporting a vulnerability
 
@@ -22,6 +28,12 @@ Please include:
 - the affected version(s) and platform/toolchain;
 - a minimal reproduction (a failing test is ideal);
 - the observed impact and, if known, the root cause.
+
+> **This form also receives code-of-conduct reports.** It is the only private, authenticated
+> channel the repository offers, so [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) designates it for
+> those as well; such a report opens with `Code of Conduct` and is handled under that document, not
+> under this one. Noted here so an incoming report that is not a vulnerability is not mistaken for a
+> misfiled one.
 
 ## What to expect
 
