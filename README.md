@@ -54,7 +54,9 @@ setup.
 
 | Document | Purpose |
 |---|---|
-| [`AGENTS.md`](AGENTS.md) | How AI agents (and humans) work in this repo — the contract. |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | The path in for a human contributor — setup, the gates, when a change needs an ADR. |
+| [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | Contributor Covenant 2.1, and how to report a concern privately. |
+| [`AGENTS.md`](AGENTS.md) | How AI agents work in this repo — the agent contract. |
 | [`ROADMAP.md`](ROADMAP.md) | The numbered plan and what is done. |
 | [`docs/adr/`](docs/adr/) | Why it is built the way it is (Architecture Decision Records). |
 | [`docs/patterns/`](docs/patterns/) | Design patterns adopted, rejected, or considered. |

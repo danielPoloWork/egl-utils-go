@@ -55,6 +55,16 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   module**: what a consumer resolves is already anchored in `sum.golang.org`, and claiming otherwise
   would put a weaker guarantee beside a stronger one. Licence detection is deliberately off — it is
   wrong on all three components.
+- **[`CONTRIBUTING.md`](CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)** — the
+  repository had an agent contract and no written path in for a human (roadmap 14.9).
+  `CONTRIBUTING.md` carries what nothing else did: that the four policy tools run **before** the pull
+  request rather than in review, the exact `gofumpt` version CI pins (`@latest` formats differently
+  and fails the build), the one-item-at-a-time rule with its mechanical reason — a squash merge
+  leaves the merged branch as no ancestor of `master`, so a stacked branch is a rebase waiting to
+  happen — the type-label set, the five triggers that make a change need an ADR, and how to propose
+  a capability. The Code of Conduct is Contributor Covenant 2.1. Both are linked from the issue
+  chooser and the README. Documentation only: no Go file, exported identifier, behaviour or
+  dependency changed.
 
 ### Changed
 
@@ -74,6 +84,13 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   10.11's "NFR-06 met at the mean, 46.6 ns" compared a throughput figure against a latency target;
   that is flagged for the maintainer as a spec question, and ADR-0038's sharding result is unaffected.
   Benchmarks and documentation only: no exported identifier, behaviour or dependency changed.
+- **[`SECURITY.md`](SECURITY.md)'s supported-versions table now describes the versions that exist**
+  (roadmap 14.9). It had said "until `egl-utils-go` reaches `v1.0.0`, only the latest released minor
+  line receives security fixes" and listed `0.x` rows — false since `v1.0.0` and misleading since
+  `v2.0.0`. Supported is now the latest released `v2.x`; `v1.1.1` stays resolvable from the proxy, as
+  every published Go version does, and receives no fixes. The same file also records that its private
+  reporting form receives code-of-conduct reports, so one is not mistaken for a misfiled
+  vulnerability.
 
 ### Deprecated
 
