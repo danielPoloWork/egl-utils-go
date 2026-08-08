@@ -30,14 +30,17 @@ contract (the "congruence checks"):
   9. action-pins     — every `uses:` in .github/workflows/ names a 40-character commit
      digest and carries the `# vX.Y.Z` comment that makes the pin reviewable;
  10. workflow-permissions — no workflow grants a token scope at the workflow level, every
-     job declares its own, and a `write` scope appears only where it is allowlisted.
+     job declares its own, and a `write` scope appears only where it is allowlisted;
+ 11. ledger-coverage  — every ADR that defers a capability with the canonical
+     `Deferred, additive:` marker is cited by the additive-capability ledger (ADR-0057),
+     and every ADR the ledger cites exists.
 
 Each check is independent; all run, then the report lists every failure. The checks are
 designed to PASS on a freshly-generated repository (empty catalogues, no releases yet).
 
-Checks 9 and 10 (ADR-0056) live here rather than in a policy tool of their own because
-`consistency / lint` is already a required status check on master, and a new CI job does not
-become a required context until someone adds it by hand.
+Checks 9 and 10 (ADR-0056) and 11 (ADR-0057) live here rather than in a policy tool of
+their own because `consistency / lint` is already a required status check on master, and a
+new CI job does not become a required context until someone adds it by hand.
 
 Generated configuration is in the CONFIG block below — EADOS fills it from project.yaml.
 """
@@ -555,6 +558,63 @@ def check_workflow_permissions():
                            f"new, add it to _ALLOWED_WRITES with the reason")
 
 
+# ---------------------------------------------------------------------------
+# 11. Ledger coverage — a deferred capability is registered where it can be found
+# ---------------------------------------------------------------------------
+# ADR-0057 turns the "Deferred, additive" lines scattered through the design records into
+# one ledger with a trigger per entry. Prose in a Consequences section is exactly the kind
+# of claim no gate can see, which is how eleven of these came to be discharged without the
+# deferring ADR ever being updated — so the register gets a tripwire in both directions:
+#
+#   * every ADR carrying the canonical marker is cited by the ledger;
+#   * every ADR the ledger cites exists.
+#
+# WHAT THIS CHECK CANNOT SEE, stated rather than discovered (ADR-0043's 12.1 lesson, and
+# the workflow-permissions hole above): it keys on the marker, which 13 of the 26 ADRs in
+# the ledger use. The rest defer in prose no pattern matches without false positives — "a
+# deferred recover()", "Go's `defer` intuition" and "deferring a nil-pointer dereference"
+# all appear in these documents and none of them is a deferral. Retrofitting the marker
+# into accepted records to please a regex was rejected (ADR-0057); §A is complete by
+# census, and this check exists to catch the NEXT deferral, where the marker is free.
+_LEDGER = "docs/adr/0057-additive-capability-ledger.md"
+_DEFERRAL_MARKER_RE = re.compile(r"deferred[,/]\s*additive", re.IGNORECASE)
+_ADR_FILE_RE = re.compile(r"^(\d{4})-.*\.md$")
+
+
+def check_ledger_coverage():
+    name = "ledger-coverage"
+    adr_dir = os.path.join(ROOT, "docs", "adr")
+    if not os.path.isdir(adr_dir) or not exists(_LEDGER):
+        return  # a freshly-generated repo has neither
+
+    ledger = read(*_LEDGER.split("/"))
+    # The ledger cites a source as a markdown link whose text is the bare ADR number.
+    cited = set(re.findall(r"\[(\d{4})\]\(\d{4}-[^)]*\.md\)", ledger))
+
+    numbers = {}
+    for entry in sorted(os.listdir(adr_dir)):
+        m = _ADR_FILE_RE.match(entry)
+        if m:
+            numbers[m.group(1)] = entry
+
+    self_number = _ADR_FILE_RE.match(os.path.basename(_LEDGER)).group(1)
+
+    for number, entry in numbers.items():
+        if number == self_number:
+            continue
+        if _DEFERRAL_MARKER_RE.search(read("docs", "adr", entry)):
+            if number not in cited:
+                fail(name, f"docs/adr/{entry} defers a capability with the "
+                           f"`Deferred, additive:` marker but ADR-{number} is not cited by "
+                           f"{_LEDGER} — add its row to §A or §B in this PR, with the "
+                           f"trigger that would schedule it (ADR-0057)")
+
+    for number in sorted(cited):
+        if number not in numbers:
+            fail(name, f"{_LEDGER} cites ADR-{number}, which does not exist under "
+                       f"docs/adr/ — a ledger row pointing at nothing is worse than no row")
+
+
 CHECKS = [
     check_version_lockstep,
     check_adr_index,
@@ -566,6 +626,7 @@ CHECKS = [
     check_posture,
     check_action_pins,
     check_workflow_permissions,
+    check_ledger_coverage,
 ]
 
 

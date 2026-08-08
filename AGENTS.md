@@ -218,6 +218,14 @@ Documentation is part of the deliverable. Every PR ships its own doc updates.
   Open one when a choice affects the public API/compatibility, when two reasonable options
   exist and the rationale is non-obvious, **when a design pattern is adopted** (§8), or when
   superseding a prior ADR. Template: [`docs/adr/template.md`](docs/adr/template.md).
+- **Additive-capability ledger** — [ADR-0057](docs/adr/0057-additive-capability-ledger.md) §A/§B.
+  **An ADR that defers a capability writes `Deferred, additive: <what>` and adds its ledger row in
+  the same PR**, with the *trigger* — the evidence that would schedule it, never "when it becomes
+  important". `consistency_lint.py`'s `ledger-coverage` check asserts both directions between the
+  marker and the ledger. Discharge is recorded in §C by the PR that ships the capability; an entry
+  that turns out not to be additive is reclassified to [ADR-0030](docs/adr/0030-spec-v2-reconciliation.md) §2.
+  **Never schedule from §A on your own judgement** — a fired trigger is the only thing that moves an
+  entry, and the milestone this ledger exists to inform is chosen from demand, not from the list.
 - **ROADMAP.md** — numbered, checkbox-driven plan. Flip the checkbox in the same PR that
   completes the item. New work goes at the bottom of the relevant section with a fresh
   number. A genuinely new capability is planned first — usually as a new milestone.
