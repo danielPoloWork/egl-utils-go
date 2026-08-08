@@ -33,6 +33,13 @@ Describe the outcomes — both the wins this decision unlocks and the costs it i
 - Testing and tooling impact
 - Documentation that must be added or updated
 - Risks and known limitations
+- **Deferred, additive:** <capability this decision deliberately does not build, and which
+  could arrive later without breaking anything>. Use this exact marker — `consistency_lint.py`
+  keys on it — and add the matching row to [ADR-0057](0057-additive-capability-ledger.md) §A or §B
+  in the same PR, with the trigger that would schedule it. Omit the bullet entirely if the
+  decision defers nothing. If you cannot name the shape that makes the capability additive
+  (a new identifier, a new option, a new signature that breaks none), it is a breaking change
+  and belongs in [ADR-0030](0030-spec-v2-reconciliation.md) §2 instead.
 
 ## References
 

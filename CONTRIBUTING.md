@@ -92,7 +92,8 @@ round trip. They are fast — seconds, not minutes.
 ```bash
 python tools/consistency_lint.py     # cross-artifact congruence (version lockstep, ADR index,
                                      # patterns, spec coverage map, milestones, bug ledger,
-                                     # action pins, workflow permissions)
+                                     # posture, action pins, workflow permissions,
+                                     # additive-capability ledger coverage)
 python tools/import_graph_lint.py    # dependency rings + internal edges (ADR-0035)
 python tools/coverage_gate.py        # >= 85% statements, per package (ADR-0036)
 python tools/spec_api_lint.py        # spec section 5 <-> exported surface (ADR-0043)
@@ -169,6 +170,12 @@ Use [`docs/adr/template.md`](docs/adr/template.md), number sequentially, and add
 same pull request — `consistency_lint.py` checks that the index and the files agree in both
 directions.
 
+**If your ADR defers a capability**, write the deferral as `Deferred, additive: <what>` and add its
+row to the [additive-capability ledger](docs/adr/0057-additive-capability-ledger.md) in the same pull
+request, with the trigger that would schedule it. `consistency_lint.py` checks that too. A deferral
+recorded only in an ADR's Consequences section is invisible: that is how eleven of them came to be
+built without the deferring ADR ever being updated.
+
 An ADR records the decision **and the argument that lost**. An ADR that lists only what was chosen
 is half a record: the next contributor's real question is why the obvious alternative is not there.
 
@@ -191,10 +198,19 @@ justify building it. So a good proposal answers four questions.
 4. **What would it break?** Surface added is surface supported forever.
 
 Open it as a [Discussion](https://github.com/danielPoloWork/egl-utils-go/discussions). Accepted
-proposals land in the **additive-capability ledger** — a table of deferred capabilities, each with
-the trigger that would schedule it, so the milestone after the current one is chosen from demand
-rather than invented. The ledger is roadmap item 14.10 and is not written yet; until it is,
-Discussions is the intake, and it will be seeded from them.
+proposals land in the **[additive-capability ledger](docs/adr/0057-additive-capability-ledger.md)** —
+a table of deferred capabilities, each with the trigger that would schedule it, so the milestone
+after the current one is chosen from demand rather than invented.
+
+**Read the ledger first.** It already holds 49 capabilities the project has considered and deferred,
+each with the argument for deferring it and the evidence that would change the answer. Three things
+you may find there:
+
+- **Your capability is already an entry.** Then the useful contribution is not a proposal but the
+  trigger: say that you need it, what you do instead today, and what that costs. An entry moves when
+  its trigger fires, and most of them fire on exactly that.
+- **It is in §C, already discharged.** Eleven were, and the ADRs that deferred them never said so.
+- **It is in §D**, meaning it turned out not to be additive after all and belongs to a future major.
 
 A proposal that is declined for now is not rejected work. It is an entry with a trigger that has not
 fired.
