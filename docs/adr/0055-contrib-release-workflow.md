@@ -115,6 +115,11 @@ Two secondary consequences of the same choice, both worth having:
   Adding a per-driver-bump Publish step to the module line that releases most often is a machine
   for manufacturing that hole.
 
+> *Amended 2026-08-08: **the hole is filled.** 14.11 backfilled `v0.1.0`'s Release from
+> `docs/releases/v0.1.0.md`, so all five core tags now have one. Nothing here is superseded — the
+> argument was that a skipped Publish step leaves an artifact only a human can restore, and
+> restoring it by hand four weeks later is what that costs.*
+
 What replaces the Release as a record is the workflow run: the final step writes the tag, module
 path, version, directory and commit into `$GITHUB_STEP_SUMMARY`, together with the
 `go list -m <path>@<version>` command that confirms what a consumer resolves.

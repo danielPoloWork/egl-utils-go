@@ -51,6 +51,26 @@ pre-1.0 milestone-driven.
     exists because the SBOM is a new artifact with no other origin story, not because the module
     needed one.
 
+### Backfilling a Release for an old tag
+
+If a tag was pushed and the Publish step skipped, the Release can be written after the fact from its
+`docs/releases/vX.Y.Z.md` — that file is the record and the Release is a copy of it. `v0.1.0` was
+backfilled this way on 2026-08-08 (roadmap 14.11).
+
+**Pass `--latest=false`.** `gh release create` marks a new Release as "Latest" by default, so
+backfilling an *older* tag without that flag moves the Latest badge off the current release and onto
+a version predating every feature package — the one mistake in this procedure that is visible to
+every visitor immediately.
+
+```bash
+gh release create v<X.Y.Z> --draft --verify-tag --latest=false \
+  --title "v<X.Y.Z>" --notes-file docs/releases/v<X.Y.Z>.md
+gh api repos/danielPoloWork/egl-utils-go/releases/latest --jq .tag_name   # must be unchanged
+```
+
+`--draft` because the boundary below is unchanged: the agent drafts, the maintainer publishes. Say in
+the body that it is a backfill and when — a Release dated four weeks after its tag is otherwise
+unexplained — and keep **"Set as the latest release" unchecked** when publishing.
 
 ## Releasing a `contrib/*` submodule
 
