@@ -19,3 +19,4 @@ a `fixed` record names its `fixed-in`) is enforced by the consistency lint's `bu
 | Bug | Title | Severity | Status | Fixed in |
 |-----|-------|----------|--------|----------|
 | [BUG-0001](2026/07/BUG-0001-race-detector-breaks-allocation-and-pool-identity-assertions.md) | The race detector breaks allocation-count and sync.Pool identity assertions, holding master red | high | fixed | v1.1.1 |
+| [BUG-0002](2026/08/BUG-0002-unbuffered-started-channel-deadlocks-two-examples-service-tests.md) | A non-blocking send on an unbuffered channel drops the signal, deadlocking two `examples/service` tests until the 10-minute timeout | medium | fixed | master (the module is never tagged) |

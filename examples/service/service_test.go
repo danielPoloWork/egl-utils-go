@@ -162,11 +162,18 @@ func TestReadinessFailsWhileTheQueueIsFull(t *testing.T) {
 	cfg.Workers, cfg.QueueSize = 1, 1
 	svc, _, h := newTestService(t, cfg)
 
-	// No sleeping and no timing assumption: the first task announces that a
-	// worker has dequeued it, so by the time `started` fires the single worker is
-	// busy and the one-slot queue is empty. The second submission therefore fills
-	// the queue, and the third — the probe's — must find it full.
-	started := make(chan struct{})
+	// No sleeping: the first task announces that a worker has dequeued it, so by
+	// the time `started` fires the single worker is busy and the one-slot queue is
+	// empty. The second submission therefore fills the queue, and the third — the
+	// probe's — must find it full.
+	//
+	// `started` MUST be buffered (BUG-0002). The send is non-blocking so the second
+	// invocation of blocker cannot park on it, and on an unbuffered channel a
+	// non-blocking send with no receiver yet ready takes `default` and drops the
+	// signal — after which this test waits on `<-started` forever. The buffer makes
+	// the first send land whether or not the receiver has arrived, which is the
+	// ordering guarantee the comment above claims.
+	started := make(chan struct{}, 1)
 	release := make(chan struct{})
 	blocker := func(context.Context) {
 		select {
@@ -199,7 +206,10 @@ func TestOrderIsShedWhenTheQueueIsFull(t *testing.T) {
 	cfg.Workers, cfg.QueueSize = 1, 1
 	svc, _, h := newTestService(t, cfg)
 
-	started := make(chan struct{})
+	// Buffered for the reason given in TestReadinessFailsWhileTheQueueIsFull
+	// (BUG-0002): an unbuffered channel loses this signal whenever the worker
+	// reaches the send before the test reaches the receive.
+	started := make(chan struct{}, 1)
 	release := make(chan struct{})
 	blocker := func(context.Context) {
 		select {
