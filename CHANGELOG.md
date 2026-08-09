@@ -12,6 +12,16 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Added
 
+- **An [issue index](ISSUES.md)** — the open backlog as a checkbox list, each line carrying its
+  severity badge, the GitHub issue it mirrors, and the model/effort tier recommended to resolve it,
+  under the same convention `ROADMAP.md` already uses. It opens with 43 entries: the findings of a
+  seven-member release review board run against `master` versus `v2.0.1`, filed as issues
+  `#106`–`#148` into a tracker that had been empty. Ordering is **chronological, not by priority** —
+  the position of a line is its age, so severity travels on the line rather than in the sort. The
+  `ROADMAP.md` model lineup moves from Opus 4.8 to **Opus 5** in the same change, because two
+  documents naming different lineups is exactly the drift an index like this exists to prevent;
+  `(as built)` tags naming Opus 4.8 are historical records and stay as written.
+  *Documentation and process only: no code, surface or behaviour changed.*
 - **A [usage guide](docs/usage/README.md)** — task-oriented recipes answering "how do I…" for every
   package, with the smallest code that answers each. It fills the layer this project was missing:
   between a one-line install and per-identifier reference documentation, there was nothing that
