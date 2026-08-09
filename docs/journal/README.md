@@ -19,6 +19,23 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-09 — a release review board, and the promise the README could not keep](2026/08/2026-08-09-release-review-board.md) —
+  seven specialist reviewers, blind to one another, evaluated `master` as a release candidate against
+  `v2.0.1` under a decision rule frozen **before** any report was read. Verdict: **not approvable**,
+  on one BLOCKER — the README's promise that **no package here imports another** is false
+  (`pkg/config/config.go:47` imports `pkg/validator`, and `import_graph_lint.py` *mandates* that
+  edge, while the ADR cited as the promise's authority is the record of the exception). It matters
+  because `README.md` ships inside the module zip, where Go immutability makes the sentence
+  permanent. **The finding that inverts 14.12's reasoning: pkg.go.dev renders Go doc comments from a
+  published version and does *not* render Markdown** — so the README rewrite already reached
+  consumers when #105 merged, the 438-line usage guide will never reach pkg.go.dev with or without a
+  tag, and a doc-only tag delivers nothing while still billing every downstream a Dependabot PR.
+  Also settled: BUG-0002's "repository-wide sweep" was scoped to `_test.go` only, and
+  `workerpool.New(n, 0, WithNonBlockingSubmit())` is the same primitive reachable from the public
+  API and untested; and `govulncheck`'s "1 vulnerability in modules you require" sits in the same
+  block as "affected by 0" and is the **non-reachable bucket** — read the whole output, never one
+  line. 43 findings filed as issues `#106`–`#148`, indexed by the new
+  [`ISSUES.md`](../../ISSUES.md).
 - [2026-08-08 — the README proved the project was well-run and never sold it](2026/08/2026-08-08-readme-and-usage-guide.md) —
   a product-lens evaluation of the front door, and the rewrite. Measured, not asserted: **0 lines of
   Go on the page**, `go get` absent (the first actionable command was `go build ./...`, which a

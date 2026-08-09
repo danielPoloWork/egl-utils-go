@@ -232,6 +232,7 @@ the plan is public.
 | [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | Contributor Covenant 2.1, and how to report a concern privately. |
 | [`AGENTS.md`](AGENTS.md) | How AI agents work in this repo — the agent contract. |
 | [`ROADMAP.md`](ROADMAP.md) | The numbered plan and what is done. |
+| [`ISSUES.md`](ISSUES.md) | The open issue backlog, newest first, with the tier recommended for each. |
 | [`docs/adr/`](docs/adr/) | Why it is built the way it is (Architecture Decision Records). |
 | [`docs/patterns/`](docs/patterns/) | Design patterns adopted, rejected, or considered. |
 | [`docs/workflow/`](docs/workflow/) | Git, documentation, release, and maintenance conventions. |

@@ -5,8 +5,11 @@ flip its checkbox (`- [ ]` → `- [x]`) **in the same PR**. New work goes at the
 its section with a fresh `<milestone>.<task>` number; never renumber.
 
 - **Versioning start:** pre-1.0 milestone-driven.
+- **Open issues:** see [`ISSUES.md`](ISSUES.md) — the defect and improvement backlog, newest
+  first, with the model/effort tier recommended for each. This file is the forward plan; that
+  one is what is currently wrong.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-08-08 — the README proved the project was well-run and never sold it](docs/journal/2026/08/2026-08-08-readme-and-usage-guide.md).
+  [2026-08-09 — a release review board, and the promise the README could not keep](docs/journal/2026/08/2026-08-09-release-review-board.md).
 
 ### Agent guidance (model × effort)
 
@@ -14,10 +17,12 @@ Each milestone carries an advisory **Agent guidance** line — the milestone def
 each roadmap item carries a per-step tag (`*agent: <model> · <effort>*`) naming the Claude
 model and effort level recommended to implement that step. Tags may sit above or below the
 milestone default; deviating tags carry a short rationale. On completed items (`[x]`) the
-tag records the tier actually used. Model lineup (current as of 2026-07): **Claude Fable 5**
+tag records the tier actually used. Model lineup (current as of 2026-08): **Claude Fable 5**
 (strongest reasoning) for concurrency-critical and one-way API-design work; **Claude
-Opus 4.8** for subtle but well-trodden correctness work; **Claude Sonnet 5** for
-well-specified integration and mechanical work. Claude Haiku 4.5 is deliberately unused:
+Opus 5** for subtle but well-trodden correctness work; **Claude Sonnet 5** for
+well-specified integration and mechanical work. **Opus 5 supersedes the Opus 4.8 this line named
+as of 2026-07**; the `(as built)` tags below that name Opus 4.8 record the tier actually used at
+the time and stay as written. Claude Haiku 4.5 is deliberately unused:
 every item ships under the full quality bar (AGENTS.md §10) and Haiku lacks the `effort`
 control. Effort scale (Claude Code): `low · medium · high · xhigh · max` — `max` where
 correctness outweighs cost (leak/race proofs, one-way design decisions), `xhigh` for the
