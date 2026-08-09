@@ -28,10 +28,12 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   each with a sentence on what it does and a link to its **full documentation on pkg.go.dev**, where
   every exported identifier and all 55 runnable examples live. The front door described the module
   and never listed what was in it, so a reader had to guess at the inventory or browse `pkg/`. It
-  also states the property that makes the list usable: **no package here imports another**, so taking
-  one pulls in no siblings. `consistency_lint.py` gains a twelfth check asserting the section names
-  exactly the packages that exist, in both directions — a hand-written table of 21 rows is precisely
-  what goes stale when the twenty-second arrives.
+  also states the property that makes the list usable: no package here imports another, with exactly
+  one sanctioned exception (`config` → `validator`), so taking one brings at most one sibling — and
+  names `import_graph_lint.py` as what enforces that in both directions, an unsanctioned edge and a
+  dead allowlist entry failing alike. `consistency_lint.py` gains a twelfth check asserting the
+  section names exactly the packages that exist, in both directions — a hand-written table of 21
+  rows is precisely what goes stale when the twenty-second arrives.
 
 ### Changed
 
