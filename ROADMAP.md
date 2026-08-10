@@ -9,7 +9,7 @@ its section with a fresh `<milestone>.<task>` number; never renumber.
   first, with the model/effort tier recommended for each. This file is the forward plan; that
   one is what is currently wrong.
 - **Session journal:** see [`docs/journal/`](docs/journal/). Latest checkpoint:
-  [2026-08-09 — a release review board, and the promise the README could not keep](docs/journal/2026/08/2026-08-09-release-review-board.md).
+  [2026-08-10 — the quickstart is production code, and so is a doc comment](docs/journal/2026/08/2026-08-10-quickstart-listener-failure.md).
 
 ### Agent guidance (model × effort)
 

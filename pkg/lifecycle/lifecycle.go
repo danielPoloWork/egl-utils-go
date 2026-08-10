@@ -10,7 +10,15 @@
 //	lifecycle.Register(func(ctx context.Context) error {
 //		return server.Shutdown(ctx)          // registered last, closed first
 //	})
-//	go func() { _ = server.ListenAndServe() }()
+//	go func() {
+//		// ErrServerClosed is what Shutdown makes ListenAndServe return, so
+//		// it is the clean stop; anything else must not leave the process up
+//		// and silent, so it takes the same shutdown path a signal would.
+//		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+//			slog.Error("listener stopped", slog.Any("error", err))
+//			lifecycle.Trigger()
+//		}
+//	}()
 //	lifecycle.WaitForSignals(10*time.Second, os.Interrupt, syscall.SIGTERM)
 //
 // Shutdown runs every hook exactly once — a failing hook does not stop the

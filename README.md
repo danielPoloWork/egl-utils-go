@@ -44,6 +44,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -88,12 +89,34 @@ func main() {
 		),
 	))
 
-	srv := &http.Server{Addr: ":8080", Handler: mux}
-	go func() { _ = srv.ListenAndServe() }()
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: mux,
+		// net/http's zero value is "no timeout" for all four, so a public
+		// listener has to state them. ReadHeaderTimeout is the one that closes
+		// Slowloris, which is why gosec's G112 fires without it.
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 
 	// Hooks run in reverse registration order, bounded by the deadline you choose.
 	lifecycle.Register(pool.Close)
 	lifecycle.Register(srv.Shutdown)
+
+	go func() {
+		// ErrServerClosed is what Shutdown makes ListenAndServe return, so it is
+		// the clean stop, not a failure. Anything else — a port already in use,
+		// most often — must not leave the process up, healthy-looking and
+		// serving nothing: Trigger starts the one shutdown path this program
+		// has, exactly as a signal would.
+		if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			log.Error("listener stopped", slog.Any("error", err))
+			lifecycle.Trigger()
+		}
+	}()
+
 	lifecycle.WaitForSignals(15*time.Second, os.Interrupt, syscall.SIGTERM)
 }
 ```
