@@ -33,11 +33,26 @@ jobs:
       contents: read
     strategy:
       fail-fast: false
+      # The full cross product of both toolchains and all three platforms, which
+      # is what AGENTS.md §10 requires ("Linux / Windows / macOS on Go 1.25 &
+      # 1.26 — every CI cell green") and what README.md, CONTRIBUTING.md and
+      # docs/development/local-build.md all tell a consumer is verified.
+      #
+      # The two 1.25 non-Linux cells are the ones this matrix used to omit, and
+      # they are the least skippable of the six: 1.25 is the go.mod language
+      # floor, so it is the version a conservative consumer is most likely to be
+      # on, and the platform half is where this project has actually been bitten
+      # — ADR-0050 records a change that passed locally, on Linux and on macOS
+      # and failed only the windows-2022 cell. A promise of support is a
+      # commitment, and the cell most likely to break was the one with no
+      # evidence behind it.
       matrix:
         include:
           - { os: ubuntu-24.04, toolchain: go-1.25, preset: test }
           - { os: ubuntu-24.04, toolchain: go-1.26, preset: test }
+          - { os: windows-2022, toolchain: go-1.25, preset: test }
           - { os: windows-2022, toolchain: go-1.26, preset: test }
+          - { os: macos-14, toolchain: go-1.25, preset: test }
           - { os: macos-14, toolchain: go-1.26, preset: test }
     steps:
       - name: Check out the source tree

@@ -59,6 +59,15 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- **The CI build matrix now runs all six cells it was documented as running.** It ran four:
+  `windows-2022` and `macos-14` were tested on Go 1.26 only, so **the `go.mod` language floor — Go
+  1.25, the version a conservative consumer is most likely to be on — was never built or tested off
+  Linux.** `AGENTS.md` §10 requires "Linux / Windows / macOS on Go 1.25 & 1.26 — every CI cell
+  green", and `README.md`, `CONTRIBUTING.md` and `docs/development/local-build.md` all told a
+  consumer that is what runs; the workflow was the artefact out of agreement with the contract, so
+  the workflow is what changed. Nothing in the documented promise moved. The platform half of that
+  gap is not hypothetical: [ADR-0050](docs/adr/0050-metrics-without-the-sdk.md) records a change
+  that passed locally, on Linux and on macOS, and failed only the `windows-2022` cell.
 - **Signed commits are now required on `master`.** Every commit on the branch already satisfied it —
   the repository is squash-only, so GitHub creates and signs the squash commit itself — which is why
   [ADR-0056](docs/adr/0056-build-time-supply-chain.md) §(e) recorded it as free. Enabling it closes

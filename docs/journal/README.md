@@ -39,6 +39,14 @@ _(newest first)_
   retry recipe carried `pkg/retry/example_test.go`'s clock-free test policy without the comment
   that made it safe to show, demonstrating the retry storm the very next paragraph warns against.
   Now states a real `BaseDelay`/`Jitter`, the shape every other recipe in the guide already uses.
+  Fourth, and the one that inverted its own remedy:
+  [#110](https://github.com/danielPoloWork/egl-utils-go/issues/110) proposed narrowing the README's
+  "Go 1.25 and 1.26 across Linux, Windows and macOS" to match a four-cell CI matrix — but
+  **`AGENTS.md` §10 does not describe that matrix, it requires it**, and three documents merely
+  restate the contract. CI was under-implementing the quality bar, not the docs overstating CI, so
+  `ci.yml` gained the two missing cells: the `go.mod` floor on Windows and macOS, which is exactly
+  where [ADR-0050](../adr/0050-metrics-without-the-sdk.md) records a change that passed everywhere
+  except `windows-2022`.
 - [2026-08-09 — a release review board, and the promise the README could not keep](2026/08/2026-08-09-release-review-board.md) —
   seven specialist reviewers, blind to one another, evaluated `master` as a release candidate against
   `v2.0.1` under a decision rule frozen **before** any report was read. Verdict: **not approvable**,
