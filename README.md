@@ -14,8 +14,9 @@ bounded worker pools, circuit breakers, rate limiting, HTTP middleware, caching,
 logging, health and metrics endpoints — as **21 independent packages in one governed module**.
 
 Assembling these yourself normally means a dependency per concern, each with its own release
-cadence, licence and supply chain. This module is **three runtime dependencies in total**, and
-**no package here imports another**, so taking one costs you nothing you did not ask for.
+cadence, licence and supply chain. This module is **three runtime dependencies in total**, and its
+packages do not import one another — with **exactly one sanctioned exception**, `config` →
+`validator` — so taking one brings at most one sibling, and usually none.
 
 Every package is documented on [pkg.go.dev](https://pkg.go.dev/github.com/danielPoloWork/egl-utils-go/v2)
 with runnable examples, holds a ≥ 85% per-package test coverage floor, and runs under the race
@@ -103,9 +104,13 @@ func main() {
 
 ## Packages
 
-**21 packages, three runtime dependencies, one import path each.** Take only what you need — nothing
-here imports anything else here, so a single package pulls in no siblings
-([ADR-0035](docs/adr/0035-import-graph-enforcement.md)).
+**21 packages, three runtime dependencies, one import path each.** Take only what you need: no
+package here imports another, with **exactly one sanctioned exception** — `config` imports
+`validator`, because configuration with struct validation is what `config` is for
+([ADR-0033](docs/adr/0033-config-struct-validation.md)). The rule is enforced in both directions by
+[`tools/import_graph_lint.py`](tools/import_graph_lint.py): an unsanctioned edge fails the build,
+and so does a sanctioned edge that has stopped existing — so the allowlist cannot outlive the
+composition that justified it ([ADR-0035](docs/adr/0035-import-graph-enforcement.md)).
 
 Every package name below links to its **full documentation on pkg.go.dev** — every exported
 identifier with its contract, plus **55 runnable `Example` functions** whose output is verified by
