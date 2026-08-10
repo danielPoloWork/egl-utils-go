@@ -35,6 +35,10 @@ _(newest first)_
   service whose point is load shedding — where the finding was right and its one-line remedy was
   loose enough that following it literally would have contradicted the module's own design. `/readyz`
   now exercises the real admission path; `/healthz` stays deliberately checkless, and now says so.
+  Third: [#109](https://github.com/danielPoloWork/egl-utils-go/issues/109) — the usage guide's
+  retry recipe carried `pkg/retry/example_test.go`'s clock-free test policy without the comment
+  that made it safe to show, demonstrating the retry storm the very next paragraph warns against.
+  Now states a real `BaseDelay`/`Jitter`, the shape every other recipe in the guide already uses.
 - [2026-08-09 — a release review board, and the promise the README could not keep](2026/08/2026-08-09-release-review-board.md) —
   seven specialist reviewers, blind to one another, evaluated `master` as a release candidate against
   `v2.0.1` under a decision rule frozen **before** any report was read. Verdict: **not approvable**,

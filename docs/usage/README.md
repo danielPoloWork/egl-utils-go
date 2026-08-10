@@ -116,7 +116,12 @@ for e := range events { /* ... */ }
 it succeeds, its attempt budget is spent, or its context ends — with exponential backoff and jitter.
 
 ```go
-policy := retry.Policy{MaxAttempts: 3}
+policy := retry.Policy{
+    MaxAttempts: 5,
+    BaseDelay:   100 * time.Millisecond,
+    MaxDelay:    2 * time.Second,
+    Jitter:      0.2,
+}
 
 err := retry.Backoff(ctx, policy, func(context.Context) error {
     return callUpstream(ctx)
