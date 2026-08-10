@@ -28,12 +28,17 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   showed the packages doing a job. Every snippet is derived from code CI compiles and runs — the
   package examples and `examples/service` — rather than written from memory.
 - **A rewritten README front page.** It now opens the way a library should: what the module is for,
-  `go get`, and a complete runnable service in ~40 lines using `workerpool`, `ratelimit`,
-  `middleware`, `health` and `lifecycle` together. Adds installation, documentation, compatibility
-  and stability, and contributing/support sections; standard Go badges (Go Reference, CI, Go Report
-  Card, Go version, licence); and moves the delivery milestones and the project's internal document
-  index into a collapsed **Project governance** section, so the visible page addresses someone
-  evaluating the library rather than someone auditing the process.
+  `go get`, and a complete runnable service in ~55 lines using `workerpool`, `ratelimit`,
+  `middleware`, `health` and `lifecycle` together — and that service's `http.Server` is written as
+  production code rather than as illustration: all four timeouts stated (`ReadHeaderTimeout` is what
+  closes Slowloris, and gosec's G112 fires without it), and a failed listener routed into the
+  shutdown path through `lifecycle.Trigger` instead of having its error discarded, so a bind failure
+  stops the process rather than leaving it up, healthy-looking and serving nothing. Adds
+  installation, documentation, compatibility and stability, and contributing/support sections;
+  standard Go badges (Go Reference, CI, Go Report Card, Go version, licence); and moves the
+  delivery milestones and the project's internal document index into a collapsed **Project
+  governance** section, so the visible page addresses someone evaluating the library rather than
+  someone auditing the process.
 - **A `Packages` section in the README** — all 21 feature packages, grouped by what they are for,
   each with a sentence on what it does and a link to its **full documentation on pkg.go.dev**, where
   every exported identifier and all 55 runnable examples live. The front door described the module
@@ -75,6 +80,15 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Fixed
 
+- **`pkg/lifecycle`'s package documentation taught a discarded listener error.** Its opening example
+  ran the server as `go func() { _ = server.ListenAndServe() }()`, so a reader who copied it got a
+  process that survives a bind failure — up, passing liveness, serving nothing — which is precisely
+  the case the same doc's `Trigger` paragraph exists to answer. The example now checks the error
+  against `http.ErrServerClosed` and calls `lifecycle.Trigger` on anything else, giving `Trigger`
+  the use it was documented for. Documentation only: no exported symbol, signature or behaviour
+  changed. This one is worth noting where the README quickstart's identical defect is not, because
+  pkg.go.dev renders Go doc comments and not Markdown — this text has been in front of consumers
+  since `v1.0.0`, in every published version of the module.
 - **Two `examples/service` tests could deadlock until the 10-minute test timeout**
   ([BUG-0002](docs/bugs/2026/08/BUG-0002-unbuffered-started-channel-deadlocks-two-examples-service-tests.md)).
   `TestReadinessFailsWhileTheQueueIsFull` and `TestOrderIsShedWhenTheQueueIsFull` announced "a worker

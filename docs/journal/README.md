@@ -19,6 +19,18 @@ _(newest first)_
 
 #### 08 — August
 
+- [2026-08-10 — the quickstart is production code, and so is a doc comment](2026/08/2026-08-10-quickstart-listener-failure.md) —
+  the first fix out of the review board's backlog ([#107](https://github.com/danielPoloWork/egl-utils-go/issues/107)),
+  and the finding that came with it. The README quickstart discarded the `ListenAndServe` error and
+  set no timeouts — hit independently by three of the seven reviewers, from availability, API-contract
+  and Slowloris arguments that needed nothing from each other. **The same defect was sitting unfiled
+  in `pkg/lifecycle`'s package doc comment**, verified against the tags as present since `v1.0.0`,
+  which makes it the larger of the two: pkg.go.dev renders doc comments and not Markdown, so that
+  line is what every `godoc` reader and IDE hover has been shown in five published versions. Both now
+  check `http.ErrServerClosed` and route anything else through `lifecycle.Trigger` — which is the use
+  the `Trigger` paragraph five lines below already claimed for it. The rule the board wrote down and
+  this session kept: **a quickstart is a production template people paste, and earns production
+  review.**
 - [2026-08-09 — a release review board, and the promise the README could not keep](2026/08/2026-08-09-release-review-board.md) —
   seven specialist reviewers, blind to one another, evaluated `master` as a release candidate against
   `v2.0.1` under a decision rule frozen **before** any report was read. Verdict: **not approvable**,
