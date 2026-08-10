@@ -46,7 +46,13 @@ _(newest first)_
   restate the contract. CI was under-implementing the quality bar, not the docs overstating CI, so
   `ci.yml` gained the two missing cells: the `go.mod` floor on Windows and macOS, which is exactly
   where [ADR-0050](../adr/0050-metrics-without-the-sdk.md) records a change that passed everywhere
-  except `windows-2022`.
+  except `windows-2022`. Fifth, and the sharpest because nothing was done carelessly:
+  [#111](https://github.com/danielPoloWork/egl-utils-go/issues/111) — the `v0.1.0` correction was
+  applied to six in-repo records, each beside the original claim as the rule requires, and was still
+  live, because **the published `v2.0.1` Release body is a surface no `grep` over the checkout can
+  see and no commit can reach.** `docs/workflow/release.md` had no correction procedure at all; it
+  now names every surface, marks the Release body as the one with `gh release edit` as its only
+  remedy, and puts that edit on the maintainer's side of the boundary.
 - [2026-08-09 — a release review board, and the promise the README could not keep](2026/08/2026-08-09-release-review-board.md) —
   seven specialist reviewers, blind to one another, evaluated `master` as a release candidate against
   `v2.0.1` under a decision rule frozen **before** any report was read. Verdict: **not approvable**,
