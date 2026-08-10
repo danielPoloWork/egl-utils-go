@@ -130,11 +130,49 @@ shape every other recipe in this guide already takes — `workerpool.New(4, 64, 
 test-clock values annotated with what production would use. A recipe answers "how do I", and the
 answer is now copy-paste correct instead of copy-paste-then-remember-to-change-four-fields.
 
+## Fourth pass: the remedy that pointed the wrong way, on #110
+
+[#110](https://github.com/danielPoloWork/egl-utils-go/issues/110) reported that
+`README.md:242` claims "CI builds and tests on Go 1.25 and 1.26 across Linux, Windows and macOS"
+while `.github/workflows/ci.yml` ran four cells, not six — `windows-2022` and `macos-14` on Go 1.26
+only. Its remedy: "**Either widen the matrix to match the sentence, or narrow the sentence to match
+the matrix. The second is one line.**"
+
+The second is not one line, and it is not a documentation fix. The claim lives in four places, and
+one of them is not a description:
+
+- `AGENTS.md:292` — the §10 quality-bar table: *"Build matrix | Linux / Windows / macOS on Go 1.25 &
+  1.26 (module floor 1.25) — **every CI cell green**"*. That is the contract stating a requirement.
+- `README.md:242`, `CONTRIBUTING.md:107`, `docs/development/local-build.md:4` — three documents
+  faithfully restating it.
+
+So the documents were not overstating CI. **CI was under-implementing the contract**, and every
+document that repeated the contract was correct. Narrowing the sentence would have meant amending
+the enterprise quality bar itself — an ADR-grade governance change dressed as a typo fix, and one
+that would have quietly lowered a support commitment to match an oversight. No ADR narrows the
+matrix; the omission is not recorded anywhere as a decision.
+
+`ci.yml` now runs the full six-cell cross product. Nothing in the documented promise moved.
+
+**The omitted cells were the two least skippable.** Go 1.25 is the `go.mod` language floor, so it is
+the version a conservative consumer is most likely to be on; the untested half was that floor on
+every platform except Linux. And the platform axis is not theoretical here —
+[ADR-0050](../../../adr/0050-metrics-without-the-sdk.md) records a change that passed locally, on
+Linux and on macOS, and **failed only the `windows-2022` cell**. This repository has already been
+saved once by a cell it nearly did not have.
+
+**Follow-through owed, deliberately not done in this PR.** The two new cells produce two new status
+contexts, `build / windows-2022 / go-1.25 / test` and `build / macos-14 / go-1.25 / test`, which are
+not in branch protection — so for now they run and block nothing, the shape BUG-0002 taught this
+project to distrust. The sequence from #103 applies unchanged: **green first, required second.** The
+contexts get added once they have passed on `master`, taking the count from 14 to 16. They are new
+names, not renames, so no existing required context is disturbed.
+
 ## State
 
 Between milestones; no milestone on any of these PRs, and none to set. 43 board findings,
-**4 closed** (#106, #107, #108, #109). The backlog is ordered chronologically and severity travels
-on the line, so the next pick is a reading of `ISSUES.md`'s badges, not of its top.
+**5 closed** (#106, #107, #108, #109, #110). The backlog is ordered chronologically and severity
+travels on the line, so the next pick is a reading of `ISSUES.md`'s badges, not of its top.
 
 **Standing order added mid-session:** the maintainer instructed that the agent opens pull requests
 itself from now on, rather than pushing the branch and reporting the `gh pr create` command.
