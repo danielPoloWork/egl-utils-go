@@ -68,8 +68,53 @@ away. `Trigger` now has the use it was documented for.
   corrected in place, exactly as #150 handled the import-graph sentence. The `pkg/lifecycle` fix
   does get a `Fixed` entry, because that one shipped in five published versions.
 
+## Second pass, same forty lines: #108
+
+[#108](https://github.com/danielPoloWork/egl-utils-go/issues/108) landed on the same block right
+after #107 merged, and it is worth recording that the issue's *remedy* and its *diagnosis* pointed
+in different directions.
+
+The finding: the quickstart mounted `health.Handler()` with no checks and exposed no readiness
+endpoint, "in a service whose stated point is load shedding". The remedy as written: "**register at
+least one real check**, and add the readiness endpoint the usage guide already documents."
+
+Read as "put checks on `/healthz`", the first half of that remedy would have been wrong, and wrong
+against this module's own documented design in three places:
+`examples/service/service.go:127-132` explains that dependency probes on liveness let one blip
+restart every instance at once; `docs/usage/README.md:251-253` states the same distinction; and
+`pkg/health/health.go:44-45` documents a checkless handler as "a bare liveness endpoint", which is a
+sanctioned configuration rather than an omission.
+
+So the defect is **not** that `/healthz` has no checks. It is that `/readyz` did not exist, and that
+nothing on the page said the checkless liveness endpoint was a decision — a reader saw "health
+endpoint" and had no way to tell deliberate from unfinished. Both are now fixed:
+`/readyz` submits a no-op task through the same `pool.Submit` the request handler uses, so a
+saturated instance is taken out of the load balancer instead of being kept in it by a probe that
+verifies nothing, and the comment above `/healthz` says why it stays bare.
+
+**A board finding is evidence, not a work order.** Three disciplines converging on #107 made that
+finding stronger than any one report; here a single reviewer's remedy line, followed literally,
+would have contradicted the design the same reviewer was measuring against. The finding was right
+and the prescription was loose — which is the ordinary case, and the reason the fix gets designed
+from the code rather than transcribed from the issue.
+
+## Something to watch
+
+The quickstart is now 97 lines in the fence, 62 of them code, having grown by half across two
+`MAJOR` fixes — and every line of that growth was earned. It is nonetheless converging on
+`examples/service`, which already exists, is compiled by CI, and is linked from three lines below
+the block. There is a point at which the honest front page is a short hello-world plus "the
+production shape is one link away", and the next `MAJOR` on these lines is the moment to decide
+whether that point has arrived. Recorded, not acted on: it is a design question, not a defect.
+
 ## State
 
-Between milestones; no milestone on this PR, and none to set. 43 board findings, 2 closed. The
-backlog is ordered chronologically and severity travels on the line, so the next pick is a reading
-of `ISSUES.md`'s badges, not of its top.
+Between milestones; no milestone on either PR, and none to set. 43 board findings, **3 closed**
+(#106, #107, #108). The backlog is ordered chronologically and severity travels on the line, so the
+next pick is a reading of `ISSUES.md`'s badges, not of its top.
+
+**Standing order added mid-session:** the maintainer instructed that the agent opens pull requests
+itself from now on, rather than pushing the branch and reporting the `gh pr create` command.
+Everything else in the §6.1 boundary is unchanged — merging, `master` and release publication stay
+human. `AGENTS.md` §6.1/§6.4 and `CLAUDE.md`'s TL;DR still say the opposite in writing and need a
+governance PR to catch up; flagged, not yet filed.

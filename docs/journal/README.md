@@ -30,7 +30,11 @@ _(newest first)_
   check `http.ErrServerClosed` and route anything else through `lifecycle.Trigger` — which is the use
   the `Trigger` paragraph five lines below already claimed for it. The rule the board wrote down and
   this session kept: **a quickstart is a production template people paste, and earns production
-  review.**
+  review.** Same session, same forty lines:
+  [#108](https://github.com/danielPoloWork/egl-utils-go/issues/108) — no readiness endpoint in a
+  service whose point is load shedding — where the finding was right and its one-line remedy was
+  loose enough that following it literally would have contradicted the module's own design. `/readyz`
+  now exercises the real admission path; `/healthz` stays deliberately checkless, and now says so.
 - [2026-08-09 — a release review board, and the promise the README could not keep](2026/08/2026-08-09-release-review-board.md) —
   seven specialist reviewers, blind to one another, evaluated `master` as a release candidate against
   `v2.0.1` under a decision rule frozen **before** any report was read. Verdict: **not approvable**,

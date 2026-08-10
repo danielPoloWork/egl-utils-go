@@ -28,12 +28,15 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   showed the packages doing a job. Every snippet is derived from code CI compiles and runs — the
   package examples and `examples/service` — rather than written from memory.
 - **A rewritten README front page.** It now opens the way a library should: what the module is for,
-  `go get`, and a complete runnable service in ~55 lines using `workerpool`, `ratelimit`,
-  `middleware`, `health` and `lifecycle` together — and that service's `http.Server` is written as
-  production code rather than as illustration: all four timeouts stated (`ReadHeaderTimeout` is what
-  closes Slowloris, and gosec's G112 fires without it), and a failed listener routed into the
+  `go get`, and a complete runnable service in ~60 lines using `workerpool`, `ratelimit`,
+  `middleware`, `health` and `lifecycle` together — and that service is written as production code
+  rather than as illustration. All four `http.Server` timeouts are stated (`ReadHeaderTimeout` is
+  what closes Slowloris, and gosec's G112 fires without it); a failed listener is routed into the
   shutdown path through `lifecycle.Trigger` instead of having its error discarded, so a bind failure
-  stops the process rather than leaving it up, healthy-looking and serving nothing. Adds
+  stops the process rather than leaving it up, healthy-looking and serving nothing; and liveness and
+  readiness are **separate** endpoints, `/readyz` exercising the real admission path through
+  `pool.Submit` so a saturated instance is taken out of the load balancer rather than kept in it by
+  a probe that verifies nothing. Adds
   installation, documentation, compatibility and stability, and contributing/support sections;
   standard Go badges (Go Reference, CI, Go Report Card, Go version, licence); and moves the
   delivery milestones and the project's internal document index into a collapsed **Project
