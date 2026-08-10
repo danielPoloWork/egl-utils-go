@@ -37,7 +37,7 @@ import "github.com/danielPoloWork/egl-utils-go/v2/pkg/workerpool"
 ## Quickstart
 
 A complete HTTP service with bounded background work, rate limiting, request logging, panic
-recovery, a health endpoint and an ordered shutdown — in one file:
+recovery, liveness and readiness endpoints, and an ordered shutdown — in one file:
 
 ```go
 package main
@@ -80,7 +80,25 @@ func main() {
 	})
 
 	mux := http.NewServeMux()
+
+	// Liveness and readiness answer different questions, so they are different
+	// endpoints. /healthz carries no checks on purpose — it answers "this
+	// process is running"; giving it dependency probes lets one dependency's
+	// blip restart every instance at once.
 	mux.Handle("/healthz", health.Handler())
+
+	// /readyz is where the dependencies belong, because its failure removes one
+	// instance from the load balancer instead of killing it. It exercises the
+	// real admission path rather than returning nil: a full queue answers 503
+	// here for the same reason POST /orders does, so the balancer stops sending
+	// work to an instance that would only shed it.
+	mux.Handle("/readyz", health.Handler(health.Check{
+		Name: "worker-pool",
+		Probe: func(ctx context.Context) error {
+			return pool.Submit(ctx, func(context.Context) {})
+		},
+	}))
+
 	mux.Handle("/", middleware.Recoverer( // a panic becomes a clean 500
 		middleware.RequestID( // correlation id before anything logs
 			middleware.Logger(log)( // one structured line per request
