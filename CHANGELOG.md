@@ -59,6 +59,15 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
 
 ### Changed
 
+- **The release process now has a written procedure for correcting a published Release**
+  ([`docs/workflow/release.md`](docs/workflow/release.md)). The rule the project had been applying —
+  *correct a released record beside the original claim, never in place of it* — existed only as
+  practice and in ADR-0055's narrative; it is now stated, with the list of surfaces a correction has
+  to reach. That list is the point: the `v0.1.0` correction was applied to six in-repo files and was
+  therefore complete in every checkout and absent from the published `v2.0.1` Release body, which is
+  the one place a reader actually meets the claim. A Release body is generated from nothing in the
+  repository, so no commit, tag or workflow run can reach it — `gh release edit` is the only remedy,
+  and it is a maintainer action, now in the boundary table beside publishing.
 - **The CI build matrix now runs all six cells it was documented as running.** It ran four:
   `windows-2022` and `macos-14` were tested on Go 1.26 only, so **the `go.mod` language floor — Go
   1.25, the version a conservative consumer is most likely to be on — was never built or tested off

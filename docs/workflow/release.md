@@ -79,6 +79,47 @@ gh api repos/danielPoloWork/egl-utils-go/releases/latest --jq .tag_name   # must
 the body that it is a backfill and when — a Release dated four weeks after its tag is otherwise
 unexplained — and keep **"Set as the latest release" unchecked** when publishing.
 
+### Correcting a published Release
+
+A published Release is immutable in every way that matters — consumers have read it, aggregators have
+copied it, and the version it announces can never be recalled from the module proxy. So when a
+released record turns out to be wrong, the rule is:
+
+> **Correct it *beside* the original claim, never in place of it.** The published text is the
+> permanent record of what the project *said*; deleting it replaces a wrong record with no record,
+> and leaves a reader who saw the original with no way to learn it was withdrawn.
+
+The correction is a dated block naming what did not hold, what is true instead, and what is *not*
+affected. Nothing else is edited — an auto-generated changelog list of merged PR titles in particular
+stays exactly as written, because it is a record of what was merged, not a claim being made now.
+
+**Correct every surface, and the surfaces are not all in the working tree.** This is the step that
+was missed once: a correction applied to six in-repo files was complete in every checkout and absent
+from the one place a reader actually encounters the claim.
+
+| Surface | How it is corrected |
+|---|---|
+| `CHANGELOG.md` `[Unreleased]`, if the claim is still there | edit in place — never published |
+| `docs/changelog/v<MAJOR>/v<X.Y.Z>.md` | dated block nested under the original entry |
+| `docs/releases/v<X.Y.Z>.md` | dated block after the claim |
+| Any ADR, `ROADMAP.md` row, or workflow doc asserting it | dated amendment beside the original line |
+| **The published GitHub Release body** | **`gh release edit` — there is no other remedy** |
+
+That last row is the one with no fallback. A Release body is not generated from anything in the
+repository, so no commit, tag, workflow run or later release can change it; it stays wrong until
+somebody edits it by hand. Put the correction **at the top of the body**, above the generated list,
+rather than after it: the claim is usually one line inside a list a reader scans and abandons, and a
+note below it is a note they never reach.
+
+```bash
+gh release view v<X.Y.Z> --json body --jq .body > /tmp/body.md   # keep the original
+# prepend the dated correction block, then:
+gh release edit v<X.Y.Z> --notes-file /tmp/body.md
+```
+
+Editing a published Release is a **maintainer action**, on the same line as publishing one — see the
+[Boundary](#boundary) table. The agent drafts the corrected body and shows it; the human applies it.
+
 ## Releasing a `contrib/*` submodule
 
 Each `contrib/*` directory is a module of its own with its own tags ([ADR-0040](../adr/0040-contrib-submodules.md)),
@@ -134,6 +175,8 @@ driver major.
 | Open / merge the release PR | **Human** |
 | Create & push the annotated tag, then the **draft** release (CI drafts it on tag-push) | Agent |
 | Publish the GitHub Release (click **Publish**) | **Human** |
+| Draft the corrected body when a published Release needs a correction | Agent |
+| **Apply it — `gh release edit` on a published Release** | **Human** |
 | Build & attach artifacts — the SBOM, plus its provenance attestation | CI (`release.yml`) |
 | Choose a `contrib/*` submodule version | **Human** |
 | Create & push a `contrib/<name>/vX.Y.Z` tag (no Release is drafted) | Agent |

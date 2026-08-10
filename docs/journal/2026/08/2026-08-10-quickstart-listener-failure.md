@@ -168,11 +168,49 @@ project to distrust. The sequence from #103 applies unchanged: **green first, re
 contexts get added once they have passed on `master`, taking the count from 14 to 16. They are new
 names, not renames, so no existing required context is disturbed.
 
+## Fifth pass: the correction that was complete in every checkout, on #111
+
+[#111](https://github.com/danielPoloWork/egl-utils-go/issues/111) is the sharpest of the five,
+because nothing about it was done carelessly. On 2026-08-08 the project discovered that `v2.0.1` had
+shipped announcing a `v0.1.0` Release that was never published, and corrected it — in
+`docs/changelog/v2/v2.0.1.md`, `docs/releases/v2.0.1.md`, `docs/adr/0055`, `ROADMAP.md`,
+`docs/workflow/release.md` and `CHANGELOG.md`. Six records, each with a dated block placed beside the
+original claim rather than over it, exactly as the rule requires. Verified again today: the
+underlying facts are true in every particular — 5 Releases, none for `v0.1.0`, no draft, `v2.0.1`
+still `latest`.
+
+And the claim was still live, because **the surfaces are not all in the working tree.** The published
+`v2.0.1` Release body still lists `docs: set repository metadata, decline a doc site, and backfill
+the v0.1.0 Release (14.11)`. A `grep` over the repository finds nothing wrong; every file is right.
+The one artefact a consumer actually opens was never in the search space.
+
+**A Release body is generated from nothing.** Not from a tag, not from a file, not from a workflow
+run — so unlike every other record here, there is no commit that can fix it and no future release
+that supersedes it. `gh release edit` is the only remedy in existence, and until somebody types it
+the correction is complete and ineffective.
+
+The durable fix is not the edit. `docs/workflow/release.md` had **no correction procedure at all** —
+`grep -n 'correct' docs/workflow/release.md` returned nothing. The rule everyone was following lived
+in practice and in ADR-0055's prose, so "which surfaces?" had never been answered in writing, and the
+answer omits the one outside the checkout by default. The procedure is now written, with the surface
+table, the reason the Release row has no fallback, and the instruction to put the correction **above**
+the generated list rather than below it — the claim sits in a fourteen-item list a reader scans and
+abandons, and a note beneath it is a note nobody reaches.
+
+**The edit itself is not the agent's to make.** Editing a published Release is on the same line as
+publishing one; the boundary table now says so explicitly. The corrected body is drafted and
+verified — the original is preserved character-for-character with the dated block prefixed, checked
+programmatically rather than by eye — and it waits for the maintainer.
+
 ## State
 
 Between milestones; no milestone on any of these PRs, and none to set. 43 board findings,
-**5 closed** (#106, #107, #108, #109, #110). The backlog is ordered chronologically and severity
-travels on the line, so the next pick is a reading of `ISSUES.md`'s badges, not of its top.
+**6 closed** (#106–#111). The backlog is ordered chronologically and severity travels on the line,
+so the next pick is a reading of `ISSUES.md`'s badges, not of its top.
+
+**Owed to the maintainer, and blocked on them by design:** the `gh release edit v2.0.1` above, and
+the two build contexts from #110 waiting to be added to branch protection now that they are green on
+`master` (14 → 16).
 
 **Standing order added mid-session:** the maintainer instructed that the agent opens pull requests
 itself from now on, rather than pushing the branch and reporting the `gh pr create` command.
