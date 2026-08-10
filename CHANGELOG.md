@@ -26,7 +26,11 @@ PR. A release PR moves the `[Unreleased]` entries into a new per-version file un
   package, with the smallest code that answers each. It fills the layer this project was missing:
   between a one-line install and per-identifier reference documentation, there was nothing that
   showed the packages doing a job. Every snippet is derived from code CI compiles and runs — the
-  package examples and `examples/service` — rather than written from memory.
+  package examples and `examples/service` — rather than written from memory, **with one caveat now
+  corrected**: the retry recipe's policy carried `pkg/retry/example_test.go`'s clock-free test
+  values without the comment that made them safe to show, so it demonstrated the retry storm the
+  prose two lines below warns against. It now states a real `BaseDelay`/`MaxDelay`/`Jitter`,
+  matching the prose it sits beside.
 - **A rewritten README front page.** It now opens the way a library should: what the module is for,
   `go get`, and a complete runnable service in ~60 lines using `workerpool`, `ratelimit`,
   `middleware`, `health` and `lifecycle` together — and that service is written as production code

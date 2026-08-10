@@ -107,11 +107,34 @@ the block. There is a point at which the honest front page is a short hello-worl
 production shape is one link away", and the next `MAJOR` on these lines is the moment to decide
 whether that point has arrived. Recorded, not acted on: it is a design question, not a defect.
 
+## Third pass: the guide's own claim was the tell, on #109
+
+[#109](https://github.com/danielPoloWork/egl-utils-go/issues/109) was found by two reviewers
+independently: the retry recipe (`docs/usage/README.md:118-124`) showed
+`retry.Policy{MaxAttempts: 3}` — no `BaseDelay`, no `Jitter` — directly beneath prose promising
+"exponential backoff and jitter" and, six lines further down, a paragraph titled **"Jitter is not
+decoration"** warning that its absence turns a failure into a synchronised retry storm. The snippet
+was the storm the paragraph beside it warns against.
+
+The root cause was traceable rather than sloppy: `pkg/retry/example_test.go:14-21` uses the same
+zero-delay policy deliberately, so `ExampleBackoff` stays clock-free and instant, and the comment
+above it says so and gives the production shape as a comment. The usage guide recipe carried the
+*code* faithfully from that test and dropped the *comment* that made it safe to show — the guide's
+own `[Unreleased]` claim is "every snippet is derived from code CI compiles and runs", which was
+true of the code and silent about the one line of context that changed its meaning.
+
+**The fix states the production policy directly** (`MaxAttempts: 5, BaseDelay: 100ms, MaxDelay: 2s,
+Jitter: 0.2`) rather than reproducing the test's zero-delay values with a comment, which is the
+shape every other recipe in this guide already takes — `workerpool.New(4, 64, ...)`,
+`ratelimit.NewLimiter(20, 40)`, `cache.New[...](5 * time.Minute)` are all real numbers, not
+test-clock values annotated with what production would use. A recipe answers "how do I", and the
+answer is now copy-paste correct instead of copy-paste-then-remember-to-change-four-fields.
+
 ## State
 
-Between milestones; no milestone on either PR, and none to set. 43 board findings, **3 closed**
-(#106, #107, #108). The backlog is ordered chronologically and severity travels on the line, so the
-next pick is a reading of `ISSUES.md`'s badges, not of its top.
+Between milestones; no milestone on any of these PRs, and none to set. 43 board findings,
+**4 closed** (#106, #107, #108, #109). The backlog is ordered chronologically and severity travels
+on the line, so the next pick is a reading of `ISSUES.md`'s badges, not of its top.
 
 **Standing order added mid-session:** the maintainer instructed that the agent opens pull requests
 itself from now on, rather than pushing the branch and reporting the `gh pr create` command.
