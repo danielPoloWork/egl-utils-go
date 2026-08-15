@@ -3,7 +3,7 @@ module github.com/danielPoloWork/egl-utils-go/contrib/redishealth
 go 1.25.0
 
 require (
-	github.com/danielPoloWork/egl-utils-go/v2 v2.0.0
+	github.com/danielPoloWork/egl-utils-go/v2 v2.0.1
 	github.com/redis/go-redis/v9 v9.21.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/goleak v1.3.0
